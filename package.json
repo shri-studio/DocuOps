@@ -1,0 +1,22 @@
+{
+  "name": "docuops",
+  "version": "3.0.0",
+  "description": "Document Operations. Automated. — Browser-based document intelligence platform.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . --listen 3000"
+  },
+  "keywords": [
+    "document-processing",
+    "ocr",
+    "data-entry",
+    "automation",
+    "bpo",
+    "invoice-processing",
+    "document-extraction"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true
+}
