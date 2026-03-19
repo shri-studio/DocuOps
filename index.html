@@ -1,1965 +1,823 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#05080f" />
-  <title>DocuOps — Document Operations. Automated.</title>
-  <meta name="description" content="Privacy-first document intelligence. Process documents locally in your browser — no install, no upload, no compromise." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuOps — Document Operations. Automated.</title>
+<meta name="description" content="AI-powered document processing platform for BPO teams. Extract data, rename files, automate data entry — without your data leaving your system.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0c0e14;
+  --surface:#13151f;
+  --surface2:#1a1d2b;
+  --border:#242840;
+  --green:#2dd4a0;
+  --blue:#5b8df6;
+  --purple:#9b7ef8;
+  --text:#eceef5;
+  --muted:#7c8399;
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --arabic:'Noto Naskh Arabic',serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet" />
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 6%;transition:all .3s;}
+nav.scrolled{background:rgba(12,14,20,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
+.nav-logo-mark{width:34px;height:34px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-logo-mark svg{width:18px;height:18px;}
+.nav-logo-text{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.4px;}
+.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .15s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{display:flex;gap:10px;align-items:center;}
+.btn-nav{background:var(--green);color:#0c0e14;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:700;text-decoration:none;transition:opacity .15s;white-space:nowrap;font-family:var(--sans);}
+.btn-nav:hover{opacity:.85;}
+.mob-menu{display:none;background:none;border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:7px;font-size:16px;cursor:pointer;align-items:center;justify-content:center;}
 
-  <style>
-    :root{
-      --bg:#05080f;
-      --surface:#0d1117;
-      --surface2:#161b24;
-      --border:#1e2737;
-      --accent:#38d9a9;
-      --accent2:#4f8ef7;
-      --purple:#a78bfa;
-      --warn:#f7a94f;
-      --text:#f0f4ff;
-      --muted:#8892a4;
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 6% 80px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(45,212,160,.07) 0%,transparent 70%);top:-100px;left:50%;transform:translateX(-50%);pointer-events:none;}
+.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3;pointer-events:none;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black 0%,transparent 100%);}
+.hero-inner{position:relative;z-index:1;max-width:780px;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--green);padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;font-family:var(--mono);margin-bottom:32px;letter-spacing:.3px;}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.hero-brand{font-size:clamp(52px,8vw,88px);font-weight:800;letter-spacing:-3px;line-height:1;margin-bottom:20px;color:var(--text);}
+.hero-rotating{min-height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;}
+.rotating-text{font-size:clamp(18px,3vw,26px);font-weight:600;color:var(--muted);letter-spacing:-.3px;opacity:0;transition:opacity .4s;}
+.rotating-text.visible{opacity:1;}
+.rotating-text.arabic{font-family:var(--arabic);direction:rtl;font-size:clamp(20px,3vw,28px);color:var(--green);}
+.cursor-blink{display:inline-block;width:2px;height:1.1em;background:var(--green);margin-left:3px;vertical-align:middle;animation:cur .8s infinite;}
+@keyframes cur{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+.hero-sub{font-size:16px;color:var(--muted);line-height:1.7;max-width:540px;margin:0 auto 36px;font-weight:400;}
+.hero-sub b{color:var(--text);font-weight:600;}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;}
+.btn-primary{background:var(--green);color:#0c0e14;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;transition:all .15s;font-family:var(--sans);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+.btn-secondary{background:none;border:1px solid var(--border);color:var(--text);padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:all .15s;font-family:var(--sans);display:inline-flex;align-items:center;gap:6px;}
+.btn-secondary:hover{border-color:var(--green);color:var(--green);}
+.trust-row{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:500;}
+.trust-item svg{width:14px;height:14px;color:var(--green);}
 
-      --shadow: 0 18px 55px rgba(0,0,0,.55);
-      --shadow2: 0 10px 28px rgba(0,0,0,.42);
-      --radius: 18px;
-      --radius2: 14px;
-      --max: 1180px;
-    }
+/* ── SECTIONS ── */
+section{padding:80px 6%;}
+.section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-family:var(--mono);margin-bottom:12px;}
+.section-title{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:14px;}
+.section-sub{font-size:15px;color:var(--muted);line-height:1.7;max-width:520px;}
+.section-header{margin-bottom:48px;}
+.section-header.center{text-align:center;}
+.section-header.center .section-sub{margin:0 auto;}
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:var(--bg);
-      overflow-x:hidden;
-    }
-    a{ color:inherit; text-decoration:none; }
-    button{ font-family:inherit; }
+/* ── HOW IT WORKS ── */
+#how{background:var(--surface);}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;position:relative;max-width:900px;margin:0 auto;}
+.step{background:var(--bg);padding:32px 28px;position:relative;}
+.step:first-child{border-radius:10px 0 0 10px;}
+.step:last-child{border-radius:0 10px 10px 0;}
+.step-num{width:36px;height:36px;border-radius:8px;background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green);margin-bottom:16px;}
+.step-icon{font-size:24px;margin-bottom:12px;}
+.step-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
 
-    /* Background: grid + glows */
-    .bg{
-      position:fixed; inset:0;
-      pointer-events:none;
-      z-index:-1;
-      background:
-        radial-gradient(900px 500px at 50% -60px, rgba(56,217,169,.24), transparent 65%),
-        radial-gradient(900px 700px at 85% 72%, rgba(79,142,247,.22), transparent 60%),
-        radial-gradient(800px 600px at 10% 55%, rgba(167,139,250,.16), transparent 62%),
-        linear-gradient(180deg, rgba(5,8,15,1) 0%, rgba(5,8,15,1) 55%, rgba(5,8,15,1) 100%);
-    }
-    .bg:after{
-      content:"";
-      position:absolute; inset:0;
-      opacity:.26;
-      background-image:
-        linear-gradient(to right, rgba(136,146,164,.12) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(136,146,164,.12) 1px, transparent 1px);
-      background-size: 64px 64px;
-      mask-image: radial-gradient(circle at 50% 0%, rgba(0,0,0,1), rgba(0,0,0,.15) 55%, rgba(0,0,0,0) 85%);
-      -webkit-mask-image: radial-gradient(circle at 50% 0%, rgba(0,0,0,1), rgba(0,0,0,.15) 55%, rgba(0,0,0,0) 85%);
-    }
+/* ── PROBLEM ── */
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.pain-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #f87171;border-radius:10px;padding:24px;opacity:0;transform:translateY(16px);transition:all .5s;}
+.pain-card.visible{opacity:1;transform:none;}
+.pain-emoji{font-size:28px;margin-bottom:12px;}
+.pain-text{font-size:14px;color:var(--muted);line-height:1.7;}
+.pain-text b{color:var(--text);}
 
-    /* Layout helpers */
-    .wrap{ width:min(var(--max), calc(100% - 40px)); margin:0 auto; }
-    .section{ padding: 92px 0; position:relative; }
-    .section.sm{ padding: 72px 0; }
-    .section.alt{ background: linear-gradient(180deg, rgba(13,17,23,.65), rgba(13,17,23,.2)); border-top:1px solid rgba(30,39,55,.65); border-bottom:1px solid rgba(30,39,55,.65); }
-    .section.alt2{ background: linear-gradient(180deg, rgba(22,27,36,.68), rgba(13,17,23,.25)); border-top:1px solid rgba(30,39,55,.65); border-bottom:1px solid rgba(30,39,55,.65); }
+/* ── PRIVACY ── */
+#privacy{background:var(--surface);}
+.privacy-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;max-width:1000px;margin:0 auto;}
+.privacy-visual{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.shield-wrap{width:120px;height:120px;border-radius:50%;background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.15);display:flex;align-items:center;justify-content:center;}
+.shield-wrap svg{width:52px;height:52px;color:var(--green);}
+.privacy-label{font-size:13px;font-weight:600;color:var(--green);font-family:var(--mono);letter-spacing:.5px;}
+.privacy-features{display:flex;flex-direction:column;gap:11px;margin-bottom:32px;}
+.pf-item{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text);line-height:1.5;}
+.pf-check{width:18px;height:18px;border-radius:4px;background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.pf-check svg{width:10px;height:10px;color:var(--green);}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;}
+.compare-table th{padding:8px 12px;text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.compare-table td{padding:9px 12px;border-bottom:1px solid rgba(36,40,64,.5);}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-table td:first-child{color:var(--muted);}
+.ct{color:#f87171;font-size:14px;}
+.cg{color:var(--green);font-size:14px;}
 
-    .kicker{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:7px 12px;
-      border:1px solid rgba(56,217,169,.28);
-      background: rgba(13,17,23,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 999px;
-      color: rgba(240,244,255,.92);
-      font-size:12px;
-      letter-spacing:.2px;
-    }
-    .kicker .dot{
-      width:10px;height:10px;border-radius:50%;
-      background:var(--accent);
-      box-shadow: 0 0 0 0 rgba(56,217,169,.55);
-      animation:pulse 1.35s ease-in-out infinite;
-    }
-    @keyframes pulse{
-      0%{ box-shadow:0 0 0 0 rgba(56,217,169,.45); }
-      70%{ box-shadow:0 0 0 9px rgba(56,217,169,0); }
-      100%{ box-shadow:0 0 0 0 rgba(56,217,169,0); }
-    }
+/* ── TOOLS ── */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.tool-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;transition:all .2s;position:relative;overflow:hidden;}
+.tool-tile.live{cursor:pointer;}
+.tool-tile.live:hover{border-color:var(--green);transform:translateY(-2px);}
+.tool-tile.soon{opacity:.6;}
+.tool-tile.custom{border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.03);}
+.tool-tile.custom:hover{border-color:var(--green);transform:translateY(-2px);cursor:pointer;}
+.tile-icon{font-size:26px;margin-bottom:10px;}
+.tile-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;font-family:var(--mono);padding:2px 8px;border-radius:99px;margin-bottom:10px;}
+.status-live{background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.2);}
+.status-soon{background:rgba(124,131,153,.1);color:var(--muted);border:1px solid var(--border);}
+.status-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.tile-name{font-size:14px;font-weight:700;margin-bottom:6px;}
+.tile-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.tile-link{display:inline-flex;align-items:center;gap:4px;margin-top:12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;transition:gap .15s;}
+.tile-link:hover{gap:8px;}
 
-    h2{
-      margin:0;
-      font-size: clamp(26px, 3.3vw, 40px);
-      letter-spacing:-1.2px;
-      line-height:1.12;
-    }
-    .sub{
-      margin: 12px auto 0;
-      max-width: 820px;
-      font-size: 15px;
-      line-height:1.75;
-      color: rgba(136,146,164,.95);
-    }
-    .center{ text-align:center; }
+/* ── INDUSTRIES ── */
+.ind-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ind-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-align:center;transition:border-color .2s;}
+.ind-card:hover{border-color:var(--blue);}
+.ind-icon{font-size:26px;margin-bottom:10px;}
+.ind-name{font-size:13px;font-weight:700;margin-bottom:5px;}
+.ind-desc{font-size:11px;color:var(--muted);line-height:1.5;}
 
-    /* Nav */
-    .nav{
-      position:fixed; inset: 14px 0 auto 0;
-      z-index:50;
-      transition: transform .25s ease, inset .25s ease, padding .25s ease;
-    }
-    .nav .bar{
-      width:min(var(--max), calc(100% - 28px));
-      margin: 0 auto;
-      padding: 12px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      display:flex; align-items:center; justify-content:space-between; gap: 12px;
-    }
-    .nav.shrink{ inset: 8px 0 auto 0; }
-    .nav.shrink .bar{ padding: 9px 12px; }
+/* ── ROI ── */
+#roi{background:var(--surface);}
+.roi-inner{max-width:640px;margin:0 auto;}
+.slider-group{margin-bottom:24px;}
+.slider-label{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+.slider-label span:first-child{color:var(--muted);}
+.slider-label span:last-child{color:var(--green);font-weight:700;font-family:var(--mono);}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:99px;background:var(--border);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid var(--bg);}
+.roi-results{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0;}
+.roi-stat{text-align:center;}
+.roi-val{font-size:28px;font-weight:800;font-family:var(--mono);color:var(--green);margin-bottom:4px;}
+.roi-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.roi-summary{font-size:15px;font-weight:600;color:var(--text);text-align:center;margin-bottom:20px;}
+.roi-summary span{color:var(--green);}
 
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width: 210px;
-    }
-    .brand .logo{
-      width:34px;height:34px;
-      display:grid; place-items:center;
-      border-radius: 12px;
-      background: linear-gradient(180deg, rgba(79,142,247,.18), rgba(13,17,23,.1));
-      border:1px solid rgba(79,142,247,.25);
-      box-shadow: 0 14px 40px rgba(79,142,247,.12);
-    }
-    .brand .txt{ display:flex; flex-direction:column; line-height:1.1; }
-    .brand .name{ font-weight:900; letter-spacing:-.9px; font-size:16px; }
-    .brand .tag{ color:rgba(136,146,164,.95); font-size:11px; }
+/* ── PRICING ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:1000px;margin:0 auto;}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 20px;position:relative;}
+.price-card.featured{border-color:var(--green);background:rgba(45,212,160,.03);}
+.price-popular{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--green);color:#0c0e14;font-size:10px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap;font-family:var(--mono);}
+.price-tier{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:var(--mono);}
+.price-amount{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;}
+.price-period{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.price-features{display:flex;flex-direction:column;gap:9px;margin-bottom:24px;}
+.price-feat{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
+.price-feat svg{width:13px;height:13px;color:var(--green);flex-shrink:0;margin-top:1px;}
+.price-btn{width:100%;padding:10px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .15s;border:none;}
+.price-btn.solid{background:var(--green);color:#0c0e14;}
+.price-btn.solid:hover{opacity:.85;}
+.price-btn.outline{background:none;border:1px solid var(--border);color:var(--text);}
+.price-btn.outline:hover{border-color:var(--green);color:var(--green);}
+.price-note{text-align:center;margin-top:20px;font-size:12px;color:var(--muted);}
 
-    .navlinks{
-      display:flex; align-items:center; gap: 18px;
-      justify-content:center;
-      flex:1;
-    }
-    .navlinks a{
-      font-size:13px;
-      color: rgba(136,146,164,.95);
-      padding: 8px 10px;
-      border-radius: 999px;
-      border:1px solid transparent;
-      transition: color .2s ease, background .2s ease, border-color .2s ease;
-      white-space:nowrap;
-    }
-    .navlinks a:hover{
-      color: rgba(240,244,255,.96);
-      background: rgba(22,27,36,.6);
-      border-color: rgba(30,39,55,.75);
-    }
-    .navlinks a.active{
-      color: rgba(240,244,255,.98);
-      background: rgba(79,142,247,.12);
-      border-color: rgba(79,142,247,.24);
-      box-shadow: 0 0 0 4px rgba(79,142,247,.06);
-    }
+/* ── FAQ ── */
+.faq-list{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:2px;}
+.faq-item{background:var(--surface);border-radius:8px;overflow:hidden;}
+.faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:none;border:none;color:var(--text);font-size:14px;font-weight:600;text-align:left;cursor:pointer;font-family:var(--sans);gap:16px;}
+.faq-q:hover{color:var(--green);}
+.faq-icon{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;transition:all .2s;color:var(--muted);}
+.faq-item.open .faq-icon{background:var(--green);border-color:var(--green);color:#0c0e14;transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.faq-item.open .faq-a{max-height:200px;}
+.faq-a-inner{padding:0 20px 16px;font-size:13px;color:var(--muted);line-height:1.7;}
 
-    .cta{
-      display:flex; align-items:center; gap: 10px;
-      min-width: 210px;
-      justify-content:flex-end;
-    }
-    .btn{
-      cursor:pointer;
-      border-radius: 999px;
-      padding: 11px 14px;
-      border: 1px solid rgba(30,39,55,.9);
-      background: rgba(22,27,36,.55);
-      color: rgba(240,244,255,.96);
-      font-size:13px;
-      font-weight:700;
-      transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
-      display:inline-flex; align-items:center; gap: 10px;
-      user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(79,142,247,.28); box-shadow: 0 12px 30px rgba(0,0,0,.35); }
-    .btn:active{ transform: translateY(0px); }
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(56,217,169,1), rgba(32,171,130,1));
-      border-color: rgba(56,217,169,.55);
-      color: #071012;
-      box-shadow: 0 18px 48px rgba(56,217,169,.18);
-    }
-    .btn.primary:hover{ border-color: rgba(56,217,169,.75); box-shadow: 0 20px 55px rgba(56,217,169,.2); }
-    .btn.ghost{
-      background: transparent;
-      border-color: rgba(136,146,164,.4);
-      color: rgba(240,244,255,.92);
-    }
-    .btn.ghost:hover{
-      border-color: rgba(240,244,255,.25);
-      background: rgba(22,27,36,.35);
-    }
-    .btn.small{ padding: 10px 12px; font-size: 12.5px; }
-    .btn:focus-visible{ outline: none; box-shadow: 0 0 0 4px rgba(79,142,247,.18); }
+/* ── CONTACT ── */
+#contact{background:var(--surface);}
+.contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;max-width:900px;margin:0 auto;}
+.contact-info h3{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-family:var(--mono);margin-bottom:12px;}
+.contact-info p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:28px;}
+.contact-points{display:flex;flex-direction:column;gap:12px;}
+.cp{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+.cp svg{width:16px;height:16px;color:var(--green);flex-shrink:0;}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.form-group input,.form-group textarea,.form-group select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s;width:100%;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--green);}
+.form-group textarea{resize:vertical;min-height:100px;}
+.form-success{display:none;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;padding:16px;font-size:13px;color:var(--green);text-align:center;}
 
-    .hamburger{
-      display:none;
-      border:1px solid rgba(30,39,55,.85);
-      background: rgba(22,27,36,.5);
-      color: rgba(240,244,255,.95);
-      width: 42px; height: 42px;
-      border-radius: 999px;
-      cursor:pointer;
-    }
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+.footer-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.footer-brand-mark{width:30px;height:30px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;}
+.footer-brand-mark svg{width:15px;height:15px;}
+.footer-tagline{font-size:13px;color:var(--muted);line-height:1.6;max-width:240px;}
+.footer-col h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;font-family:var(--mono);}
+.footer-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:8px;transition:color .15s;}
+.footer-col a:hover{color:var(--text);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-copy{font-size:12px;color:var(--muted);}
+.footer-privacy{font-size:12px;color:var(--muted);font-family:var(--mono);}
 
-    /* Hero */
-    .hero{
-      min-height: 100vh;
-      display:flex;
-      align-items:center;
-      padding: 130px 0 56px;
-      position:relative;
-    }
-    .hero-grid{
-      display:grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 28px;
-      align-items:center;
-    }
-    .hero h1{
-      margin: 14px 0 6px;
-      font-size: clamp(48px, 8vw, 96px);
-      line-height: .94;
-      letter-spacing: -3px;
-      font-weight: 900;
-    }
-    .typewrap{
-      position:relative;
-      margin-top: 10px;
-      min-height: 42px;
-      display:flex; align-items:flex-start;
-      gap: 10px;
-    }
-    .type{
-      font-size: clamp(16px, 2.4vw, 24px);
-      line-height:1.35;
-      letter-spacing: -0.5px;
-      color: rgba(240,244,255,.94);
-      font-weight: 700;
-      opacity: 1;
-      transition: opacity .5s ease;
-      white-space:pre-wrap;
-    }
-    .type.ar{
-      font-family: "Noto Naskh Arabic", Inter, system-ui, sans-serif;
-      font-size: clamp(18px, 2.6vw, 28px);
-      direction: rtl;
-      unicode-bidi: plaintext;
-      letter-spacing: 0;
-    }
-    .cursor{
-      width: 10px;
-      height: 28px;
-      border-radius: 2px;
-      background: var(--accent);
-      box-shadow: 0 0 18px rgba(56,217,169,.35);
-      margin-top: 6px;
-      animation: blink .95s steps(1) infinite;
-      flex: 0 0 auto;
-      opacity: .95;
-    }
-    @keyframes blink{ 0%,45%{opacity:1} 46%,100%{opacity:0} }
+/* ── SCROLL ANIMATIONS ── */
+.fade-up{opacity:0;transform:translateY(20px);transition:all .5s ease;}
+.fade-up.visible{opacity:1;transform:none;}
 
-    .headline{
-      margin-top: 14px;
-      max-width: 720px;
-      color: rgba(136,146,164,.96);
-      font-size: 16px;
-      line-height: 1.8;
-      opacity:0;
-      transform: translateY(8px);
-      transition: opacity .8s ease, transform .8s ease;
-    }
-    .headline.show{ opacity:1; transform: translateY(0); }
-
-    .hero-actions{
-      display:flex; gap: 12px;
-      margin-top: 18px;
-      opacity:0;
-      transform: translateY(8px);
-      transition: opacity .8s ease, transform .8s ease;
-    }
-    .hero-actions.show{ opacity:1; transform: translateY(0); }
-
-    .trust{
-      margin-top: 16px;
-      display:flex; gap: 10px;
-      flex-wrap:wrap;
-      opacity:0;
-      transform: translateY(8px);
-      transition: opacity .8s ease, transform .8s ease;
-    }
-    .trust.show{ opacity:1; transform: translateY(0); }
-    .chip{
-      display:inline-flex; align-items:center; gap: 10px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      color: rgba(240,244,255,.92);
-      font-size: 12.5px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.22);
-    }
-    .chip b{ font-weight: 800; }
-
-    .hero-card{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background:
-        radial-gradient(800px 250px at 50% 0%, rgba(56,217,169,.18), transparent 55%),
-        linear-gradient(180deg, rgba(22,27,36,.72), rgba(13,17,23,.55));
-      box-shadow: var(--shadow);
-      padding: 18px;
-      position:relative;
-      overflow:hidden;
-    }
-    .hero-card:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(500px 300px at 15% 25%, rgba(79,142,247,.18), transparent 65%),
-        radial-gradient(500px 300px at 85% 70%, rgba(167,139,250,.16), transparent 68%);
-      opacity:.9;
-      pointer-events:none;
-    }
-    .hero-card > *{ position:relative; }
-    .mono{
-      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-      color: rgba(240,244,255,.9);
-    }
-    .cardhdr{
-      display:flex; align-items:center; justify-content:space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .status{
-      display:inline-flex; align-items:center; gap: 8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: rgba(56,217,169,.12);
-      border: 1px solid rgba(56,217,169,.26);
-      color: rgba(240,244,255,.92);
-      font-size: 12px;
-    }
-    .status .s{
-      width:8px;height:8px;border-radius:50%;
-      background:var(--accent);
-      box-shadow: 0 0 0 6px rgba(56,217,169,.12);
-    }
-    .mini{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    .mini .row{
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 12px 12px;
-      border-radius: 14px;
-      background: rgba(13,17,23,.55);
-      border: 1px solid rgba(30,39,55,.75);
-    }
-    .mini .row .l{
-      display:flex; flex-direction:column;
-      gap: 3px;
-    }
-    .mini .row .t{ font-weight: 800; letter-spacing: -.2px; }
-    .mini .row .d{ color: rgba(136,146,164,.95); font-size: 12px; line-height:1.5; }
-    .pill{
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid rgba(79,142,247,.26);
-      background: rgba(79,142,247,.10);
-      color: rgba(240,244,255,.92);
-      white-space:nowrap;
-    }
-
-    /* How it works */
-    .steps{
-      margin-top: 36px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      position:relative;
-    }
-    .steps:before{
-      content:"";
-      position:absolute;
-      left: 8%;
-      right: 8%;
-      top: 40px;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(56,217,169,0), rgba(56,217,169,.45), rgba(79,142,247,.35), rgba(56,217,169,.45), rgba(56,217,169,0));
-      opacity:.65;
-    }
-    .step{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(13,17,23,.55);
-      padding: 18px;
-      box-shadow: var(--shadow2);
-      position:relative;
-      overflow:hidden;
-    }
-    .step .num{
-      position:absolute; top: 14px; right: 16px;
-      font-weight: 900;
-      color: rgba(56,217,169,.75);
-      font-size: 38px;
-      letter-spacing:-2px;
-      opacity:.35;
-    }
-    .step .ico{ font-size: 28px; margin-bottom: 10px; }
-    .step .ttl{ font-weight:900; letter-spacing:-.6px; font-size: 16px; margin-bottom: 8px; }
-    .step .desc{ color: rgba(136,146,164,.96); line-height:1.7; font-size: 13.5px; }
-
-    /* Pain points */
-    .cards3{
-      margin-top: 28px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-    .pain{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(22,27,36,.55);
-      padding: 18px;
-      box-shadow: var(--shadow2);
-      position:relative;
-      overflow:hidden;
-    }
-    .pain:before{
-      content:"";
-      position:absolute; left:0; top:0; bottom:0;
-      width: 6px;
-      background: linear-gradient(180deg, rgba(247,169,79,.95), rgba(255,95,109,.75));
-      opacity:.9;
-    }
-    .pain .ico{ font-size: 28px; margin-bottom: 10px; }
-    .pain .txt{ font-size: 14px; line-height:1.7; color: rgba(240,244,255,.9); }
-
-    /* Privacy */
-    .privacy{
-      border-radius: calc(var(--radius) + 6px);
-      border: 1px solid rgba(56,217,169,.22);
-      background:
-        radial-gradient(1200px 420px at 50% 0%, rgba(56,217,169,.18), transparent 62%),
-        linear-gradient(180deg, rgba(13,17,23,.78), rgba(13,17,23,.45));
-      box-shadow: var(--shadow);
-      padding: 26px;
-      overflow:hidden;
-      position:relative;
-    }
-    .privacy:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(560px 360px at 15% 40%, rgba(79,142,247,.12), transparent 70%),
-        radial-gradient(560px 360px at 85% 60%, rgba(167,139,250,.10), transparent 72%);
-      opacity:.9;
-      pointer-events:none;
-    }
-    .privacy > *{ position:relative; }
-    .privacy h2{ max-width: 820px; margin: 0; }
-    .privacy .sub{ max-width: 860px; margin: 10px 0 0; }
-
-    .privacy-grid{
-      display:grid;
-      grid-template-columns: .95fr 1.05fr;
-      gap: 18px;
-      margin-top: 22px;
-      align-items:stretch;
-    }
-    .visual{
-      border-radius: var(--radius);
-      border:1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      padding: 20px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      gap: 14px;
-      position:relative;
-      overflow:hidden;
-    }
-    .visual:before{
-      content:"";
-      position:absolute;
-      width: 520px; height: 520px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(56,217,169,.22), transparent 60%);
-      filter: blur(2px);
-      opacity:.85;
-    }
-    .shield{
-      width: 88px; height: 88px;
-      filter: drop-shadow(0 18px 45px rgba(56,217,169,.25));
-    }
-    .visual .cap{
-      font-weight: 900;
-      letter-spacing:-.8px;
-      font-size: 18px;
-    }
-    .visual .cap2{
-      color: rgba(136,146,164,.96);
-      font-size: 13px;
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-    }
-
-    .list{
-      border-radius: var(--radius);
-      border:1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      padding: 18px 18px;
-    }
-    .list ul{ margin:0; padding: 0; list-style:none; display:grid; gap: 10px; }
-    .list li{
-      display:flex; gap: 10px;
-      padding: 10px 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(30,39,55,.65);
-      background: rgba(22,27,36,.35);
-      align-items:flex-start;
-    }
-    .list .check{
-      width: 22px; height: 22px;
-      border-radius: 7px;
-      display:grid; place-items:center;
-      background: rgba(56,217,169,.14);
-      border: 1px solid rgba(56,217,169,.28);
-      color: var(--accent);
-      flex: 0 0 auto;
-      margin-top: 2px;
-      font-weight: 900;
-      font-size: 12px;
-    }
-    .list .li-t{
-      font-weight: 800;
-      letter-spacing: -.2px;
-      font-size: 13px;
-    }
-    .list .li-d{
-      margin-top: 2px;
-      color: rgba(136,146,164,.96);
-      font-size: 12.5px;
-      line-height: 1.65;
-    }
-
-    .compare{
-      margin-top: 18px;
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      overflow:hidden;
-    }
-    .table{
-      width:100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .table th, .table td{
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(30,39,55,.65);
-      text-align:center;
-    }
-    .table th:first-child, .table td:first-child{
-      text-align:left;
-      color: rgba(240,244,255,.92);
-      font-weight: 800;
-      letter-spacing: -.2px;
-    }
-    .table thead th{
-      color: rgba(136,146,164,.98);
-      font-weight: 900;
-      background: rgba(22,27,36,.40);
-    }
-    .table thead th:last-child{
-      color: rgba(240,244,255,.96);
-      background: rgba(56,217,169,.12);
-      border-bottom-color: rgba(56,217,169,.18);
-    }
-    .ok{ color: var(--accent); font-weight: 900; }
-    .no{ color: rgba(255,95,109,.92); font-weight: 900; }
-
-    /* Tools grid */
-    .grid{
-      margin-top: 30px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-    .tool{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(13,17,23,.55);
-      padding: 18px;
-      box-shadow: var(--shadow2);
-      position:relative;
-      overflow:hidden;
-      display:flex; flex-direction:column;
-      min-height: 210px;
-      transition: transform .22s ease, border-color .22s ease, background .22s ease, box-shadow .22s ease;
-    }
-    .tool.live:hover{
-      transform: translateY(-3px);
-      border-color: rgba(56,217,169,.28);
-      box-shadow: 0 20px 55px rgba(0,0,0,.45);
-    }
-    .tool.coming{
-      opacity:.72;
-      filter:saturate(.6);
-      background: rgba(13,17,23,.42);
-    }
-    .tool.custom{
-      border-color: rgba(56,217,169,.32);
-      box-shadow: 0 22px 65px rgba(56,217,169,.10);
-      background:
-        radial-gradient(800px 240px at 50% 0%, rgba(56,217,169,.16), transparent 60%),
-        rgba(13,17,23,.55);
-    }
-    .badge{
-      position:absolute; top: 14px; right: 14px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(22,27,36,.55);
-      color: rgba(240,244,255,.92);
-      display:inline-flex; align-items:center; gap: 8px;
-    }
-    .badge.live{
-      border-color: rgba(56,217,169,.26);
-      background: rgba(56,217,169,.10);
-    }
-    .badge.coming{
-      border-color: rgba(136,146,164,.28);
-      background: rgba(136,146,164,.08);
-      color: rgba(136,146,164,.95);
-    }
-    .badge .b-dot{
-      width: 9px; height: 9px; border-radius:50%;
-      background: var(--accent);
-    }
-    .tool .ico{ font-size: 28px; margin-bottom: 10px; }
-    .tool .ttl{ font-weight: 900; letter-spacing:-.7px; font-size: 16px; margin: 2px 0 8px; }
-    .tool .desc{ color: rgba(136,146,164,.96); line-height:1.75; font-size: 13.5px; flex:1; }
-    .tool .actions{ margin-top: 14px; display:flex; gap: 10px; }
-
-    /* Industries */
-    .grid2{
-      margin-top: 28px;
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-    .industry{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(13,17,23,.55);
-      padding: 16px;
-      box-shadow: var(--shadow2);
-      min-height: 150px;
-    }
-    .industry .top{
-      display:flex; align-items:center; gap: 10px;
-      font-weight: 900;
-      letter-spacing:-.6px;
-      margin-bottom: 8px;
-    }
-    .industry .top span{ font-size: 20px; }
-    .industry .desc{ color: rgba(136,146,164,.96); line-height:1.75; font-size: 13.5px; }
-
-    /* ROI */
-    .roi{
-      margin-top: 26px;
-      border-radius: calc(var(--radius) + 6px);
-      border: 1px solid rgba(56,217,169,.22);
-      background:
-        radial-gradient(1100px 340px at 50% 0%, rgba(56,217,169,.16), transparent 62%),
-        rgba(13,17,23,.55);
-      box-shadow: var(--shadow);
-      padding: 22px;
-    }
-    .roi-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items:start;
-    }
-    .slider{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(22,27,36,.35);
-      padding: 16px;
-    }
-    .srow{ display:flex; justify-content:space-between; align-items:baseline; gap: 10px; }
-    .srow .l{ font-weight: 900; letter-spacing:-.4px; }
-    .srow .v{
-      font-family:"IBM Plex Mono", ui-monospace, monospace;
-      color: rgba(240,244,255,.95);
-      font-weight: 700;
-      font-size: 13px;
-    }
-    input[type="range"]{
-      width:100%;
-      margin-top: 10px;
-      accent-color: var(--accent);
-    }
-    .results{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(13,17,23,.55);
-      padding: 16px;
-    }
-    .metric{
-      display:flex; justify-content:space-between; gap: 10px;
-      padding: 10px 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(30,39,55,.65);
-      background: rgba(22,27,36,.35);
-      margin-bottom: 10px;
-      align-items:center;
-    }
-    .metric:last-child{ margin-bottom:0; }
-    .metric .k{ color: rgba(136,146,164,.98); font-size: 13px; }
-    .metric .val{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-weight: 900; }
-    .bigline{
-      margin-top: 14px;
-      padding: 14px 14px;
-      border-radius: var(--radius);
-      border: 1px solid rgba(56,217,169,.22);
-      background: rgba(56,217,169,.08);
-      font-weight: 900;
-      letter-spacing:-.6px;
-      line-height:1.35;
-    }
-
-    /* Pricing */
-    .pricing{
-      margin-top: 28px;
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-    .plan{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.85);
-      background: rgba(13,17,23,.55);
-      padding: 18px;
-      box-shadow: var(--shadow2);
-      position:relative;
-      overflow:hidden;
-      display:flex; flex-direction:column;
-    }
-    .plan.popular{
-      border-color: rgba(56,217,169,.32);
-      box-shadow: 0 24px 75px rgba(56,217,169,.12);
-      background:
-        radial-gradient(900px 220px at 50% 0%, rgba(56,217,169,.14), transparent 62%),
-        rgba(13,17,23,.55);
-    }
-    .ribbon{
-      position:absolute; top: 14px; right: 14px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(56,217,169,.28);
-      background: rgba(56,217,169,.10);
-      font-size: 12px;
-      font-weight: 900;
-    }
-    .plan .name{ font-weight: 900; letter-spacing:-.7px; font-size: 16px; }
-    .price{
-      margin-top: 10px;
-      display:flex; align-items:baseline; gap: 8px;
-      font-weight: 900;
-      letter-spacing:-.9px;
-    }
-    .price .p{ font-size: 32px; }
-    .price .m{ color: rgba(136,146,164,.98); font-size: 13px; font-weight: 800; }
-    .plan ul{ margin: 12px 0 0; padding:0; list-style:none; display:grid; gap: 10px; }
-    .plan li{
-      display:flex; gap: 10px;
-      align-items:flex-start;
-      color: rgba(240,244,255,.9);
-      font-size: 13px;
-      line-height:1.6;
-    }
-    .plan li .dot{
-      width: 18px; height: 18px;
-      border-radius: 7px;
-      display:grid; place-items:center;
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(22,27,36,.35);
-      color: var(--accent);
-      flex:0 0 auto;
-      margin-top: 2px;
-      font-weight: 900;
-      font-size: 12px;
-    }
-    .plan .foot{
-      margin-top: 14px;
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-    }
-    .fine{
-      margin-top: 16px;
-      color: rgba(136,146,164,.95);
-      font-size: 13px;
-      line-height:1.75;
-    }
-    .fine b{ color: rgba(240,244,255,.92); }
-
-    /* FAQ */
-    .faq{
-      margin-top: 26px;
-      display:grid;
-      gap: 10px;
-      max-width: 920px;
-      margin-left:auto;
-      margin-right:auto;
-    }
-    details{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(13,17,23,.55);
-      overflow:hidden;
-    }
-    summary{
-      list-style:none;
-      cursor:pointer;
-      padding: 16px 16px;
-      display:flex; align-items:center; justify-content:space-between;
-      gap: 12px;
-      font-weight: 900;
-      letter-spacing:-.5px;
-    }
-    summary::-webkit-details-marker{ display:none; }
-    .chev{
-      width: 34px; height: 34px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(22,27,36,.35);
-      display:grid; place-items:center;
-      transition: transform .25s ease;
-      flex:0 0 auto;
-      color: rgba(240,244,255,.92);
-    }
-    details[open] .chev{ transform: rotate(180deg); }
-    .answer{
-      padding: 0 16px 16px;
-      color: rgba(136,146,164,.96);
-      line-height:1.8;
-      font-size: 13.5px;
-    }
-
-    /* Contact */
-    .contact{
-      margin-top: 26px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      align-items:start;
-    }
-    .panel{
-      border-radius: var(--radius);
-      border: 1px solid rgba(30,39,55,.8);
-      background: rgba(13,17,23,.55);
-      box-shadow: var(--shadow2);
-      padding: 18px;
-    }
-    .panel h3{
-      margin:0;
-      font-size: 18px;
-      letter-spacing:-.6px;
-      font-weight: 900;
-    }
-    .panel p{ margin: 10px 0 0; color: rgba(136,146,164,.96); line-height:1.75; font-size: 13.5px; }
-    .contacts{
-      margin-top: 14px;
-      display:grid;
-      gap: 10px;
-    }
-    .citem{
-      display:flex; gap: 10px;
-      align-items:center;
-      padding: 12px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(22,27,36,.35);
-    }
-    .citem .ico{ font-size: 18px; }
-    .citem .t{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: rgba(240,244,255,.92); }
-    .form{
-      display:grid; gap: 10px;
-      margin-top: 14px;
-    }
-    label{ font-size: 12px; color: rgba(136,146,164,.96); font-weight: 700; }
-    .field{
-      display:grid; gap: 7px;
-    }
-    input, textarea{
-      width:100%;
-      border-radius: 14px;
-      border: 1px solid rgba(30,39,55,.85);
-      background: rgba(5,8,15,.35);
-      color: rgba(240,244,255,.95);
-      padding: 11px 12px;
-      font-size: 13px;
-      outline:none;
-      transition: border-color .2s ease, box-shadow .2s ease;
-    }
-    textarea{ min-height: 110px; resize: vertical; }
-    input:focus, textarea:focus{
-      border-color: rgba(56,217,169,.35);
-      box-shadow: 0 0 0 4px rgba(56,217,169,.10);
-    }
-    .success{
-      display:none;
-      margin-top: 10px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(56,217,169,.28);
-      background: rgba(56,217,169,.10);
-      color: rgba(240,244,255,.92);
-      line-height:1.6;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    /* Footer */
-    footer{
-      padding: 54px 0 16px;
-      border-top: 1px solid rgba(30,39,55,.65);
-      background: rgba(13,17,23,.35);
-    }
-    .footgrid{
-      display:grid;
-      grid-template-columns: 1.35fr 1fr 1fr 1fr;
-      gap: 14px;
-      align-items:start;
-    }
-    .col h4{
-      margin:0 0 10px;
-      font-size: 12px;
-      letter-spacing: .9px;
-      text-transform: uppercase;
-      color: rgba(136,146,164,.98);
-    }
-    .col a{
-      display:block;
-      padding: 7px 0;
-      color: rgba(240,244,255,.9);
-      font-size: 13px;
-      opacity:.9;
-    }
-    .col a:hover{ opacity:1; text-decoration: underline; text-underline-offset: 3px; }
-    .footbrand{
-      display:flex; align-items:flex-start; gap: 12px;
-    }
-    .footbrand .miniLogo{
-      width:34px;height:34px; border-radius: 12px;
-      display:grid; place-items:center;
-      border:1px solid rgba(79,142,247,.25);
-      background: rgba(79,142,247,.10);
-    }
-    .footbrand .p{
-      margin-top: 8px;
-      color: rgba(136,146,164,.96);
-      line-height:1.75;
-      font-size: 13px;
-      max-width: 360px;
-    }
-    .bottom{
-      margin-top: 24px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(30,39,55,.65);
-      display:flex;
-      justify-content:space-between;
-      gap: 14px;
-      flex-wrap:wrap;
-      color: rgba(136,146,164,.96);
-      font-size: 12.5px;
-    }
-
-    /* Scroll reveal */
-    .reveal{
-      opacity:0;
-      transform: translateY(14px);
-      transition: opacity .7s ease, transform .7s ease;
-    }
-    .reveal.show{
-      opacity:1;
-      transform: translateY(0);
-    }
-    .stagger > *{ transition-delay: var(--d, 0ms); }
-
-    /* Mobile */
-    @media (max-width: 980px){
-      .hero-grid{ grid-template-columns: 1fr; }
-      .navlinks{ display:none; }
-      .cta{ min-width: auto; }
-      .hamburger{ display:inline-grid; place-items:center; }
-      .brand{ min-width:auto; }
-      .steps{ grid-template-columns: 1fr; }
-      .steps:before{ display:none; }
-      .cards3{ grid-template-columns: 1fr; }
-      .privacy-grid{ grid-template-columns: 1fr; }
-      .grid{ grid-template-columns: repeat(2, 1fr); }
-      .grid2{ grid-template-columns: repeat(2, 1fr); }
-      .roi-grid{ grid-template-columns: 1fr; }
-      .pricing{ grid-template-columns: repeat(2, 1fr); }
-      .contact{ grid-template-columns: 1fr; }
-      .footgrid{ grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 560px){
-      .grid{ grid-template-columns: 1fr; }
-      .grid2{ grid-template-columns: 1fr; }
-      .pricing{ grid-template-columns: 1fr; }
-      .footgrid{ grid-template-columns: 1fr; }
-      .hero{ padding-top: 122px; }
-      .nav .bar{ border-radius: 18px; }
-    }
-
-    /* Mobile nav sheet */
-    .sheet{
-      position:fixed; inset:0;
-      display:none;
-      z-index:60;
-      background: rgba(5,8,15,.68);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .sheet.show{ display:block; }
-    .sheet .panel{
-      position:absolute;
-      right: 14px; left: 14px; top: 70px;
-      max-width: 520px;
-      margin: 0 auto;
-      border-radius: 20px;
-      background: rgba(13,17,23,.78);
-    }
-    .sheet a{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding: 14px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(22,27,36,.35);
-      margin-top: 10px;
-      font-weight: 900;
-      letter-spacing:-.4px;
-      color: rgba(240,244,255,.92);
-    }
-    .sheet .panel .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap: 10px;
-    }
-    .sheet .panel .topbar .t{ font-weight: 900; letter-spacing:-.6px; }
-    .xbtn{
-      width: 40px; height: 40px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,39,55,.75);
-      background: rgba(22,27,36,.35);
-      color: rgba(240,244,255,.92);
-      cursor:pointer;
-    }
-  </style>
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .steps{grid-template-columns:1fr;}
+  .step{border-radius:10px!important;}
+  .pain-grid{grid-template-columns:1fr;}
+  .privacy-inner{grid-template-columns:1fr;}
+  .privacy-visual{display:none;}
+  .tools-grid{grid-template-columns:1fr 1fr;}
+  .ind-grid{grid-template-columns:1fr 1fr;}
+  .pricing-grid{grid-template-columns:1fr 1fr;}
+  .contact-inner{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr 1fr;}
+  .nav-links{display:none;}
+  .mob-menu{display:flex;}
+}
+@media(max-width:560px){
+  .tools-grid{grid-template-columns:1fr;}
+  .pricing-grid{grid-template-columns:1fr;}
+  .ind-grid{grid-template-columns:1fr 1fr;}
+  .hero-btns{flex-direction:column;align-items:center;}
+  section{padding:60px 5%;}
+}
+</style>
 </head>
-
 <body>
-  <div class="bg" aria-hidden="true"></div>
 
-  <!-- Navigation -->
-  <div class="nav" id="nav">
-    <div class="bar">
-      <a class="brand" href="#top" aria-label="DocuOps home">
-        <div class="logo" aria-hidden="true">
-          <!-- Document page + checkmark -->
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M7 3.8h6.6l3.4 3.5V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2Z" stroke="rgba(136,146,164,.95)" stroke-width="1.6" />
-            <path d="M13.6 3.8V8a1 1 0 0 0 1 1h2.4" stroke="rgba(79,142,247,.95)" stroke-width="1.6" />
-            <path d="M9.2 13.0l2.2 2.2 4.6-4.8" stroke="rgba(56,217,169,1)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div class="txt">
-          <div class="name">DocuOps</div>
-          <div class="tag">Document Operations. Automated.</div>
-        </div>
-      </a>
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <polyline points="9 15 11 17 15 13"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">DocuOps</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#tools">Tools</a>
+    <a href="#industries">Industries</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <div class="nav-cta">
+    <a href="/app/" class="btn-nav">Launch App →</a>
+    <button class="mob-menu" onclick="toggleMobMenu()">☰</button>
+  </div>
+</nav>
 
-      <nav class="navlinks" aria-label="Primary navigation">
-        <a href="#features" data-nav="features">Features</a>
-        <a href="#tools" data-nav="tools">Tools</a>
-        <a href="#industries" data-nav="industries">Industries</a>
-        <a href="#pricing" data-nav="pricing">Pricing</a>
-      </nav>
-
-      <div class="cta">
-        <a class="btn primary small" href="/app/" aria-label="Launch the DocuOps app">Launch App →</a>
-        <button class="hamburger" id="hamburger" aria-label="Open menu" title="Menu">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 7h14M5 12h14M5 17h14" stroke="rgba(240,244,255,.92)" stroke-width="2" stroke-linecap="round" />
-          </svg>
-        </button>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Privacy-First Document Intelligence
+    </div>
+    <h1 class="hero-brand">DocuOps</h1>
+    <div class="hero-rotating">
+      <span class="rotating-text" id="rotatingText"></span><span class="cursor-blink"></span>
+    </div>
+    <p class="hero-sub">
+      The document processing platform built for <b>BPO teams</b> and data-heavy businesses.
+      Extract, rename and automate — <b>your data never leaves your system.</b>
+    </p>
+    <div class="hero-btns">
+      <a href="/app/" class="btn-primary">Launch App Free →</a>
+      <a href="#how" class="btn-secondary">See How It Works ↓</a>
+    </div>
+    <div class="trust-row">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Data stays local
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        No install needed
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Works in your browser
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Mobile menu -->
-  <div class="sheet" id="sheet" aria-hidden="true">
-    <div class="panel">
-      <div class="topbar">
-        <div class="t">Menu</div>
-        <button class="xbtn" id="closeSheet" aria-label="Close menu">×</button>
-      </div>
-      <a href="#features" data-sheet="1">Features <span style="color:rgba(136,146,164,.95)">→</span></a>
-      <a href="#tools" data-sheet="1">Tools <span style="color:rgba(136,146,164,.95)">→</span></a>
-      <a href="#industries" data-sheet="1">Industries <span style="color:rgba(136,146,164,.95)">→</span></a>
-      <a href="#pricing" data-sheet="1">Pricing <span style="color:rgba(136,146,164,.95)">→</span></a>
-      <a href="#contact" data-sheet="1">Contact <span style="color:rgba(136,146,164,.95)">→</span></a>
-      <a href="/app/" style="border-color:rgba(56,217,169,.28);background:rgba(56,217,169,.10)">Launch App →</a>
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-header center fade-up">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Three steps. That's all.</h2>
+    <p class="section-sub">No training, no setup, no IT department needed.</p>
+  </div>
+  <div class="steps fade-up">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📂</div>
+      <div class="step-title">Upload Your Documents</div>
+      <p class="step-desc">Drop invoices, contracts, resumes or any documents directly in your browser. Nothing goes to a server.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚡</div>
+      <div class="step-title">AI Extracts The Data</div>
+      <p class="step-desc">Define your fields once. DocuOps learns your document layouts and pre-fills everything automatically.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">📊</div>
+      <div class="step-title">Download Your Excel</div>
+      <p class="step-desc">Clean, structured data in your existing Excel template — ready for your workflow in minutes.</p>
     </div>
   </div>
+</section>
 
-  <!-- Hero -->
-  <main id="top" class="hero">
-    <div class="wrap">
-      <div class="hero-grid">
-        <div>
-          <div class="kicker" aria-label="Privacy-first badge">
-            <span class="dot" aria-hidden="true"></span>
-            <span>Privacy-First Document Intelligence</span>
-          </div>
-
-          <h1>DocuOps</h1>
-
-          <div class="typewrap" aria-live="polite" aria-atomic="true">
-            <div class="type" id="typeText"></div>
-            <div class="cursor" aria-hidden="true"></div>
-          </div>
-
-          <div class="headline" id="headline">
-            The AI-powered document processing platform<br/>
-            that keeps your data where it belongs —<br/>
-            on your system.
-          </div>
-
-          <div class="hero-actions" id="heroActions">
-            <a class="btn primary" href="/app/">Launch App Free →</a>
-            <a class="btn ghost" href="#how-it-works">See How It Works ↓</a>
-          </div>
-
-          <div class="trust" id="trustBadges">
-            <div class="chip"><b>🔒</b> Data stays local</div>
-            <div class="chip"><b>⚡</b> No installation needed</div>
-            <div class="chip"><b>🌐</b> Works in your browser</div>
-          </div>
-        </div>
-
-        <aside class="hero-card reveal" data-reveal>
-          <div class="cardhdr">
-            <div class="mono" style="font-weight:900;letter-spacing:-.6px;">Enterprise-ready from day one</div>
-            <div class="status"><span class="s" aria-hidden="true"></span><span>Local Processing</span></div>
-          </div>
-          <div class="mini">
-            <div class="row">
-              <div class="l">
-                <div class="t">No upload</div>
-                <div class="d">Documents stay on your device.</div>
-              </div>
-              <div class="pill">Zero transmission</div>
-            </div>
-            <div class="row">
-              <div class="l">
-                <div class="t">No install</div>
-                <div class="d">Runs in Chrome / Edge.</div>
-              </div>
-              <div class="pill" style="border-color:rgba(56,217,169,.26);background:rgba(56,217,169,.10)">Browser-native</div>
-            </div>
-            <div class="row">
-              <div class="l">
-                <div class="t">Designed for teams</div>
-                <div class="d">Templates, profiles, repeatable workflows.</div>
-              </div>
-              <div class="pill" style="border-color:rgba(167,139,250,.24);background:rgba(167,139,250,.10)">BPO + Enterprise</div>
-            </div>
-          </div>
-        </aside>
-      </div>
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-header center fade-up">
+    <div class="section-label">The problem</div>
+    <h2 class="section-title">Sound familiar?</h2>
+  </div>
+  <div class="pain-grid">
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">😓</div>
+      <p class="pain-text">Your team <b>manually types document data into Excel</b> for hours every single day</p>
     </div>
-  </main>
-
-  <!-- How it works -->
-  <section class="section sm" id="how-it-works">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Three steps. That's all.</h2>
-      <p class="sub reveal" data-reveal>
-        Drop your documents, define your fields once, and export structured Excel in minutes.
-      </p>
-
-      <div class="steps stagger">
-        <div class="step reveal" data-reveal style="--d:0ms">
-          <div class="num">1</div>
-          <div class="ico">📂</div>
-          <div class="ttl">Upload Your Documents</div>
-          <div class="desc">Drop invoices, contracts, resumes or any documents</div>
-        </div>
-        <div class="step reveal" data-reveal style="--d:90ms">
-          <div class="num">2</div>
-          <div class="ico">⚡</div>
-          <div class="ttl">AI Extracts The Data</div>
-          <div class="desc">Define your fields once. AI fills them automatically.</div>
-        </div>
-        <div class="step reveal" data-reveal style="--d:180ms">
-          <div class="num">3</div>
-          <div class="ico">📊</div>
-          <div class="ttl">Download Your Excel</div>
-          <div class="desc">Clean, structured data ready for your workflow.</div>
-        </div>
-      </div>
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">⏰</div>
+      <p class="pain-text">Processing <b>100 invoices takes a full working day</b> of repetitive, error-prone typing</p>
     </div>
-  </section>
-
-  <!-- Problem -->
-  <section class="section alt" id="features">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Sound familiar?</h2>
-      <p class="sub reveal" data-reveal>
-        Most teams are stuck between slow manual entry and risky cloud uploads. DocuOps is the privacy-first alternative.
-      </p>
-
-      <div class="cards3">
-        <div class="pain reveal" data-reveal>
-          <div class="ico">😓</div>
-          <div class="txt">Your team manually types document data into Excel for hours every day</div>
-        </div>
-        <div class="pain reveal" data-reveal style="transition-delay:90ms">
-          <div class="ico">⏰</div>
-          <div class="txt">Processing 100 invoices takes a full working day of repetitive typing</div>
-        </div>
-        <div class="pain reveal" data-reveal style="transition-delay:180ms">
-          <div class="ico">🔓</div>
-          <div class="txt">ChatGPT and Claude need you to upload sensitive documents to their servers</div>
-        </div>
-      </div>
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">🔓</div>
+      <p class="pain-text">ChatGPT and Claude <b>require uploading sensitive documents</b> to their servers</p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Privacy / Security -->
-  <section class="section" id="security">
-    <div class="wrap">
-      <div class="privacy reveal" data-reveal>
-        <div class="center">
-          <h2>Your data. Your system. Always.</h2>
-          <p class="sub">
-            Unlike ChatGPT, Claude or any cloud tool — DocuOps never sees your documents.
-          </p>
-        </div>
-
-        <div class="privacy-grid">
-          <div class="visual reveal" data-reveal>
-            <svg class="shield" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2.5l7 3.2v6.2c0 5.4-3.4 9.4-7 10.6-3.6-1.2-7-5.2-7-10.6V5.7l7-3.2Z" stroke="rgba(56,217,169,1)" stroke-width="1.8" />
-              <path d="M9.3 12.2l2 2 3.7-3.9" stroke="rgba(56,217,169,1)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <div class="cap">Zero data transmission</div>
-            <div class="cap2">Processed locally in your browser</div>
-          </div>
-
-          <div class="list reveal" data-reveal>
-            <ul>
-              <li><div class="check">✓</div><div><div class="li-t">Documents processed in YOUR browser</div><div class="li-d">No server-side parsing, no hidden transfers.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">Nothing uploaded to any server</div><div class="li-d">DocuOps works without sending files anywhere.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">Works completely offline</div><div class="li-d">After first load, core tools run with zero internet.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">No account needed to start</div><div class="li-d">Launch immediately — no sign-in required.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">GDPR friendly by design</div><div class="li-d">Data never leaves the user’s environment.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">Your templates stay on your device</div><div class="li-d">Forms and profiles remain local by default.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">No AI training on your documents</div><div class="li-d">Because we never receive them.</div></div></li>
-              <li><div class="check">✓</div><div><div class="li-t">Open architecture — no vendor lock-in</div><div class="li-d">Export to Excel; build workflows you control.</div></div></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="compare reveal" data-reveal>
-          <table class="table" aria-label="Comparison table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>ChatGPT</th>
-                <th>Claude</th>
-                <th>DocuOps</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Data stays local</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-              <tr><td>Works offline</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-              <tr><td>No upload needed</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-              <tr><td>Batch processing</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-              <tr><td>Custom templates</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-              <tr><td>Free forever</td><td class="no">❌</td><td class="no">❌</td><td class="ok">✅</td></tr>
-            </tbody>
-          </table>
-        </div>
+<!-- PRIVACY -->
+<section id="privacy">
+  <div class="privacy-inner">
+    <div>
+      <div class="section-label">Why DocuOps</div>
+      <h2 class="section-title">Your data. Your system. Always.</h2>
+      <p class="section-sub" style="margin-bottom:28px;">Unlike ChatGPT, Claude or any cloud tool — DocuOps never sees your documents.</p>
+      <div class="privacy-features">
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Documents processed entirely in your browser</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Nothing uploaded to any server — ever</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Works completely offline after first load</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>No account needed to start using it</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>GDPR friendly by design</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Your documents never train any AI model</div>
       </div>
+      <table class="compare-table">
+        <thead><tr><th>Feature</th><th>ChatGPT</th><th>Claude</th><th>DocuOps</th></tr></thead>
+        <tbody>
+          <tr><td>Data stays local</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Works offline</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Batch processing</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Custom templates</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Excel export</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Learns layouts</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+        </tbody>
+      </table>
     </div>
-  </section>
-
-  <!-- Tools grid -->
-  <section class="section alt2" id="tools">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Everything your team needs</h2>
-      <p class="sub reveal" data-reveal>
-        Two tools live today. More launching soon.
-      </p>
-
-      <div class="grid">
-        <div class="tool live reveal" data-reveal role="link" tabindex="0" data-link="/app/">
-          <div class="badge live"><span class="b-dot" aria-hidden="true"></span> Live</div>
-          <div class="ico">📄</div>
-          <div class="ttl">Document Renamer</div>
-          <div class="desc">Batch rename thousands of files using OCR. Invoices, contracts, receipts — organised in minutes.</div>
-          <div class="actions">
-            <a class="btn primary small" href="/app/">Open Tool →</a>
-          </div>
-        </div>
-
-        <div class="tool live reveal" data-reveal style="transition-delay:90ms" role="link" tabindex="0" data-link="/app/">
-          <div class="badge live"><span class="b-dot" aria-hidden="true"></span> Live</div>
-          <div class="ico">📊</div>
-          <div class="ttl">Data Entry Assistant</div>
-          <div class="desc">Build custom forms from your Excel template. AI learns your document layouts and pre-fills automatically.</div>
-          <div class="actions">
-            <a class="btn primary small" href="/app/">Open Tool →</a>
-          </div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal style="transition-delay:180ms">
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">📑</div>
-          <div class="ttl">Batch Data Extractor</div>
-          <div class="desc">Upload 100 documents. Get filled Excel in minutes. Zero manual typing.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal>
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">🌐</div>
-          <div class="ttl">Document Translator</div>
-          <div class="desc">Translate documents between Arabic, English and more. Layout preserved.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal style="transition-delay:90ms">
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">✍️</div>
-          <div class="ttl">Document Summariser</div>
-          <div class="desc">Get executive summaries, key points and action items from any document.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal style="transition-delay:180ms">
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">🔍</div>
-          <div class="ttl">Document Search</div>
-          <div class="desc">Search across thousands of documents instantly. Find anything in seconds.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal>
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">🔀</div>
-          <div class="ttl">Document Comparison</div>
-          <div class="desc">Compare two versions of any document. See exactly what changed.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal style="transition-delay:90ms">
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">🏷️</div>
-          <div class="ttl">Document Classifier</div>
-          <div class="desc">Automatically sort mixed documents into categories. No manual sorting.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal style="transition-delay:180ms">
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">🔒</div>
-          <div class="ttl">Document Redactor</div>
-          <div class="desc">Remove sensitive information before sharing. GDPR compliant.</div>
-        </div>
-
-        <div class="tool coming reveal" data-reveal>
-          <div class="badge coming">Coming Soon</div>
-          <div class="ico">✅</div>
-          <div class="ttl">Document Validator</div>
-          <div class="desc">Check documents meet your requirements before filing or sending.</div>
-        </div>
-
-        <div class="tool custom reveal" data-reveal style="transition-delay:90ms">
-          <div class="ico">🔧</div>
-          <div class="ttl">Need something custom?</div>
-          <div class="desc">Every business has unique workflows. Don’t see what you need? Tell us — we build to order.</div>
-          <div class="actions">
-            <a class="btn primary small" href="#contact">Contact Us →</a>
-          </div>
-        </div>
+    <div class="privacy-visual">
+      <div class="shield-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
+      <div class="privacy-label">ZERO DATA TRANSMISSION</div>
+      <p style="font-size:13px;color:var(--muted);text-align:center;max-width:200px;line-height:1.6;">Your documents stay exactly where they are — on your device.</p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Industries -->
-  <section class="section" id="industries">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Built for document-heavy industries</h2>
-      <p class="sub reveal" data-reveal>
-        Reliable for sensitive workflows. Fast enough for high-volume operations.
-      </p>
+<!-- TOOLS -->
+<section id="tools">
+  <div class="section-header center fade-up">
+    <div class="section-label">Tools</div>
+    <h2 class="section-title">Everything your team needs</h2>
+    <p class="section-sub">Two tools live today. More launching soon.</p>
+  </div>
+  <div class="tools-grid fade-up">
+    <!-- Live -->
+    <div class="tool-tile live" onclick="window.location='/app/'">
+      <div class="tile-icon">📄</div>
+      <div class="tile-status status-live"><span class="status-dot"></span>Live</div>
+      <div class="tile-name">Document Renamer</div>
+      <p class="tile-desc">Batch rename thousands of files using OCR. Invoices, contracts, receipts — organised in minutes.</p>
+      <a href="/app/" class="tile-link">Open Tool →</a>
+    </div>
+    <div class="tool-tile live" onclick="window.location='/app/'">
+      <div class="tile-icon">📊</div>
+      <div class="tile-status status-live"><span class="status-dot"></span>Live</div>
+      <div class="tile-name">Data Entry Assistant</div>
+      <p class="tile-desc">Build custom forms from your Excel template. AI learns your document layouts and pre-fills automatically.</p>
+      <a href="/app/" class="tile-link">Open Tool →</a>
+    </div>
+    <!-- Coming soon -->
+    <div class="tool-tile soon">
+      <div class="tile-icon">📑</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Batch Data Extractor</div>
+      <p class="tile-desc">Upload 100 documents. Get filled Excel in minutes. AI extracts every field automatically.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">🌐</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Translator</div>
+      <p class="tile-desc">Translate documents between Arabic, English and more. Layout preserved.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">✍️</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Summariser</div>
+      <p class="tile-desc">Get executive summaries, key points and action items from any document instantly.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">🔍</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Search</div>
+      <p class="tile-desc">Search across thousands of documents instantly. Find anything in seconds.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">🔀</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Comparison</div>
+      <p class="tile-desc">Compare two versions of any document. See exactly what changed between them.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">🏷️</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Classifier</div>
+      <p class="tile-desc">Automatically sort mixed documents into categories. No manual sorting needed.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">🔒</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Redactor</div>
+      <p class="tile-desc">Remove sensitive information before sharing. GDPR compliant redaction.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">✅</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document Validator</div>
+      <p class="tile-desc">Check documents meet your requirements before filing or sending them.</p>
+    </div>
+    <div class="tool-tile soon">
+      <div class="tile-icon">📧</div>
+      <div class="tile-status status-soon">Coming Soon</div>
+      <div class="tile-name">Document to Email</div>
+      <p class="tile-desc">Auto-draft professional emails from extracted document data in one click.</p>
+    </div>
+    <!-- Custom -->
+    <div class="tool-tile custom" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+      <div class="tile-icon">🔧</div>
+      <div class="tile-status status-live" style="background:rgba(45,212,160,.08);"><span class="status-dot"></span>Custom</div>
+      <div class="tile-name">Need Something Specific?</div>
+      <p class="tile-desc">Don't see what you need? Every business has unique workflows. Tell us — we build to order.</p>
+      <a href="#contact" class="tile-link">Contact Us →</a>
+    </div>
+  </div>
+</section>
 
-      <div class="grid2">
-        <div class="industry reveal" data-reveal><div class="top"><span>📞</span> BPO & Call Centres</div><div class="desc">Process thousands of documents daily without growing your team</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:60ms"><div class="top"><span>🏥</span> Healthcare</div><div class="desc">Patient records, prescriptions and medical forms — extracted accurately</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:120ms"><div class="top"><span>⚖️</span> Legal & Contracts</div><div class="desc">Extract key clauses, dates and parties from contracts automatically</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:180ms"><div class="top"><span>💰</span> Finance & Accounting</div><div class="desc">Invoices, receipts and financial reports processed in bulk</div></div>
-        <div class="industry reveal" data-reveal><div class="top"><span>🛡️</span> Insurance</div><div class="desc">Claims, policies and assessment forms — data extracted instantly</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:60ms"><div class="top"><span>👥</span> HR & Recruitment</div><div class="desc">Process hundreds of CVs and applications in minutes not days</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:120ms"><div class="top"><span>🏛️</span> Government</div><div class="desc">Sensitive documents processed locally — full data sovereignty</div></div>
-        <div class="industry reveal" data-reveal style="transition-delay:180ms"><div class="top"><span>🏢</span> Enterprise</div><div class="desc">Custom workflows for large teams with shared templates and profiles</div></div>
+<!-- INDUSTRIES -->
+<section id="industries" style="background:var(--surface);">
+  <div class="section-header center fade-up">
+    <div class="section-label">Industries</div>
+    <h2 class="section-title">Built for document-heavy industries</h2>
+  </div>
+  <div class="ind-grid fade-up">
+    <div class="ind-card"><div class="ind-icon">📞</div><div class="ind-name">BPO & Call Centres</div><p class="ind-desc">Process thousands of documents daily without growing your team</p></div>
+    <div class="ind-card"><div class="ind-icon">🏥</div><div class="ind-name">Healthcare</div><p class="ind-desc">Patient records, prescriptions and medical forms — extracted accurately</p></div>
+    <div class="ind-card"><div class="ind-icon">⚖️</div><div class="ind-name">Legal & Contracts</div><p class="ind-desc">Extract key clauses, dates and parties from contracts automatically</p></div>
+    <div class="ind-card"><div class="ind-icon">💰</div><div class="ind-name">Finance & Accounting</div><p class="ind-desc">Invoices, receipts and financial reports processed in bulk</p></div>
+    <div class="ind-card"><div class="ind-icon">🛡️</div><div class="ind-name">Insurance</div><p class="ind-desc">Claims, policies and assessment forms — data extracted instantly</p></div>
+    <div class="ind-card"><div class="ind-icon">👥</div><div class="ind-name">HR & Recruitment</div><p class="ind-desc">Process hundreds of CVs and applications in minutes not days</p></div>
+    <div class="ind-card"><div class="ind-icon">🏛️</div><div class="ind-name">Government</div><p class="ind-desc">Sensitive documents processed locally — full data sovereignty</p></div>
+    <div class="ind-card"><div class="ind-icon">🏢</div><div class="ind-name">Enterprise</div><p class="ind-desc">Custom workflows for large teams with shared templates and profiles</p></div>
+  </div>
+</section>
+
+<!-- ROI -->
+<section id="roi">
+  <div class="section-header center fade-up">
+    <div class="section-label">ROI Calculator</div>
+    <h2 class="section-title">How much time are you wasting?</h2>
+  </div>
+  <div class="roi-inner fade-up">
+    <div class="slider-group">
+      <div class="slider-label"><span>Documents per day</span><span id="docsVal">50</span></div>
+      <input type="range" id="docsSlider" min="10" max="500" value="50" oninput="calcROI()">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Minutes per document (manual)</span><span id="minsVal">8</span></div>
+      <input type="range" id="minsSlider" min="2" max="30" value="8" oninput="calcROI()">
+    </div>
+    <div class="roi-results">
+      <div class="roi-stat"><div class="roi-val" id="manualTime">6.7h</div><div class="roi-lbl">Manual time/day</div></div>
+      <div class="roi-stat"><div class="roi-val" id="docuopsTime">25m</div><div class="roi-lbl">With DocuOps</div></div>
+      <div class="roi-stat"><div class="roi-val" id="savedDay">6.3h</div><div class="roi-lbl">Saved per day</div></div>
+      <div class="roi-stat"><div class="roi-val" id="savedMonth">132h</div><div class="roi-lbl">Saved per month</div></div>
+    </div>
+    <p class="roi-summary" id="roiSummary">That's <span>3.3 full working weeks</span> saved every month</p>
+    <div style="text-align:center;"><a href="/app/" class="btn-primary">Start Saving Time Free →</a></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-header center fade-up">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Simple, transparent pricing</h2>
+    <p class="section-sub">Start free. Upgrade when ready. Cancel anytime.</p>
+  </div>
+  <div class="pricing-grid fade-up">
+    <div class="price-card">
+      <div class="price-tier">Free</div>
+      <div class="price-amount">$0</div>
+      <div class="price-period">forever</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Document Renamer</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Data Entry Assistant</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>50 documents/month</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 templates</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Community support</div>
       </div>
+      <button class="price-btn outline" onclick="window.location='/app/'">Get Started Free</button>
     </div>
-  </section>
+    <div class="price-card featured">
+      <div class="price-popular">MOST POPULAR</div>
+      <div class="price-tier">Pro</div>
+      <div class="price-amount">$9</div>
+      <div class="price-period">per month</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>All tools as they launch</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited documents</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited templates</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>No ads</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority support</div>
+      </div>
+      <button class="price-btn solid" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Start Pro Trial</button>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">Team</div>
+      <div class="price-amount">$29</div>
+      <div class="price-period">per month</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Up to 10 users</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Shared templates</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Team profiles</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Admin dashboard</div>
+      </div>
+      <button class="price-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact Sales</button>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">Enterprise</div>
+      <div class="price-amount">Custom</div>
+      <div class="price-period">pricing</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Team</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited users</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Self-hosted option</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SLA guarantee</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dedicated support</div>
+      </div>
+      <button class="price-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get in Touch</button>
+    </div>
+  </div>
+  <p class="price-note">✓ No credit card required for Free &nbsp;·&nbsp; ✓ Cancel anytime &nbsp;·&nbsp; ✓ Data privacy on all plans</p>
+</section>
 
-  <!-- ROI Calculator -->
-  <section class="section alt" id="roi">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>How much time are you wasting?</h2>
-      <p class="sub reveal" data-reveal>
-        Move the sliders to see the impact instantly.
-      </p>
+<!-- FAQ -->
+<section id="faq" style="background:var(--surface);">
+  <div class="section-header center fade-up">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Frequently asked questions</h2>
+  </div>
+  <div class="faq-list fade-up" id="faqList">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Is it really free?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Yes. The Free plan includes our two core tools with no credit card required. You can process up to 50 documents per month completely free, forever.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Do I need to install anything?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">No. DocuOps runs entirely in your Chrome or Edge browser. No download, no setup, no IT department needed. Just open the link and start working.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Does my data get uploaded anywhere?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Never. All document processing happens in your browser on your device. Your files never leave your computer — not even to our servers. This is a core design principle, not a feature we can toggle.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Does it work with Arabic documents?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Yes. DocuOps supports Arabic, English and mixed-language documents. Full right-to-left support is included. Enhanced Arabic OCR is on our roadmap as a high priority.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Can my whole team use it?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Yes. The Team plan supports up to 10 users with shared templates and learning profiles. Enterprise plan supports unlimited users with self-hosted options.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Does it work offline?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Tools 1 and 2 (Document Renamer and Data Entry Assistant) work fully offline after the first load. AI-powered tools in development will require an internet connection.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">Can I use my own Excel template?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Yes. Upload your existing Excel file and DocuOps automatically converts your column headers into form fields. Your data gets exported back into your exact template format.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)">How accurate is the OCR?<span class="faq-icon">+</span></button>
+      <div class="faq-a"><div class="faq-a-inner">Our OCR engine achieves 95%+ accuracy on clear, well-scanned documents. The select-area mode improves accuracy further by letting you draw a box around specific fields rather than processing the whole document.</div></div>
+    </div>
+  </div>
+</section>
 
-      <div class="roi reveal" data-reveal>
-        <div class="roi-grid">
-          <div class="slider">
-            <div class="field">
-              <div class="srow">
-                <div class="l">Documents per day</div>
-                <div class="v"><span id="docsVal">50</span></div>
-              </div>
-              <input id="docs" type="range" min="10" max="500" value="50" step="1" />
-            </div>
-            <div class="field" style="margin-top:14px">
-              <div class="srow">
-                <div class="l">Minutes per document (manual)</div>
-                <div class="v"><span id="minsVal">8</span></div>
-              </div>
-              <input id="mins" type="range" min="2" max="30" value="8" step="1" />
-            </div>
-            <div class="bigline" id="weeksLine">That’s <span id="weeks">0</span> full working weeks saved every month</div>
-            <div style="margin-top:14px">
-              <a class="btn primary" href="/app/">Start Saving Time Free →</a>
-            </div>
-          </div>
-
-          <div class="results">
-            <div class="metric"><div class="k">⏰ Manual time/day</div><div class="val" id="manual">0 hours</div></div>
-            <div class="metric"><div class="k">⚡ With DocuOps</div><div class="val" id="docu">0 minutes</div></div>
-            <div class="metric"><div class="k">📅 Time saved/month</div><div class="val" id="month">0 hours</div></div>
-            <div class="metric"><div class="k">💰 Team hours freed</div><div class="val" id="days">0 working days/month</div></div>
-            <div style="margin-top:10px;color:rgba(136,146,164,.96);font-size:12.5px;line-height:1.7">
-              Assumes a 22-day working month and a conservative “with DocuOps” processing time of 0.5 minutes per document.
-            </div>
-          </div>
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="contact-info fade-up">
+      <h3>Get In Touch</h3>
+      <h2 class="section-title" style="font-size:28px;">Need something specific?</h2>
+      <p>Every business has unique document workflows. Tell us what you need — we'll build it for you. We also offer custom integrations, onboarding and enterprise pricing.</p>
+      <div class="contact-points">
+        <div class="cp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          We respond within 24 hours
+        </div>
+        <div class="cp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          All custom work is privacy-first
+        </div>
+        <div class="cp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          docu-ops.vercel.app
         </div>
       </div>
     </div>
-  </section>
-
-  <!-- Pricing -->
-  <section class="section" id="pricing">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Simple, transparent pricing</h2>
-      <p class="sub reveal" data-reveal>Start free. Upgrade when ready.</p>
-
-      <div class="pricing">
-        <div class="plan reveal" data-reveal>
-          <div class="name">FREE</div>
-          <div class="price"><div class="p">$0</div><div class="m">/month</div></div>
-          <ul>
-            <li><span class="dot">✓</span> Document Renamer</li>
-            <li><span class="dot">✓</span> Data Entry Assistant</li>
-            <li><span class="dot">✓</span> 50 documents/month</li>
-            <li><span class="dot">✓</span> 3 templates</li>
-            <li><span class="dot">✓</span> Browser storage</li>
-            <li><span class="dot">✓</span> Community support</li>
-          </ul>
-          <div class="foot">
-            <a class="btn primary" href="/app/">Get Started Free →</a>
-          </div>
+    <div class="fade-up">
+      <div id="formSuccess" class="form-success">✅ Thank you! We'll be in touch within 24 hours.</div>
+      <form id="contactForm" onsubmit="submitForm(event)">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" placeholder="Your name" required>
         </div>
-
-        <div class="plan popular reveal" data-reveal style="transition-delay:80ms">
-          <div class="ribbon">MOST POPULAR</div>
-          <div class="name">PRO</div>
-          <div class="price"><div class="p">$9</div><div class="m">/month</div></div>
-          <ul>
-            <li><span class="dot">✓</span> All tools (as they launch)</li>
-            <li><span class="dot">✓</span> Unlimited documents</li>
-            <li><span class="dot">✓</span> Unlimited templates</li>
-            <li><span class="dot">✓</span> Cloud sync (coming soon)</li>
-            <li><span class="dot">✓</span> Priority support</li>
-            <li><span class="dot">✓</span> No ads</li>
-          </ul>
-          <div class="foot">
-            <a class="btn primary" href="#contact">Start Pro Trial →</a>
-          </div>
+        <div class="form-group">
+          <label>Company</label>
+          <input type="text" placeholder="Company name">
         </div>
-
-        <div class="plan reveal" data-reveal style="transition-delay:160ms">
-          <div class="name">TEAM</div>
-          <div class="price"><div class="p">$29</div><div class="m">/month</div></div>
-          <ul>
-            <li><span class="dot">✓</span> Everything in Pro</li>
-            <li><span class="dot">✓</span> Up to 10 users</li>
-            <li><span class="dot">✓</span> Shared templates</li>
-            <li><span class="dot">✓</span> Team learning profiles</li>
-            <li><span class="dot">✓</span> Admin dashboard</li>
-            <li><span class="dot">✓</span> Dedicated support</li>
-          </ul>
-          <div class="foot">
-            <a class="btn ghost" href="#contact">Contact Sales →</a>
-          </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" placeholder="your@email.com" required>
         </div>
-
-        <div class="plan reveal" data-reveal style="transition-delay:240ms">
-          <div class="name">ENTERPRISE</div>
-          <div class="price"><div class="p">Custom</div><div class="m"></div></div>
-          <ul>
-            <li><span class="dot">✓</span> Everything in Team</li>
-            <li><span class="dot">✓</span> Unlimited users</li>
-            <li><span class="dot">✓</span> Self-hosted option</li>
-            <li><span class="dot">✓</span> Custom integrations</li>
-            <li><span class="dot">✓</span> SLA guarantee</li>
-            <li><span class="dot">✓</span> Dedicated account manager</li>
-          </ul>
-          <div class="foot">
-            <a class="btn ghost" href="#contact">Get in Touch →</a>
-          </div>
+        <div class="form-group">
+          <label>What do you need? *</label>
+          <textarea placeholder="Describe your document workflow and what you'd like DocuOps to do..." required></textarea>
         </div>
-      </div>
-
-      <div class="fine reveal" data-reveal>
-        <b>✅</b> No credit card required for Free plan &nbsp;&nbsp; <b>✅</b> Cancel anytime &nbsp;&nbsp; <b>✅</b> All plans include data privacy guarantee
-      </div>
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Send Request →</button>
+      </form>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FAQ -->
-  <section class="section alt2" id="faq">
-    <div class="wrap center">
-      <h2 class="reveal" data-reveal>Frequently asked questions</h2>
-
-      <div class="faq">
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Is it really free?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Yes. The Free plan includes our two core tools with no credit card required. You can process up to 50 documents per month completely free.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Do I need to install anything?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            No. DocuOps runs entirely in your Chrome or Edge browser. No download, no setup, no IT department needed.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Does my data get uploaded anywhere?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Never. All document processing happens in your browser. Your files never leave your device. Not even to our servers.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Does it work with Arabic documents?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Yes. DocuOps supports Arabic, English and mixed-language documents. Full RTL support included.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Can my whole team use it?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Yes. The Team plan supports up to 10 users with shared templates and learning profiles.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Does it work offline?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Tools 1 and 2 work fully offline after first load. AI-powered tools require an internet connection.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>How accurate is the OCR?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Our OCR engine (Tesseract.js) achieves 95%+ accuracy on clear documents. The select-area mode improves accuracy further for specific fields.
-          </div>
-        </details>
-
-        <details class="reveal" data-reveal>
-          <summary>
-            <span>Can I use my own Excel template?</span>
-            <span class="chev" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="answer">
-            Yes. Upload your existing Excel file and DocuOps automatically converts your columns into form fields.
-          </div>
-        </details>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">
+        <div class="footer-brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <polyline points="9 15 11 17 15 13"/>
+          </svg>
+        </div>
+        <span style="font-size:16px;font-weight:800;letter-spacing:-.3px;">DocuOps</span>
       </div>
+      <p class="footer-tagline">Document Operations. Automated. All processing happens locally in your browser. Your data never leaves your system.</p>
     </div>
-  </section>
-
-  <!-- Contact -->
-  <section class="section" id="contact">
-    <div class="wrap">
-      <div class="center">
-        <h2 class="reveal" data-reveal>Need something specific?</h2>
-        <p class="sub reveal" data-reveal>
-          Every business has unique document workflows. Tell us what you need — we’ll build it for you.
-        </p>
-      </div>
-
-      <div class="contact">
-        <div class="panel reveal" data-reveal>
-          <h3>Custom requests & enterprise support</h3>
-          <p>We’ll scope your workflow, suggest the fastest approach, and build a custom tool or integration if needed.</p>
-
-          <div class="contacts">
-            <div class="citem"><div class="ico">📧</div><div class="t">Email (coming soon)</div></div>
-            <div class="citem"><div class="ico">💬</div><div class="t">WhatsApp (coming soon)</div></div>
-            <div class="citem"><div class="ico">🌐</div><div class="t">docu-ops.vercel.app</div></div>
-          </div>
-        </div>
-
-        <div class="panel reveal" data-reveal>
-          <h3>Send a request</h3>
-          <form class="form" id="contactForm">
-            <div class="field">
-              <label for="fullName">Full Name *</label>
-              <input id="fullName" name="fullName" required placeholder="Your name" />
-            </div>
-            <div class="field">
-              <label for="company">Company Name</label>
-              <input id="company" name="company" placeholder="Company (optional)" />
-            </div>
-            <div class="field">
-              <label for="email">Email Address *</label>
-              <input id="email" name="email" type="email" required placeholder="name@company.com" />
-            </div>
-            <div class="field">
-              <label for="need">What do you need? *</label>
-              <textarea id="need" name="need" required placeholder="Describe your workflow, inputs, outputs, and what success looks like."></textarea>
-            </div>
-            <button class="btn primary" type="submit">Send Request →</button>
-            <div class="success" id="successMsg">✅ Thank you! We'll be in touch within 24 hours.</div>
-          </form>
-        </div>
-      </div>
+    <div class="footer-col">
+      <h4>Tools</h4>
+      <a href="/app/">Document Renamer</a>
+      <a href="/app/">Data Entry Assistant</a>
+      <a href="#tools">Coming Soon</a>
     </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <div class="wrap">
-      <div class="footgrid">
-        <div class="col">
-          <div class="footbrand">
-            <div class="miniLogo" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M7 3.8h6.6l3.4 3.5V20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2Z" stroke="rgba(136,146,164,.95)" stroke-width="1.6" />
-                <path d="M13.6 3.8V8a1 1 0 0 0 1 1h2.4" stroke="rgba(79,142,247,.95)" stroke-width="1.6" />
-                <path d="M9.2 13.0l2.2 2.2 4.6-4.8" stroke="rgba(56,217,169,1)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </div>
-            <div>
-              <div style="font-weight:900;letter-spacing:-.7px;font-size:16px">DocuOps</div>
-              <div style="color:rgba(136,146,164,.96);font-size:12px;margin-top:2px">Document Operations. Automated.</div>
-              <div class="footbrand p">All processing happens locally in your browser.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col">
-          <h4>Tools</h4>
-          <a href="/app/">Document Renamer</a>
-          <a href="/app/">Data Entry Assistant</a>
-          <a href="#tools">Batch Extractor (coming soon)</a>
-          <a href="#tools">All Tools →</a>
-        </div>
-
-        <div class="col">
-          <h4>Company</h4>
-          <a href="#features">About</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#contact">Contact</a>
-          <a href="#contact">Privacy Policy (placeholder)</a>
-        </div>
-
-        <div class="col">
-          <h4>Connect</h4>
-          <a href="https://github.com/shri-studio/DocuOps" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="#contact">Twitter/X (placeholder)</a>
-          <a href="#contact">LinkedIn (placeholder)</a>
-        </div>
-      </div>
-
-      <div class="bottom">
-        <div>© 2026 DocuOps · Your data never leaves your system · Built for document-heavy teams</div>
-        <div class="mono" style="opacity:.9">/app/ → launch tools</div>
-      </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#contact">Contact</a>
+      <a href="#faq">FAQ</a>
     </div>
-  </footer>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 DocuOps. All rights reserved.</span>
+    <span class="footer-privacy">🔒 Your data never leaves your system</span>
+  </div>
+</footer>
 
-  <script>
-    // Smooth scroll for internal anchors
-    document.addEventListener('click', (e) => {
-      const a = e.target.closest('a[href^="#"]');
-      if (!a) return;
-      const href = a.getAttribute('href');
-      if (!href || href === '#') return;
-      const el = document.querySelector(href);
-      if (!el) return;
-      e.preventDefault();
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.replaceState(null, '', href);
-      closeSheet();
-    }, { passive: false });
+<script>
+// ── NAV SCROLL ──
+window.addEventListener('scroll',()=>{
+  document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>40);
+});
 
-    // Shrink nav on scroll
-    const nav = document.getElementById('nav');
-    const onScroll = () => {
-      nav.classList.toggle('shrink', window.scrollY > 10);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+// ── TYPEWRITER ANIMATION ──
+const lines=[
+  {text:"Document Operations. Fully Automated.",arabic:false},
+  {text:"Your Data Never Leaves Your System.",arabic:false},
+  {text:"Like ChatGPT — But Your Data Stays Local.",arabic:false},
+  {text:"From 100 Invoices to Excel in Minutes.",arabic:false},
+  {text:"10x Faster Than Manual Data Entry.",arabic:false},
+  {text:"Built for BPO Teams and Enterprises.",arabic:false},
+  {text:"No Install. No Upload. No Compromise.",arabic:false},
+  {text:"مستنداتك. آمنة. دائماً.",arabic:true},
+];
+let lineIdx=0,charIdx=0,typing=true,pauseTimer=null;
+const el=document.getElementById('rotatingText');
 
-    // Mobile sheet
-    const sheet = document.getElementById('sheet');
-    const hamburger = document.getElementById('hamburger');
-    const closeSheetBtn = document.getElementById('closeSheet');
-    function openSheet(){
-      sheet.classList.add('show');
-      sheet.setAttribute('aria-hidden', 'false');
+function typeLoop(){
+  const line=lines[lineIdx];
+  el.className='rotating-text'+(line.arabic?' arabic':'');
+  if(typing){
+    if(charIdx<=line.text.length){
+      el.textContent=line.text.slice(0,charIdx);
+      el.classList.add('visible');
+      charIdx++;
+      setTimeout(typeLoop,line.arabic?80:45);
+    } else {
+      typing=false;
+      setTimeout(typeLoop,2500);
     }
-    function closeSheet(){
-      sheet.classList.remove('show');
-      sheet.setAttribute('aria-hidden', 'true');
-    }
-    hamburger?.addEventListener('click', openSheet);
-    closeSheetBtn?.addEventListener('click', closeSheet);
-    sheet?.addEventListener('click', (e) => {
-      if (e.target === sheet) closeSheet();
-    });
-    document.querySelectorAll('[data-sheet="1"]').forEach(a => a.addEventListener('click', closeSheet));
+  } else {
+    el.classList.remove('visible');
+    setTimeout(()=>{
+      lineIdx=(lineIdx+1)%lines.length;
+      charIdx=0;typing=true;
+      el.textContent='';
+      setTimeout(typeLoop,300);
+    },400);
+  }
+}
+typeLoop();
 
-    // Typewriter (8 lines, loop forever)
-    const lines = [
-      { t: "Document Operations. Fully Automated.", ar: false },
-      { t: "Your Data Never Leaves Your System.", ar: false },
-      { t: "Like ChatGPT — But Your Data Stays Local.", ar: false },
-      { t: "From 100 Invoices to Excel in Minutes.", ar: false },
-      { t: "10x Faster Than Manual Data Entry.", ar: false },
-      { t: "Built for BPO Teams and Enterprises.", ar: false },
-      { t: "No Install. No Upload. No Compromise.", ar: false },
-      { t: "مستنداتك. آمنة. دائماً.", ar: true }
-    ];
-    const typeEl = document.getElementById('typeText');
-    const headline = document.getElementById('headline');
-    const heroActions = document.getElementById('heroActions');
-    const trustBadges = document.getElementById('trustBadges');
+// ── SCROLL ANIMATIONS ──
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target);}
+  });
+},{threshold:.1});
+document.querySelectorAll('.fade-up,.pain-card').forEach(el=>observer.observe(el));
 
-    const TYPE_MS = 50;
-    const STAY_MS = 2500;
-    const FADE_MS = 500;
-    let idx = 0;
+// ── ROI CALCULATOR ──
+function calcROI(){
+  const docs=+document.getElementById('docsSlider').value;
+  const mins=+document.getElementById('minsSlider').value;
+  document.getElementById('docsVal').textContent=docs;
+  document.getElementById('minsVal').textContent=mins;
+  const manualH=(docs*mins/60);
+  const docuH=Math.max(0.2,(docs*0.3/60));
+  const savedD=manualH-docuH;
+  const savedM=savedD*22;
+  const weeks=(savedM/40).toFixed(1);
+  document.getElementById('manualTime').textContent=manualH.toFixed(1)+'h';
+  document.getElementById('docuopsTime').textContent=Math.round(docuH*60)+'m';
+  document.getElementById('savedDay').textContent=savedD.toFixed(1)+'h';
+  document.getElementById('savedMonth').textContent=Math.round(savedM)+'h';
+  document.getElementById('roiSummary').innerHTML=`That's <span>${weeks} full working weeks</span> saved every month`;
+}
+calcROI();
 
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+// ── FAQ ──
+function toggleFAQ(btn){
+  const item=btn.closest('.faq-item');
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
 
-    async function typeLine(text){
-      typeEl.textContent = '';
-      for (let i=0; i<text.length; i++){
-        typeEl.textContent += text[i];
-        await sleep(TYPE_MS);
-      }
-    }
+// ── CONTACT FORM ──
+function submitForm(e){
+  e.preventDefault();
+  document.getElementById('contactForm').style.display='none';
+  document.getElementById('formSuccess').style.display='block';
+}
 
-    async function loopTypewriter(){
-      while(true){
-        const line = lines[idx % lines.length];
-        typeEl.classList.toggle('ar', !!line.ar);
-        typeEl.style.opacity = '1';
-        await typeLine(line.t);
-
-        // After first full line, show headline + buttons + trust
-        if (idx === 0){
-          headline.classList.add('show');
-          heroActions.classList.add('show');
-          trustBadges.classList.add('show');
-        }
-
-        await sleep(STAY_MS);
-        typeEl.style.opacity = '0';
-        await sleep(FADE_MS);
-        idx++;
-      }
-    }
-    loopTypewriter();
-
-    // Scroll reveal
-    const revealEls = Array.from(document.querySelectorAll('[data-reveal]'));
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(en => {
-        if (en.isIntersecting){
-          en.target.classList.add('show');
-          io.unobserve(en.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    revealEls.forEach(el => io.observe(el));
-
-    // Active nav highlighting on scroll
-    const navAnchors = Array.from(document.querySelectorAll('.navlinks a[data-nav]'));
-    const sections = navAnchors
-      .map(a => ({ a, el: document.querySelector(a.getAttribute('href')) }))
-      .filter(x => x.el);
-    const navIO = new IntersectionObserver((entries) => {
-      const vis = entries.filter(e => e.isIntersecting)
-        .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!vis) return;
-      const id = vis.target.getAttribute('id');
-      navAnchors.forEach(a => a.classList.toggle('active', a.dataset.nav === id));
-    }, { rootMargin: '-35% 0px -55% 0px', threshold: [0.05, 0.2, 0.35, 0.5] });
-    sections.forEach(s => navIO.observe(s.el));
-
-    // Make live tool cards clickable (without external libraries)
-    document.querySelectorAll('.tool.live[data-link]').forEach(card => {
-      card.addEventListener('click', (e) => {
-        const a = e.target.closest('a');
-        if (a) return; // button handles it
-        window.location.href = card.getAttribute('data-link');
-      });
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          window.location.href = card.getAttribute('data-link');
-        }
-      });
-    });
-
-    // ROI calculator
-    const docs = document.getElementById('docs');
-    const mins = document.getElementById('mins');
-    const docsVal = document.getElementById('docsVal');
-    const minsVal = document.getElementById('minsVal');
-    const manualEl = document.getElementById('manual');
-    const docuEl = document.getElementById('docu');
-    const monthEl = document.getElementById('month');
-    const daysEl = document.getElementById('days');
-    const weeksEl = document.getElementById('weeks');
-
-    const WORK_DAYS = 22;
-    const DOCUOPS_MIN_PER_DOC = 0.5; // conservative estimate for calculator
-
-    function fmt(n, unit){
-      const rounded = (Math.round(n * 10) / 10).toString().replace(/\.0$/,'');
-      return `${rounded} ${unit}`;
-    }
-    function recompute(){
-      const d = +docs.value;
-      const m = +mins.value;
-      docsVal.textContent = d.toString();
-      minsVal.textContent = m.toString();
-
-      const manualMinutesPerDay = d * m;
-      const manualHoursPerDay = manualMinutesPerDay / 60;
-
-      const docuMinutesPerDay = d * DOCUOPS_MIN_PER_DOC;
-
-      const savedMinutesPerDay = Math.max(0, manualMinutesPerDay - docuMinutesPerDay);
-      const savedHoursPerMonth = (savedMinutesPerDay * WORK_DAYS) / 60;
-      const workingDaysPerMonth = savedHoursPerMonth / 8;
-      const weeksPerMonth = workingDaysPerMonth / 5;
-
-      manualEl.textContent = fmt(manualHoursPerDay, 'hours');
-      docuEl.textContent = fmt(docuMinutesPerDay, 'minutes');
-      monthEl.textContent = fmt(savedHoursPerMonth, 'hours');
-      daysEl.textContent = fmt(workingDaysPerMonth, 'working days/month');
-      weeksEl.textContent = (Math.round(weeksPerMonth * 10) / 10).toString().replace(/\.0$/,'');
-    }
-    docs.addEventListener('input', recompute);
-    mins.addEventListener('input', recompute);
-    recompute();
-
-    // FAQ accordion: smooth close/open (single-open behavior)
-    const faqDetails = Array.from(document.querySelectorAll('#faq details'));
-    faqDetails.forEach(d => d.addEventListener('toggle', () => {
-      if (!d.open) return;
-      faqDetails.forEach(o => { if (o !== d) o.removeAttribute('open'); });
-    }));
-
-    // Contact form: fake submit success message (no backend)
-    const form = document.getElementById('contactForm');
-    const success = document.getElementById('successMsg');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      success.style.display = 'block';
-      form.querySelectorAll('input,textarea,button').forEach(el => el.blur());
-      form.reset();
-      setTimeout(() => { success.style.display = 'none'; }, 6500);
-    });
-  </script>
+// ── MOBILE MENU ──
+function toggleMobMenu(){
+  const links=document.querySelector('.nav-links');
+  if(links.style.display==='flex'){
+    links.style.display='none';
+  } else {
+    links.style.cssText='display:flex;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:var(--surface);padding:20px;border-bottom:1px solid var(--border);gap:16px;z-index:99;';
+  }
+}
+</script>
 </body>
 </html>
-
