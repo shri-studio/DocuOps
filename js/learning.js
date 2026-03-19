@@ -422,7 +422,7 @@ function renderProfileManager() {
   const keys = Object.keys(profiles);
 
   if (!keys.length) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--muted);">No profiles learned yet. Use OCR Data Entry with Profile Keys set to start learning.</div>';
+    container.innerHTML = '<div style="font-size:11px;color:var(--muted);">No profiles learned yet. Use Data Entry Assistant with Profile Keys set to start learning.</div>';
     return;
   }
 
