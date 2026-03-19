@@ -590,8 +590,11 @@ footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">© 2026 DocuOps. All rights reserved.</span>
-    <span class="footer-privacy">🔒 Your data never leaves your system</span>
+    <span class="footer-copy">© 2026 DocuOps. All rights reserved. · Built by <a href="#" style="color:var(--green);text-decoration:none;">Shri Studio</a></span>
+    <span class="footer-privacy" style="display:flex;align-items:center;gap:12px;">
+      <span class="version-display" style="font-family:var(--mono);font-size:11px;color:var(--border);">v3.1.3</span>
+      🔒 Your data never leaves your system
+    </span>
   </div>
 </footer>
 
@@ -637,14 +640,113 @@ footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
 </div>
 
 <script>
-// ── SUPABASE INIT ──
+// ════════════════════════════════
+// DocuOps Landing Page Scripts
+// v3.1.3
+// ════════════════════════════════
+
+// ── VERSION ──
+const DOCUOPS_VERSION = '3.1.3';
+
+// ── SUPABASE ──
 const { createClient } = supabase;
 const _sb = createClient('https://mawyhvjvnkzgohujxubl.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hd3lodmp2bmt6Z29odWp4dWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDc2NDUsImV4cCI6MjA4OTQ4MzY0NX0.BGx1DABC9Algtfguw3Mh61aXJZjhRYhS3RLttivrivo');
 let _user = null;
+let _pendingDest = '/app/app.html';
+
+const TOOL_URLS = {
+  app: '/app/app.html',
+  t1:  '/app/app.html?tool=t1',
+  t2:  '/app/app.html?tool=t2',
+};
 
 // ── NAV SCROLL ──
-window.addEventListener('scroll',()=>{
-  document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>40);
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// ── SESSION CHECK ON LOAD ──
+window.addEventListener('load', async () => {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (session) {
+    _user = session.user;
+    updateNavSignedIn();
+  }
+  _sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      _user = session.user;
+      window.location.href = _pendingDest;
+    }
+  });
+});
+
+function updateNavSignedIn() {
+  const si = document.getElementById('navSignIn');
+  const nl = document.getElementById('navLaunch');
+  const name = _user?.user_metadata?.full_name || _user?.email?.split('@')[0] || 'Account';
+  if (si) { si.textContent = '👤 ' + name; si.onclick = () => window.location.href = '/app/app.html'; }
+  if (nl) { nl.textContent = 'Open DocuOps →'; nl.onclick = () => window.location.href = '/app/app.html'; }
+}
+
+// ── SHOW SIGN IN MODAL ──
+function showSignIn(dest) {
+  if (_user) { window.location.href = TOOL_URLS[dest] || '/app/app.html'; return; }
+  _pendingDest = TOOL_URLS[dest] || '/app/app.html';
+  document.getElementById('signInModal').classList.add('open');
+  // Reset modal state
+  document.getElementById('signInError').style.display = 'none';
+  document.getElementById('emailSent').style.display = 'none';
+  document.getElementById('emailForm').style.display = 'block';
+  const btn = document.getElementById('googleSignInBtn');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google';
+}
+
+// ── GOOGLE SIGN IN ──
+async function signInWithGoogle() {
+  const btn = document.getElementById('googleSignInBtn');
+  btn.innerHTML = 'Connecting to Google...';
+  btn.disabled = true;
+  const { error } = await _sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + _pendingDest }
+  });
+  if (error) {
+    showAuthError(error.message);
+    btn.disabled = false;
+  }
+}
+
+// ── MAGIC LINK EMAIL ──
+async function signInWithEmail() {
+  const email = document.getElementById('signInEmail').value.trim();
+  if (!email) { showAuthError('Please enter your email address.'); return; }
+  const btn = document.querySelector('#emailForm button');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  const { error } = await _sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + _pendingDest }
+  });
+  if (error) {
+    showAuthError(error.message);
+    btn.textContent = 'Send Magic Link →';
+    btn.disabled = false;
+  } else {
+    document.getElementById('emailForm').style.display = 'none';
+    document.getElementById('emailSent').style.display = 'block';
+  }
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('signInError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// Close modal on backdrop click
+document.getElementById('signInModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
 });
 
 // ── TYPEWRITER ──
@@ -659,20 +761,16 @@ const lines=[
   {text:"مستنداتك. آمنة. دائماً.",arabic:true},
 ];
 let li=0,ci=0,typing=true;
-const el=document.getElementById('rotatingText');
+const rEl=document.getElementById('rotatingText');
 function typeLoop(){
   const line=lines[li];
-  el.className='rotating-text'+(line.arabic?' arabic':'');
+  rEl.className='rotating-text'+(line.arabic?' arabic':'');
   if(typing){
-    if(ci<=line.text.length){
-      el.textContent=line.text.slice(0,ci);
-      el.classList.add('visible');
-      ci++;
-      setTimeout(typeLoop,line.arabic?80:45);
-    }else{typing=false;setTimeout(typeLoop,2500);}
+    if(ci<=line.text.length){rEl.textContent=line.text.slice(0,ci);rEl.classList.add('visible');ci++;setTimeout(typeLoop,line.arabic?80:45);}
+    else{typing=false;setTimeout(typeLoop,2500);}
   }else{
-    el.classList.remove('visible');
-    setTimeout(()=>{li=(li+1)%lines.length;ci=0;typing=true;el.textContent='';setTimeout(typeLoop,300);},400);
+    rEl.classList.remove('visible');
+    setTimeout(()=>{li=(li+1)%lines.length;ci=0;typing=true;rEl.textContent='';setTimeout(typeLoop,300);},400);
   }
 }
 typeLoop();
@@ -713,80 +811,6 @@ function submitForm(e){
   document.getElementById('contactForm').style.display='none';
   document.getElementById('formSuccess').style.display='block';
 }
-
-// ── CLERK AUTH ──
-let clerk=null;
-let pendingDest='/app/';
-
-const TOOL_URLS={
-  app:'/app/',
-  t1:'/app/?tool=t1',
-  t2:'/app/?tool=t2',
-};
-
-window.addEventListener('load',async()=>{
-  try{
-    await window.Clerk.load();
-    clerk=window.Clerk;
-    // If already signed in — update nav
-    if(clerk.user){
-      updateNavSignedIn();
-    }
-  }catch(e){console.log('Clerk:',e);}
-});
-
-function updateNavSignedIn(){
-  const si=document.getElementById('navSignIn');
-  const nl=document.getElementById('navLaunch');
-  if(si) si.textContent='My Account';
-  if(si) si.onclick=()=>clerk.openUserProfile();
-  if(nl) nl.textContent='Open DocuOps →';
-  if(nl) nl.onclick=()=>window.location.href='/app/';
-}
-
-function showSignIn(dest){
-  // If already signed in — go directly
-  if(clerk&&clerk.user){
-    window.location.href=TOOL_URLS[dest]||'/app/';
-    return;
-  }
-  pendingDest=TOOL_URLS[dest]||'/app/';
-  document.getElementById('clerkModal').classList.add('open');
-  if(clerk){
-    const container=document.getElementById('clerkContainer');
-    container.innerHTML='';
-    clerk.mountSignIn(container,{
-      routing:'virtual',
-      afterSignInUrl:pendingDest,
-      appearance:{
-        variables:{
-          colorPrimary:'#2dd4a0',
-          colorBackground:'#13151f',
-          colorText:'#eceef5',
-          colorInputBackground:'#1a1d2b',
-          colorInputText:'#eceef5',
-          colorNeutral:'#7c8399',
-          borderRadius:'8px',
-          fontFamily:'Plus Jakarta Sans, sans-serif',
-        },
-        elements:{
-          card:'background:transparent;box-shadow:none;padding:0;',
-          footer:'display:none;',
-        }
-      }
-    });
-  }
-}
-
-// Close modal on backdrop click
-document.getElementById('clerkModal').addEventListener('click',function(e){
-  if(e.target===this){
-    this.classList.remove('open');
-    if(clerk){
-      try{clerk.unmountSignIn(document.getElementById('clerkContainer'));}catch(e){}
-    }
-  }
-});
 </script>
 </body>
 </html>
