@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuOps — Document Operations. Automated.</title>
+<meta name="description" content="The smarter way to process documents. Extract data, rename files and automate repetitive work — privately, locally, without uploading anything anywhere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0c0e14;--surface:#13151f;--surface2:#1a1d2b;--border:#242840;
+  --green:#2dd4a0;--blue:#5b8df6;--purple:#9b7ef8;
+  --warn:#f59e0b;--danger:#f87171;
+  --text:#eceef5;--muted:#7c8399;
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --arabic:'Noto Naskh Arabic',serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 6%;transition:all .3s;}
+nav.scrolled{background:rgba(12,14,20,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-logo-mark{width:34px;height:34px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-logo-mark svg{width:18px;height:18px;}
+.nav-logo-text{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.4px;}
+.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .15s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{display:flex;gap:10px;align-items:center;}
+.btn-nav{background:var(--green);color:#0c0e14;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:var(--sans);transition:opacity .15s;}
+.btn-nav:hover{opacity:.85;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text);padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 6% 80px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(45,212,160,.06) 0%,transparent 70%);top:-100px;left:50%;transform:translateX(-50%);pointer-events:none;}
+.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.25;pointer-events:none;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black,transparent);}
+.hero-inner{position:relative;z-index:1;max-width:800px;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--green);padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;font-family:var(--mono);margin-bottom:32px;letter-spacing:.3px;}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.hero-brand{font-size:clamp(52px,8vw,88px);font-weight:800;letter-spacing:-3px;line-height:1;margin-bottom:20px;}
+.hero-rotating{min-height:44px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;}
+.rotating-text{font-size:clamp(16px,2.5vw,22px);font-weight:600;color:var(--muted);letter-spacing:-.3px;opacity:0;transition:opacity .4s;}
+.rotating-text.visible{opacity:1;}
+.rotating-text.arabic{font-family:var(--arabic);direction:rtl;font-size:clamp(18px,2.5vw,24px);color:var(--green);}
+.cursor-blink{display:inline-block;width:2px;height:1em;background:var(--green);margin-left:3px;vertical-align:middle;animation:cur .8s infinite;}
+@keyframes cur{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+.hero-sub{font-size:16px;color:var(--muted);line-height:1.75;max-width:560px;margin:0 auto 36px;font-weight:400;}
+.hero-sub b{color:var(--text);font-weight:600;}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
+.btn-primary{background:var(--green);color:#0c0e14;padding:13px 30px;border-radius:8px;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:var(--sans);transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+.btn-secondary{background:none;border:1px solid var(--border);color:var(--text);padding:13px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.btn-secondary:hover{border-color:var(--green);color:var(--green);}
+.trust-row{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:500;}
+
+/* SECTIONS */
+section{padding:80px 6%;}
+.section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-family:var(--mono);margin-bottom:12px;}
+.section-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:14px;}
+.section-sub{font-size:15px;color:var(--muted);line-height:1.7;max-width:520px;}
+.section-header{margin-bottom:48px;}
+.section-header.center{text-align:center;}
+.section-header.center .section-sub{margin:0 auto;}
+
+/* HOW IT WORKS */
+#how{background:var(--surface);}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:900px;margin:0 auto;}
+.step{background:var(--bg);padding:32px 28px;}
+.step:first-child{border-radius:10px 0 0 10px;}
+.step:last-child{border-radius:0 10px 10px 0;}
+.step-num{width:34px;height:34px;border-radius:8px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);margin-bottom:16px;}
+.step-icon{font-size:22px;margin-bottom:12px;}
+.step-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* PROBLEM */
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.pain-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--danger);border-radius:10px;padding:24px;opacity:0;transform:translateY(16px);transition:all .5s;}
+.pain-card.visible{opacity:1;transform:none;}
+.pain-emoji{font-size:26px;margin-bottom:12px;}
+.pain-text{font-size:14px;color:var(--muted);line-height:1.7;}
+.pain-text b{color:var(--text);}
+
+/* PRIVACY */
+#privacy{background:var(--surface);}
+.privacy-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;max-width:1000px;margin:0 auto;}
+.privacy-features{display:flex;flex-direction:column;gap:11px;margin-bottom:32px;}
+.pf-item{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;}
+.pf-check{width:18px;height:18px;border-radius:4px;background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.pf-check svg{width:10px;height:10px;color:var(--green);}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;}
+.compare-table th{padding:8px 12px;text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.compare-table td{padding:9px 12px;border-bottom:1px solid rgba(36,40,64,.5);}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-table td:first-child{color:var(--muted);}
+.ct{color:var(--danger);}
+.cg{color:var(--green);}
+.privacy-visual{display:flex;flex-direction:column;align-items:center;gap:20px;}
+.shield-wrap{width:120px;height:120px;border-radius:50%;background:rgba(45,212,160,.05);border:1px solid rgba(45,212,160,.12);display:flex;align-items:center;justify-content:center;}
+.shield-wrap svg{width:50px;height:50px;color:var(--green);}
+.privacy-label{font-size:12px;font-weight:700;color:var(--green);font-family:var(--mono);letter-spacing:.5px;}
+
+/* TOOLS */
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.tool-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;transition:all .2s;position:relative;}
+.tool-tile.live{cursor:pointer;}
+.tool-tile.live:hover{border-color:var(--green);transform:translateY(-2px);}
+.tool-tile.soon{opacity:.55;}
+.tool-tile.custom{border-color:rgba(45,212,160,.25);cursor:pointer;}
+.tool-tile.custom:hover{border-color:var(--green);transform:translateY(-2px);}
+.tile-icon{font-size:24px;margin-bottom:10px;}
+.tile-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;font-family:var(--mono);padding:2px 8px;border-radius:99px;margin-bottom:10px;}
+.status-live{background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.2);}
+.status-soon{background:rgba(124,131,153,.08);color:var(--muted);border:1px solid var(--border);}
+.status-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.tile-name{font-size:14px;font-weight:700;margin-bottom:6px;}
+.tile-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.tile-link{display:inline-flex;align-items:center;gap:4px;margin-top:12px;font-size:12px;font-weight:600;color:var(--green);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:0;transition:gap .15s;}
+.tile-link:hover{gap:8px;}
+
+/* INDUSTRIES */
+.ind-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ind-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-align:center;transition:border-color .2s;}
+.ind-card:hover{border-color:var(--blue);}
+.ind-icon{font-size:24px;margin-bottom:10px;}
+.ind-name{font-size:13px;font-weight:700;margin-bottom:5px;}
+.ind-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* ROI */
+#roi{background:var(--surface);}
+.roi-inner{max-width:620px;margin:0 auto;}
+.slider-group{margin-bottom:22px;}
+.slider-label{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+.slider-label span:first-child{color:var(--muted);}
+.slider-label span:last-child{color:var(--green);font-weight:700;font-family:var(--mono);}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:99px;background:var(--border);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid var(--bg);}
+.roi-results{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0;}
+.roi-stat{text-align:center;}
+.roi-val{font-size:26px;font-weight:800;font-family:var(--mono);color:var(--green);margin-bottom:4px;}
+.roi-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.roi-summary{font-size:15px;font-weight:600;text-align:center;margin-bottom:20px;}
+.roi-summary span{color:var(--green);}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:1000px;margin:0 auto;}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 20px;position:relative;}
+.price-card.featured{border-color:var(--green);}
+.price-popular{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--green);color:#0c0e14;font-size:10px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap;font-family:var(--mono);}
+.price-tier{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:var(--mono);}
+.price-amount{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;}
+.price-period{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.price-features{display:flex;flex-direction:column;gap:9px;margin-bottom:24px;}
+.price-feat{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
+.price-feat svg{width:13px;height:13px;color:var(--green);flex-shrink:0;margin-top:1px;}
+.price-btn{width:100%;padding:10px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .15s;border:none;}
+.price-btn.solid{background:var(--green);color:#0c0e14;}
+.price-btn.solid:hover{opacity:.85;}
+.price-btn.outline{background:none;border:1px solid var(--border);color:var(--text);}
+.price-btn.outline:hover{border-color:var(--green);color:var(--green);}
+.price-note{text-align:center;margin-top:20px;font-size:12px;color:var(--muted);}
+
+/* FAQ */
+.faq-list{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:2px;}
+.faq-item{background:var(--surface);border-radius:8px;overflow:hidden;}
+.faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:none;border:none;color:var(--text);font-size:14px;font-weight:600;text-align:left;cursor:pointer;font-family:var(--sans);gap:16px;}
+.faq-q:hover{color:var(--green);}
+.faq-icon{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;transition:all .2s;color:var(--muted);}
+.faq-item.open .faq-icon{background:var(--green);border-color:var(--green);color:#0c0e14;transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+.faq-item.open .faq-a{max-height:200px;}
+.faq-a-inner{padding:0 20px 16px;font-size:13px;color:var(--muted);line-height:1.7;}
+
+/* CONTACT */
+#contact{background:var(--surface);}
+.contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;max-width:900px;margin:0 auto;}
+.contact-info p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:28px;}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);}
+.form-group input,.form-group textarea{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s;width:100%;}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--green);}
+.form-group textarea{resize:vertical;min-height:100px;}
+.form-success{display:none;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;padding:16px;font-size:13px;color:var(--green);text-align:center;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+.footer-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.footer-mark{width:30px;height:30px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;}
+.footer-mark svg{width:15px;height:15px;}
+.footer-tagline{font-size:13px;color:var(--muted);line-height:1.6;max-width:240px;}
+.footer-col h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;font-family:var(--mono);}
+.footer-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:8px;transition:color .15s;cursor:pointer;}
+.footer-col a:hover{color:var(--text);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-copy{font-size:12px;color:var(--muted);}
+.footer-privacy{font-size:12px;color:var(--muted);font-family:var(--mono);}
+
+/* CLERK MODAL */
+.clerk-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
+.clerk-modal.open{display:flex;}
+.clerk-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:400px;margin:20px;position:relative;}
+.clerk-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:24px;gap:10px;}
+.clerk-logo-mark{width:44px;height:44px;background:var(--green);border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.clerk-logo-mark svg{width:22px;height:22px;}
+.clerk-title{font-size:20px;font-weight:800;letter-spacing:-.4px;}
+.clerk-sub{font-size:13px;color:var(--muted);margin-top:4px;text-align:center;}
+#clerkContainer{min-height:60px;}
+
+/* SCROLL ANIMATIONS */
+.fade-up{opacity:0;transform:translateY(20px);transition:all .5s ease;}
+.fade-up.visible{opacity:1;transform:none;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .steps,.pain-grid{grid-template-columns:1fr;}
+  .step{border-radius:10px!important;}
+  .privacy-inner{grid-template-columns:1fr;}
+  .privacy-visual{display:none;}
+  .tools-grid{grid-template-columns:1fr 1fr;}
+  .ind-grid{grid-template-columns:1fr 1fr;}
+  .pricing-grid{grid-template-columns:1fr 1fr;}
+  .contact-inner{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr 1fr;}
+  .nav-links{display:none;}
+}
+@media(max-width:560px){
+  .tools-grid,.pricing-grid{grid-template-columns:1fr;}
+  .hero-btns{flex-direction:column;align-items:center;}
+  section{padding:60px 5%;}
+}
+</style>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+    </div>
+    <span class="nav-logo-text">DocuOps</span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#tools">Tools</a>
+    <a href="#industries">Industries</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn-ghost" id="navSignIn" onclick="showSignIn('app')">Sign In</button>
+    <button class="btn-nav" id="navLaunch" onclick="showSignIn('app')">Launch DocuOps →</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="badge-dot"></span>Privacy-First Document Intelligence</div>
+    <h1 class="hero-brand">DocuOps</h1>
+    <div class="hero-rotating">
+      <span class="rotating-text" id="rotatingText"></span><span class="cursor-blink"></span>
+    </div>
+    <p class="hero-sub">
+      The smarter way to process documents. Extract data, rename files and automate repetitive work —
+      <b>privately, locally, without uploading anything anywhere.</b>
+    </p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showSignIn('app')">Launch DocuOps →</button>
+      <a href="#how" class="btn-secondary">See How It Works ↓</a>
+    </div>
+    <div class="trust-row">
+      <div class="trust-item">🔒 Data stays local</div>
+      <div class="trust-item">⚡ No installation needed</div>
+      <div class="trust-item">🌐 Works in your browser</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-header center fade-up">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Three steps. That's all.</h2>
+    <p class="section-sub">No training, no setup, no IT department needed.</p>
+  </div>
+  <div class="steps fade-up">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📂</div>
+      <div class="step-title">Upload Your Documents</div>
+      <p class="step-desc">Drop invoices, contracts, resumes or any documents directly in your browser. Nothing goes to a server.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚡</div>
+      <div class="step-title">AI Extracts The Data</div>
+      <p class="step-desc">Define your fields once. DocuOps learns your document layouts and pre-fills everything automatically.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">📊</div>
+      <div class="step-title">Download Your Excel</div>
+      <p class="step-desc">Clean, structured data in your existing Excel template — ready for your workflow in minutes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-header center fade-up">
+    <div class="section-label">The problem</div>
+    <h2 class="section-title">Sound familiar?</h2>
+  </div>
+  <div class="pain-grid">
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">😓</div>
+      <p class="pain-text">Your team <b>manually types document data into Excel</b> for hours every single day</p>
+    </div>
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">⏰</div>
+      <p class="pain-text">Processing <b>100 invoices takes a full working day</b> of repetitive, error-prone typing</p>
+    </div>
+    <div class="pain-card fade-up">
+      <div class="pain-emoji">🔓</div>
+      <p class="pain-text">ChatGPT and Claude <b>require uploading sensitive documents</b> to their servers</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section id="privacy">
+  <div class="privacy-inner">
+    <div class="fade-up">
+      <div class="section-label">Why DocuOps</div>
+      <h2 class="section-title">Your data. Your system. Always.</h2>
+      <p class="section-sub" style="margin-bottom:28px;">Unlike ChatGPT, Claude or any cloud tool — DocuOps never sees your documents.</p>
+      <div class="privacy-features">
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Documents processed entirely in your browser</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Nothing uploaded to any server — ever</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Works completely offline after first load</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>GDPR friendly by design</div>
+        <div class="pf-item"><div class="pf-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Your documents never train any AI model</div>
+      </div>
+      <table class="compare-table">
+        <thead><tr><th>Feature</th><th>ChatGPT</th><th>Claude</th><th>DocuOps</th></tr></thead>
+        <tbody>
+          <tr><td>Data stays local</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Works offline</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Batch processing</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Custom templates</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Excel export</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+          <tr><td>Learns layouts</td><td class="ct">✕</td><td class="ct">✕</td><td class="cg">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="privacy-visual fade-up">
+      <div class="shield-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="privacy-label">ZERO DATA TRANSMISSION</div>
+      <p style="font-size:13px;color:var(--muted);text-align:center;max-width:200px;line-height:1.6;">Your documents stay exactly where they are — on your device.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools">
+  <div class="section-header center fade-up">
+    <div class="section-label">Tools</div>
+    <h2 class="section-title">Everything your team needs</h2>
+    <p class="section-sub">Two tools live today. More launching soon.</p>
+  </div>
+  <div class="tools-grid fade-up">
+    <div class="tool-tile live" onclick="showSignIn('t1')">
+      <div class="tile-icon">📄</div>
+      <div class="tile-status status-live"><span class="status-dot"></span>Live</div>
+      <div class="tile-name">Document Renamer</div>
+      <p class="tile-desc">Batch rename thousands of files using OCR. Invoices, contracts, receipts — organised in minutes.</p>
+      <button class="tile-link">Open Tool →</button>
+    </div>
+    <div class="tool-tile live" onclick="showSignIn('t2')">
+      <div class="tile-icon">📊</div>
+      <div class="tile-status status-live"><span class="status-dot"></span>Live</div>
+      <div class="tile-name">Data Entry Assistant</div>
+      <p class="tile-desc">Build custom forms from your Excel template. AI learns your document layouts and pre-fills automatically.</p>
+      <button class="tile-link">Open Tool →</button>
+    </div>
+    <div class="tool-tile soon"><div class="tile-icon">📑</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Batch Data Extractor</div><p class="tile-desc">Upload 100 documents. Get filled Excel in minutes. AI extracts every field automatically.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">🌐</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Translator</div><p class="tile-desc">Translate documents between Arabic, English and more. Layout preserved.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">✍️</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Summariser</div><p class="tile-desc">Get executive summaries, key points and action items from any document instantly.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">🔍</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Search</div><p class="tile-desc">Search across thousands of documents instantly. Find anything in seconds.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">🔀</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Comparison</div><p class="tile-desc">Compare two versions of any document. See exactly what changed.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">🏷️</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Classifier</div><p class="tile-desc">Automatically sort mixed documents into categories. No manual sorting needed.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">🔒</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Redactor</div><p class="tile-desc">Remove sensitive information before sharing. GDPR compliant.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">✅</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document Validator</div><p class="tile-desc">Check documents meet your requirements before filing or sending.</p></div>
+    <div class="tool-tile soon"><div class="tile-icon">📧</div><div class="tile-status status-soon">Coming Soon</div><div class="tile-name">Document to Email</div><p class="tile-desc">Auto-draft professional emails from extracted document data in one click.</p></div>
+    <div class="tool-tile custom" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">
+      <div class="tile-icon">🔧</div>
+      <div class="tile-status status-live" style="background:rgba(45,212,160,.08);"><span class="status-dot"></span>Custom</div>
+      <div class="tile-name">Need Something Specific?</div>
+      <p class="tile-desc">Don't see what you need? Every business has unique workflows. Tell us — we build to order.</p>
+      <button class="tile-link">Contact Us →</button>
+    </div>
+  </div>
+</section>
+
+<!-- INDUSTRIES -->
+<section id="industries" style="background:var(--surface);">
+  <div class="section-header center fade-up">
+    <div class="section-label">Industries</div>
+    <h2 class="section-title">Built for document-heavy industries</h2>
+  </div>
+  <div class="ind-grid fade-up">
+    <div class="ind-card"><div class="ind-icon">📞</div><div class="ind-name">BPO & Call Centres</div><p class="ind-desc">Process thousands of documents daily without growing your team</p></div>
+    <div class="ind-card"><div class="ind-icon">🏥</div><div class="ind-name">Healthcare</div><p class="ind-desc">Patient records, prescriptions and medical forms — extracted accurately</p></div>
+    <div class="ind-card"><div class="ind-icon">⚖️</div><div class="ind-name">Legal & Contracts</div><p class="ind-desc">Extract key clauses, dates and parties from contracts automatically</p></div>
+    <div class="ind-card"><div class="ind-icon">💰</div><div class="ind-name">Finance & Accounting</div><p class="ind-desc">Invoices, receipts and financial reports processed in bulk</p></div>
+    <div class="ind-card"><div class="ind-icon">🛡️</div><div class="ind-name">Insurance</div><p class="ind-desc">Claims, policies and assessment forms — data extracted instantly</p></div>
+    <div class="ind-card"><div class="ind-icon">👥</div><div class="ind-name">HR & Recruitment</div><p class="ind-desc">Process hundreds of CVs and applications in minutes not days</p></div>
+    <div class="ind-card"><div class="ind-icon">🏛️</div><div class="ind-name">Government</div><p class="ind-desc">Sensitive documents processed locally — full data sovereignty</p></div>
+    <div class="ind-card"><div class="ind-icon">🏢</div><div class="ind-name">Enterprise</div><p class="ind-desc">Custom workflows for large teams with shared templates and profiles</p></div>
+  </div>
+</section>
+
+<!-- ROI -->
+<section id="roi">
+  <div class="section-header center fade-up">
+    <div class="section-label">ROI Calculator</div>
+    <h2 class="section-title">How much time are you wasting?</h2>
+  </div>
+  <div class="roi-inner fade-up">
+    <div class="slider-group">
+      <div class="slider-label"><span>Documents per day</span><span id="docsVal">50</span></div>
+      <input type="range" id="docsSlider" min="10" max="500" value="50" oninput="calcROI()">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Minutes per document (manual)</span><span id="minsVal">8</span></div>
+      <input type="range" id="minsSlider" min="2" max="30" value="8" oninput="calcROI()">
+    </div>
+    <div class="roi-results">
+      <div class="roi-stat"><div class="roi-val" id="manualTime">6.7h</div><div class="roi-lbl">Manual time/day</div></div>
+      <div class="roi-stat"><div class="roi-val" id="docuopsTime">25m</div><div class="roi-lbl">With DocuOps</div></div>
+      <div class="roi-stat"><div class="roi-val" id="savedDay">6.3h</div><div class="roi-lbl">Saved per day</div></div>
+      <div class="roi-stat"><div class="roi-val" id="savedMonth">132h</div><div class="roi-lbl">Saved per month</div></div>
+    </div>
+    <p class="roi-summary" id="roiSummary">That's <span>3.3 full working weeks</span> saved every month</p>
+    <div style="text-align:center;"><button class="btn-primary" onclick="showSignIn('app')">Start Saving Time Free →</button></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-header center fade-up">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Simple, transparent pricing</h2>
+    <p class="section-sub">Start free. Upgrade when ready.</p>
+  </div>
+  <div class="pricing-grid fade-up">
+    <div class="price-card">
+      <div class="price-tier">Free</div>
+      <div class="price-amount">$0</div>
+      <div class="price-period">forever</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Document Renamer</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Data Entry Assistant</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>50 documents/month</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 templates</div>
+      </div>
+      <button class="price-btn solid" onclick="showSignIn('app')">Get Started Free</button>
+    </div>
+    <div class="price-card featured">
+      <div class="price-popular">MOST POPULAR</div>
+      <div class="price-tier">Pro</div>
+      <div class="price-amount">$9</div>
+      <div class="price-period">per month</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>All tools as they launch</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited documents</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited templates</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority support</div>
+      </div>
+      <button class="price-btn solid" onclick="showSignIn('app')">Start Pro Trial</button>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">Team</div>
+      <div class="price-amount">$29</div>
+      <div class="price-period">per month</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Up to 10 users</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Shared templates</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Admin dashboard</div>
+      </div>
+      <button class="price-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact Sales</button>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">Enterprise</div>
+      <div class="price-amount">Custom</div>
+      <div class="price-period">pricing</div>
+      <div class="price-features">
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Everything in Team</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited users</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Self-hosted option</div>
+        <div class="price-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>SLA guarantee</div>
+      </div>
+      <button class="price-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get in Touch</button>
+    </div>
+  </div>
+  <p class="price-note">✓ No credit card required &nbsp;·&nbsp; ✓ Cancel anytime &nbsp;·&nbsp; ✓ Data privacy on all plans</p>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="background:var(--surface);">
+  <div class="section-header center fade-up">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Frequently asked questions</h2>
+  </div>
+  <div class="faq-list fade-up">
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Is it really free?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Yes. The Free plan includes our two core tools with no credit card required. You can process up to 50 documents per month completely free, forever.</div></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Do I need to install anything?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">No. DocuOps runs entirely in your Chrome or Edge browser. No download, no setup, no IT department needed.</div></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does my data get uploaded anywhere?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Never. All document processing happens in your browser. Your files never leave your device — not even to our servers.</div></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Does it work with Arabic documents?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Yes. DocuOps supports Arabic, English and mixed-language documents with full right-to-left support.</div></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can my whole team use it?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Yes. The Team plan supports up to 10 users with shared templates and learning profiles.</div></div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFAQ(this)">Can I use my own Excel template?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Yes. Upload your existing Excel file and DocuOps automatically converts your column headers into form fields.</div></div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="fade-up">
+      <div class="section-label">Get In Touch</div>
+      <h2 class="section-title" style="font-size:28px;">Need something specific?</h2>
+      <p class="contact-info" style="font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:0;">Every business has unique document workflows. Tell us what you need — we'll build it for you.</p>
+    </div>
+    <div class="fade-up">
+      <div id="formSuccess" class="form-success">✅ Thank you! We'll be in touch within 24 hours.</div>
+      <form id="contactForm" onsubmit="submitForm(event)">
+        <div class="form-group"><label>Full Name *</label><input type="text" placeholder="Your name" required></div>
+        <div class="form-group"><label>Company</label><input type="text" placeholder="Company name"></div>
+        <div class="form-group"><label>Email *</label><input type="email" placeholder="your@email.com" required></div>
+        <div class="form-group"><label>What do you need? *</label><textarea placeholder="Describe your document workflow..." required></textarea></div>
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Send Request →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">
+        <div class="footer-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg></div>
+        <span style="font-size:16px;font-weight:800;letter-spacing:-.3px;">DocuOps</span>
+      </div>
+      <p class="footer-tagline">Document Operations. Automated. All processing happens locally in your browser.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Tools</h4>
+      <a onclick="showSignIn('t1')">Document Renamer</a>
+      <a onclick="showSignIn('t2')">Data Entry Assistant</a>
+      <a href="#tools">Coming Soon</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#contact">Contact</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 DocuOps. All rights reserved.</span>
+    <span class="footer-privacy">🔒 Your data never leaves your system</span>
+  </div>
+</footer>
+
+<!-- SUPABASE SIGN IN MODAL -->
+<div class="clerk-modal" id="signInModal">
+  <div class="clerk-box">
+    <div class="clerk-logo">
+      <div class="clerk-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+      </div>
+      <div class="clerk-title">Sign in to DocuOps</div>
+      <div class="clerk-sub">Access your tools and saved templates</div>
+    </div>
+    <!-- Google Sign In -->
+    <button id="googleSignInBtn" onclick="signInWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#1a1a1a;border:none;border-radius:8px;padding:13px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity .15s;margin-bottom:16px;">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-size:12px;color:var(--muted);">or</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
+    <!-- Email Magic Link -->
+    <div id="emailForm">
+      <div style="margin-bottom:12px;">
+        <input id="signInEmail" type="email" placeholder="your@email.com" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s;" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <button onclick="signInWithEmail()" style="width:100%;background:var(--green);color:#0c0e14;border:none;border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:opacity .15s;">
+        Send Magic Link →
+      </button>
+    </div>
+    <!-- Success message -->
+    <div id="emailSent" style="display:none;text-align:center;padding:16px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;">
+      <div style="font-size:20px;margin-bottom:8px;">📧</div>
+      <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:4px;">Check your email!</div>
+      <div style="font-size:12px;color:var(--muted);">We sent a magic link to your inbox. Click it to sign in.</div>
+    </div>
+    <!-- Error message -->
+    <div id="signInError" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;font-size:13px;color:var(--danger);text-align:center;"></div>
+  </div>
+</div>
+
+<script>
+// ── SUPABASE INIT ──
+const { createClient } = supabase;
+const _sb = createClient('https://mawyhvjvnkzgohujxubl.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hd3lodmp2bmt6Z29odWp4dWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDc2NDUsImV4cCI6MjA4OTQ4MzY0NX0.BGx1DABC9Algtfguw3Mh61aXJZjhRYhS3RLttivrivo');
+let _user = null;
+
+// ── NAV SCROLL ──
+window.addEventListener('scroll',()=>{
+  document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>40);
+});
+
+// ── TYPEWRITER ──
+const lines=[
+  {text:"Document Operations. Fully Automated.",arabic:false},
+  {text:"Your Data Never Leaves Your System.",arabic:false},
+  {text:"Like ChatGPT — But Your Data Stays Local.",arabic:false},
+  {text:"From 100 Invoices to Excel in Minutes.",arabic:false},
+  {text:"10x Faster Than Manual Data Entry.",arabic:false},
+  {text:"Built for BPO Teams and Enterprises.",arabic:false},
+  {text:"No Install. No Upload. No Compromise.",arabic:false},
+  {text:"مستنداتك. آمنة. دائماً.",arabic:true},
+];
+let li=0,ci=0,typing=true;
+const el=document.getElementById('rotatingText');
+function typeLoop(){
+  const line=lines[li];
+  el.className='rotating-text'+(line.arabic?' arabic':'');
+  if(typing){
+    if(ci<=line.text.length){
+      el.textContent=line.text.slice(0,ci);
+      el.classList.add('visible');
+      ci++;
+      setTimeout(typeLoop,line.arabic?80:45);
+    }else{typing=false;setTimeout(typeLoop,2500);}
+  }else{
+    el.classList.remove('visible');
+    setTimeout(()=>{li=(li+1)%lines.length;ci=0;typing=true;el.textContent='';setTimeout(typeLoop,300);},400);
+  }
+}
+typeLoop();
+
+// ── SCROLL ANIMATIONS ──
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target);}});},{threshold:.1});
+document.querySelectorAll('.fade-up,.pain-card').forEach(e=>obs.observe(e));
+
+// ── ROI CALCULATOR ──
+function calcROI(){
+  const docs=+document.getElementById('docsSlider').value;
+  const mins=+document.getElementById('minsSlider').value;
+  document.getElementById('docsVal').textContent=docs;
+  document.getElementById('minsVal').textContent=mins;
+  const manH=(docs*mins/60);
+  const docH=Math.max(0.2,(docs*0.3/60));
+  const savD=manH-docH;
+  const savM=savD*22;
+  document.getElementById('manualTime').textContent=manH.toFixed(1)+'h';
+  document.getElementById('docuopsTime').textContent=Math.round(docH*60)+'m';
+  document.getElementById('savedDay').textContent=savD.toFixed(1)+'h';
+  document.getElementById('savedMonth').textContent=Math.round(savM)+'h';
+  document.getElementById('roiSummary').innerHTML=`That's <span>${(savM/40).toFixed(1)} full working weeks</span> saved every month`;
+}
+calcROI();
+
+// ── FAQ ──
+function toggleFAQ(btn){
+  const item=btn.closest('.faq-item');
+  const open=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!open)item.classList.add('open');
+}
+
+// ── CONTACT FORM ──
+function submitForm(e){
+  e.preventDefault();
+  document.getElementById('contactForm').style.display='none';
+  document.getElementById('formSuccess').style.display='block';
+}
+
+// ── CLERK AUTH ──
+let clerk=null;
+let pendingDest='/app/';
+
+const TOOL_URLS={
+  app:'/app/',
+  t1:'/app/?tool=t1',
+  t2:'/app/?tool=t2',
+};
+
+window.addEventListener('load',async()=>{
+  try{
+    await window.Clerk.load();
+    clerk=window.Clerk;
+    // If already signed in — update nav
+    if(clerk.user){
+      updateNavSignedIn();
+    }
+  }catch(e){console.log('Clerk:',e);}
+});
+
+function updateNavSignedIn(){
+  const si=document.getElementById('navSignIn');
+  const nl=document.getElementById('navLaunch');
+  if(si) si.textContent='My Account';
+  if(si) si.onclick=()=>clerk.openUserProfile();
+  if(nl) nl.textContent='Open DocuOps →';
+  if(nl) nl.onclick=()=>window.location.href='/app/';
+}
+
+function showSignIn(dest){
+  // If already signed in — go directly
+  if(clerk&&clerk.user){
+    window.location.href=TOOL_URLS[dest]||'/app/';
+    return;
+  }
+  pendingDest=TOOL_URLS[dest]||'/app/';
+  document.getElementById('clerkModal').classList.add('open');
+  if(clerk){
+    const container=document.getElementById('clerkContainer');
+    container.innerHTML='';
+    clerk.mountSignIn(container,{
+      routing:'virtual',
+      afterSignInUrl:pendingDest,
+      appearance:{
+        variables:{
+          colorPrimary:'#2dd4a0',
+          colorBackground:'#13151f',
+          colorText:'#eceef5',
+          colorInputBackground:'#1a1d2b',
+          colorInputText:'#eceef5',
+          colorNeutral:'#7c8399',
+          borderRadius:'8px',
+          fontFamily:'Plus Jakarta Sans, sans-serif',
+        },
+        elements:{
+          card:'background:transparent;box-shadow:none;padding:0;',
+          footer:'display:none;',
+        }
+      }
+    });
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('clerkModal').addEventListener('click',function(e){
+  if(e.target===this){
+    this.classList.remove('open');
+    if(clerk){
+      try{clerk.unmountSignIn(document.getElementById('clerkContainer'));}catch(e){}
+    }
+  }
+});
+</script>
+</body>
+</html>

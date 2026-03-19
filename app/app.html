@@ -1,0 +1,623 @@
+<!-- ★ DocuOps APP — Tools & Workspace | docu-ops.vercel.app/app/ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuOps</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- DocuOps Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="hdr-left" onclick="showHome()">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0c0e14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg></div>
+    <div><div class="logo-text">DocuOps</div><div class="logo-sub">Document Operations. Automated.</div></div>
+  </div>
+  <div class="hdr-center">
+    <span class="tool-badge" id="toolBadge"></span>
+    <span class="mode-badge" id="modeBadge"></span>
+    <div class="stats-bar" id="statsBar">
+      <div class="stat"><div class="stat-val" id="statTotal">—</div><div class="stat-label">Total</div></div>
+      <div class="stat"><div class="stat-val" id="statDone">0</div><div class="stat-label">Done</div></div>
+      <div class="stat"><div class="stat-val warn" id="statSkip">0</div><div class="stat-label">Skip</div></div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div id="appUser" style="display:none;align-items:center;gap:8px;">
+      <span id="appUserName" style="font-size:12px;color:var(--muted);font-family:var(--mono);"></span>
+      <button onclick="appSignOut()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s;" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Sign Out</button>
+    </div>
+    <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
+</header>
+
+<div class="net-warn" id="netWarn">⚠ No internet — Tesseract.js needs internet on first load only.</div>
+<div id="progressWrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+</div>
+
+<!-- ══ SETTINGS PANEL ══ -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-hdr">
+    <div class="settings-title">⚙️ Settings</div>
+    <button class="settings-close" onclick="closeSettings()">×</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-section">
+      <div class="settings-section-title">🎨 Theme</div>
+      <div class="theme-options">
+        <div class="theme-opt" id="themeLight" onclick="setTheme('light')">
+          <div class="theme-opt-icon">☀️</div>Light
+        </div>
+        <div class="theme-opt active" id="themeDark" onclick="setTheme('dark')">
+          <div class="theme-opt-icon">🌙</div>Dark
+        </div>
+        <div class="theme-opt" id="themeSystem" onclick="setTheme('system')">
+          <div class="theme-opt-icon">💻</div>System
+        </div>
+      </div>
+    </div>
+    <div class="settings-section" style="color:var(--muted);font-size:11px;line-height:1.7;">
+      More settings coming soon — font size, OCR language, default mode, date format and more.
+    </div>
+  </div>
+  <div class="settings-footer"><span class="version-display">DocuOps</span> · All processing local · No data uploaded</div>
+</div>
+
+<!-- ══ HOME PAGE ══ -->
+<div id="homePage">
+  <div class="home-hero">
+    <div class="home-title">DocuOps</div>
+    <div class="home-tagline">Document Operations. Automated. tools · runs in your browser · no install needed</div>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card t1" onclick="launchT1()">
+      <div class="tool-card-icon">📄</div>
+      <div class="tool-card-name">Document Renamer</div>
+      <div class="tool-card-desc">Batch rename documents using OCR. Supports JPG, PNG, PDF, MP4 and more. Zoom, rotate, select area OCR.</div>
+      <span class="tool-card-tag tag-t1">Batch Rename · Multi-format</span>
+    </div>
+    <div class="tool-card t2" onclick="launchT2()">
+      <div class="tool-card-icon">📊</div>
+      <div class="tool-card-name">Data Entry Assistant</div>
+      <div class="tool-card-desc">Build a custom form from your Excel template. OCR any field by drawing a box. Export filled data to Excel row by row.</div>
+      <span class="tool-card-tag tag-t2">Data Entry · Excel Export</span>
+    </div>
+    <div class="tool-card" style="border-color:var(--border);" onmouseenter="this.style.borderColor='var(--accent2)';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform=''" onclick="launchT3()">
+      <div class="tool-card-icon">📑</div>
+      <div class="tool-card-name">Document Data Extractor</div>
+      <div class="tool-card-desc">AI-powered batch extraction from resumes, contracts, invoices. Upload documents → define fields → get Excel automatically.</div>
+      <span class="tool-card-tag" style="background:rgba(56,217,169,.15);color:var(--accent2);">AI Powered · Batch Extract</span>
+    </div>
+  </div>
+  <div class="home-footer">All tools run locally · No data uploaded anywhere · <span class="version-display">DocuOps</span></div>
+</div>
+
+<!-- ══ TOOL 1 ══ -->
+<div id="tool1">
+  <div class="drop-zone-panel" id="t1Drop">
+    <div class="drop-icon">🗂️</div>
+    <div class="drop-title">Document Renamer</div>
+    <div class="drop-sub">Pick OCR mode, then load your files to rename them.</div>
+    <div class="mode-selector">
+      <div class="mode-card selected" id="t1ModeWhole" onclick="t1Mode('whole')">
+        <div class="mode-card-icon">📄</div>
+        <div class="mode-card-title">Whole Image</div>
+        <div class="mode-card-desc">Auto-OCRs entire file. Fast.</div>
+      </div>
+      <div class="mode-card" id="t1ModeSel" onclick="t1Mode('select')">
+        <div class="mode-card-icon">✂️</div>
+        <div class="mode-card-title">Select Area</div>
+        <div class="mode-card-desc">Draw box over the number. Accurate.</div>
+      </div>
+    </div>
+    <div class="drop-area" id="t1DropArea">
+      <button class="drop-btn" onclick="document.getElementById('t1FileIn').click()">📂 Choose Invoice Files</button>
+      <div class="fmt-badges">
+        <span class="fmt-badge">JPG</span><span class="fmt-badge">PNG</span><span class="fmt-badge">WEBP</span>
+        <span class="fmt-badge">BMP</span><span class="fmt-badge">GIF</span><span class="fmt-badge">PDF</span><span class="fmt-badge">MP4</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">or drag &amp; drop</div>
+    </div>
+    <input type="file" id="t1FileIn" accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.pdf,.mp4" multiple style="display:none">
+    <div class="folder-row">
+      <div class="folder-row-top">
+        <button class="folder-btn" onclick="pickFolder('t1')">📁 Save Folder</button>
+        <span style="font-size:11px;color:var(--muted);">optional — files save silently</span>
+      </div>
+      <span class="folder-name none" id="t1FolderName">No folder — files go to Downloads</span>
+    </div>
+  </div>
+  <div class="t1-main" id="t1Work" style="display:none;flex:1;min-height:0;overflow:hidden;">
+    <div class="img-panel">
+      <div class="img-header">
+        <span class="panel-lbl">Preview</span>
+        <span class="fname-chip" id="t1FName">—</span>
+        <span class="file-type-badge" id="t1FType"></span>
+        <span class="sel-hint" id="t1SelHint" style="display:none;">✏️ drag to select</span>
+        <button class="icon-btn hidden" id="t1RedrawBtn" onclick="v1.resetSel()">↺ Re-draw</button>
+        <button class="icon-btn hidden" id="t1BackBtn" onclick="t1GoBack()">← Back</button>
+      </div>
+      <div class="pdf-page-bar" id="t1PdfBar">
+        <button onclick="v1.changePdfPage(-1)">‹</button>
+        <span class="pdf-page-info" id="t1PdfInfo">Page 1/1</span>
+        <button onclick="v1.changePdfPage(1)">›</button>
+      </div>
+      <div class="video-scrubber" id="t1VidScrub">
+        <span style="font-size:11px;color:var(--muted);">Frame:</span>
+        <input type="range" id="t1VidSlider" min="0" max="100" step="1" value="50" oninput="v1.scrubVideo(this.value)">
+        <span class="video-time" id="t1VidTime">—</span>
+        <button class="capture-btn" onclick="v1.captureFrame(true)">📸</button>
+      </div>
+      <div class="canvas-wrap" id="t1CWrap">
+        <canvas class="main-canvas" id="t1Canvas"></canvas>
+        <video id="t1Video" muted playsinline preload="metadata" style="display:none"></video>
+        <div class="ocr-overlay" id="t1Overlay"><div class="spinner"></div><div class="ocr-status-txt" id="t1Status">Loading…</div></div>
+      </div>
+      <div class="zoom-bar" id="t1ZBar">
+        <button class="r-btn" onclick="v1.rotate(-90)" title="[">↺</button>
+        <button class="r-btn" onclick="v1.rotate(90)" title="]">↻</button>
+        <div class="z-div"></div>
+        <button class="z-btn" onclick="v1.zoomBy(-0.25)">−</button>
+        <input type="range" class="z-slider" id="t1ZSlider" min="1" max="8" step="0.05" value="1" oninput="v1.setZoom(+this.value)">
+        <button class="z-btn" onclick="v1.zoomBy(0.25)">+</button>
+        <span class="z-pct" id="t1ZPct">100%</span>
+        <button class="z-fit" onclick="v1.resetZoom()">fit</button>
+      </div>
+    </div>
+    <div class="t1-right">
+      <div><div class="lbl" style="margin-bottom:4px;">OCR Text</div><div class="ocr-box" id="t1OcrBox">Waiting…</div></div>
+      <div>
+        <div class="lbl">Document Number</div>
+        <input class="text-inp" id="t1Inp" type="text" placeholder="e.g. INV-1042" autocomplete="off" spellcheck="false">
+        <div class="hint-txt">Auto: <span id="t1Auto">—</span></div>
+      </div>
+      <button class="ocr-sel-btn" id="t1OcrSelBtn" onclick="v1.ocrSelection()" style="display:none;">🔍 OCR Selected Area</button>
+      <div class="fname-preview-row" id="t1FnameRow" style="display:none;">
+        <span class="fname-preview-lbl">Save as:</span>
+        <span class="fname-preview-val" id="t1FnameVal">—</span>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-save" id="t1SaveBtn" onclick="t1SaveNext()" disabled style="flex:1">✔ Save & Next</button>
+        <button class="btn btn-skip" id="t1SkipBtn" onclick="t1Skip()" disabled style="flex:1">⏭ Skip</button>
+      </div>
+      <div class="kb-hint"><b>Enter</b> Save &nbsp;·&nbsp; <b>Shift+Enter</b> Skip &nbsp;·&nbsp; <b>←</b> Back &nbsp;·&nbsp; <b>[ ]</b> Rotate</div>
+      <div class="tip-box" id="t1Tip"></div>
+    </div>
+  </div>
+  <div id="t1LogSection"></div>
+  <div class="done-screen" id="t1Done">
+    <div class="done-icon">🎉</div><div class="done-title">All Done!</div>
+    <div class="done-stats">
+      <div class="done-stat"><div class="done-val" id="t1DR">0</div><div class="done-lbl">Renamed</div></div>
+      <div class="done-stat"><div class="done-val s" id="t1DS">0</div><div class="done-lbl">Skipped</div></div>
+    </div>
+    <div class="done-sub" id="t1DSub">Files processed.</div>
+    <div class="done-btns">
+      <button class="dl-btn" onclick="t1DownloadCSV()">⬇ Rename Log (CSV)</button>
+      <button class="rst-btn" onclick="showHome()">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOOL 2 ══ -->
+<div id="tool2">
+  <!-- Setup -->
+  <div id="t2Setup">
+    <div class="drop-icon">📊</div>
+    <div class="drop-title">Data Entry Assistant</div>
+    <div class="drop-sub">Build a data entry form from your Excel template. Process documents field by field. Export to Excel.</div>
+    <div class="setup-steps">
+      <div class="setup-step"><div class="step-num">1</div><div class="step-title">Upload Template</div><div class="step-desc">Excel columns become form fields</div></div>
+      <div class="setup-step"><div class="step-num">2</div><div class="step-title">Customize Fields</div><div class="step-desc">Text, number, dropdown, formula, repeating</div></div>
+      <div class="setup-step"><div class="step-num">3</div><div class="step-title">Load Documents</div><div class="step-desc">Images appear in bottom strip</div></div>
+      <div class="setup-step"><div class="step-num">4</div><div class="step-title">OCR & Enter</div><div class="step-desc">Click field → draw box → data fills in</div></div>
+    </div>
+    <div class="setup-actions">
+      <button class="btn btn-purple" onclick="document.getElementById('t2TmplIn').click()">📋 Upload Excel Template</button>
+      <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="t2BuildManual()">✏️ Build Manually</button>
+    </div>
+    <input type="file" id="t2TmplIn" accept=".xlsx,.xls,.csv" style="display:none">
+    <!-- Template save/load bar -->
+    <div class="tmpl-bar">
+      <span class="tmpl-bar-lbl">Template:</span>
+      <button class="tmpl-btn" onclick="t2SaveTemplate()">💾 Save</button>
+      <button class="tmpl-btn" onclick="t2LoadTemplateFile()">📂 Load JSON</button>
+      <button class="tmpl-btn" onclick="t2CheckAutoSave()">🔄 Last Auto-saved</button>
+      <span class="tmpl-name" id="t2TmplName"></span>
+    </div>
+  </div>
+
+  <!-- Builder -->
+  <div id="t2Builder">
+    <div class="builder-hdr">
+      <div class="builder-title">Form Builder</div>
+      <div class="builder-sub">Configure fields — drag to reorder, click code to rename</div>
+      <div class="builder-actions">
+        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:6px 12px;font-size:11px;" onclick="t2SaveTemplate()">💾 Save Template</button>
+        <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t2StartEntry()">▶ Start Entry →</button>
+      </div>
+    </div>
+    <!-- File naming pattern -->
+    <div style="padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div class="naming-row">
+        <div class="naming-lbl">📝 File Naming Pattern</div>
+        <input class="naming-inp" id="t2NamingPattern" placeholder="e.g. {A}-{B}-{C}  →  INV-AlMaha-2026-03-18" value="{A}">
+        <div class="naming-hint">Use field codes in curly braces. Empty fields are skipped with a warning.</div>
+      </div>
+    </div>
+    <div class="builder-body">
+      <div class="builder-fields" id="t2FieldList"></div>
+      <div class="builder-preview">
+        <div class="preview-lbl">Form Preview</div>
+        <div id="t2Preview"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work -->
+  <div id="t2Work">
+    <div class="t2w-main">
+      <div class="img-panel">
+        <div class="img-header">
+          <span class="panel-lbl">Document</span>
+          <span class="fname-chip" id="t2FName">—</span>
+          <span class="file-type-badge" id="t2FType"></span>
+          <span class="sel-hint">✏️ Click field label then draw box</span>
+          <button class="icon-btn hidden" id="t2RedrawBtn" onclick="v2.resetSel()">↺ Re-draw</button>
+        </div>
+        <div class="pdf-page-bar" id="t2PdfBar">
+          <button onclick="v2.changePdfPage(-1)">‹</button>
+          <span class="pdf-page-info" id="t2PdfInfo">Page 1/1</span>
+          <button onclick="v2.changePdfPage(1)">›</button>
+        </div>
+        <div class="video-scrubber" id="t2VidScrub">
+          <span style="font-size:11px;color:var(--muted);">Frame:</span>
+          <input type="range" id="t2VidSlider" min="0" max="100" step="1" value="50" oninput="v2.scrubVideo(this.value)">
+          <span class="video-time" id="t2VidTime">—</span>
+          <button class="capture-btn" onclick="v2.captureFrame(true)">📸</button>
+        </div>
+        <div class="canvas-wrap" id="t2CWrap">
+          <canvas class="main-canvas" id="t2Canvas"></canvas>
+          <video id="t2Video" muted playsinline preload="metadata" style="display:none"></video>
+          <div class="ocr-overlay" id="t2Overlay" style="display:none;"><div class="spinner"></div><div class="ocr-status-txt" id="t2Status">OCR…</div></div>
+        </div>
+        <div class="zoom-bar" id="t2ZBar" style="display:flex;">
+          <button class="r-btn" onclick="v2.rotate(-90)" title="[">↺</button>
+          <button class="r-btn" onclick="v2.rotate(90)" title="]">↻</button>
+          <div class="z-div"></div>
+          <button class="z-btn" onclick="v2.zoomBy(-0.25)">−</button>
+          <input type="range" class="z-slider" id="t2ZSlider" min="1" max="8" step="0.05" value="1" oninput="v2.setZoom(+this.value)">
+          <button class="z-btn" onclick="v2.zoomBy(0.25)">+</button>
+          <span class="z-pct" id="t2ZPct">100%</span>
+          <button class="z-fit" onclick="v2.resetZoom()">fit</button>
+        </div>
+      </div>
+      <div class="t2w-right">
+        <div class="t2w-form" id="t2Form"></div>
+        <div class="entry-fname-row" id="t2EntryFname" style="margin:0 10px 0;">
+          <span class="entry-fname-lbl">Save as:</span>
+          <span class="entry-fname-val" id="t2EntryFnameVal">—</span>
+          <button class="entry-fname-edit" onclick="t2EditFname()">✏️</button>
+          <span class="entry-fname-warn" id="t2FnameWarn"></span>
+        </div>
+        <div class="t2w-hint" id="t2Hint">💡 Click a field label to activate, then draw a box on the image</div>
+        <div class="t2w-actions">
+          <button class="btn btn-save" id="t2SaveBtn" onclick="t2SaveEntry()" style="flex:1;">✔ Save Entry</button>
+          <button class="btn btn-skip" onclick="t2ClearForm()" style="flex:0.6;font-size:11px;">↺ Clear</button>
+          <button class="btn" onclick="t2Finish()" style="flex:0.6;background:var(--surface2);border:1px solid var(--border);font-size:11px;">⬇ Export</button>
+        </div>
+      </div>
+    </div>
+    <div class="strip-wrap" id="t2StripWrap"><div class="strip" id="t2Strip"></div></div>
+  </div>
+
+  <!-- Done -->
+  <div id="t2Done">
+    <div class="done-icon">📊</div><div class="done-title">Data Entry Complete!</div>
+    <div class="done-stats">
+      <div class="done-stat"><div class="done-val" id="t2DE">0</div><div class="done-lbl">Entries</div></div>
+      <div class="done-stat"><div class="done-val" id="t2DF">0</div><div class="done-lbl">Fields</div></div>
+    </div>
+    <div class="done-sub">Choose how to download your data:</div>
+    <div class="t2-dl-btns">
+      <button class="t2-dl-btn" style="background:var(--accent2);color:#0f1117;" onclick="t2ExportAppend()">📋 Add to My Template</button>
+      <button class="t2-dl-btn" style="background:var(--accent);color:#fff;" onclick="t2ExportFresh()">📄 Fresh Excel</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="rst-btn" onclick="t2Continue()">↩ Continue Entry</button>
+      <button class="rst-btn" onclick="showHome()">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="t2TmplLoadIn" accept=".json" style="display:none">
+<!-- ══════════════════ TOOL 3 — DOCUMENT DATA EXTRACTOR ══════════════════ -->
+<div id="tool3" style="display:none;flex:1;flex-direction:column;min-height:0;">
+
+  <!-- Step 1: AI Setup (first time) -->
+  <div id="t3AISetup" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px;">
+    <div style="font-size:38px;">🤖</div>
+    <div style="font-size:18px;font-weight:700;">AI Provider Setup</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;max-width:480px;line-height:1.7;">
+      Tool 3 uses AI to read and extract data from your documents automatically.<br>
+      Set up a free provider — takes 2 minutes.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:460px;">
+      <!-- Ollama -->
+      <div class="ai-provider-card" id="t3OllamaCard">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🦙</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Ollama <span style="font-size:10px;background:rgba(56,217,169,.15);color:var(--accent2);padding:1px 7px;border-radius:99px;font-family:var(--mono);">LOCAL</span></div>
+            <div style="font-size:11px;color:var(--muted);">Free · Offline · No API key needed · Runs on your PC</div>
+          </div>
+          <div id="t3OllamaStatus" style="font-size:11px;font-family:var(--mono);color:var(--muted);">checking…</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+          Install from <b>ollama.com</b> → run <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">ollama pull llama3.1</code>
+        </div>
+      </div>
+      <!-- Gemini -->
+      <div class="ai-provider-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">♊</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Google Gemini <span style="font-size:10px;background:rgba(79,142,247,.15);color:var(--accent);padding:1px 7px;border-radius:99px;font-family:var(--mono);">RECOMMENDED</span></div>
+            <div style="font-size:11px;color:var(--muted);">Free tier · 1M tokens/day · Get key at aistudio.google.com</div>
+          </div>
+        </div>
+        <input id="t3GeminiKey" class="ai-key-input" placeholder="Paste Gemini API key here…" type="password">
+      </div>
+      <!-- HuggingFace -->
+      <div class="ai-provider-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🤗</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Hugging Face</div>
+            <div style="font-size:11px;color:var(--muted);">Free account · Get token at huggingface.co</div>
+          </div>
+        </div>
+        <input id="t3HFKey" class="ai-key-input" placeholder="Paste HuggingFace token here…" type="password">
+      </div>
+      <!-- Claude -->
+      <div class="ai-provider-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">⚡</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Anthropic Claude</div>
+            <div style="font-size:11px;color:var(--muted);">Best accuracy · Paid API key · console.anthropic.com</div>
+          </div>
+        </div>
+        <input id="t3ClaudeKey" class="ai-key-input" placeholder="Paste Claude API key here…" type="password">
+      </div>
+      <!-- OpenAI -->
+      <div class="ai-provider-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🔮</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">OpenAI ChatGPT</div>
+            <div style="font-size:11px;color:var(--muted);">Popular · Paid API key · platform.openai.com</div>
+          </div>
+        </div>
+        <input id="t3OpenAIKey" class="ai-key-input" placeholder="Paste OpenAI API key here…" type="password">
+      </div>
+    </div>
+    <button class="btn btn-save" style="padding:11px 32px;font-size:13px;" onclick="t3SaveAIKeys()">Save & Continue →</button>
+    <div style="font-size:11px;color:var(--muted);">Keys stored locally in your browser. Never uploaded anywhere.</div>
+  </div>
+
+  <!-- Step 2: Template Select -->
+  <div id="t3TemplateSelect" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;overflow-y:auto;">
+    <div style="text-align:center;">
+      <div style="font-size:17px;font-weight:700;">What type of documents?</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:5px;">Pick a preset or build your own field list</div>
+    </div>
+    <div id="t3PresetGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:560px;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn btn-purple" onclick="document.getElementById('t3ExcelTmplIn').click()">📋 Upload Excel Template</button>
+      <button class="btn" style="background:var(--surface2);border:1px solid var(--border);" onclick="t3BuildCustom()">✏️ Custom Fields</button>
+    </div>
+    <input type="file" id="t3ExcelTmplIn" accept=".xlsx,.xls,.csv" style="display:none">
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">AI Provider: <span id="t3ActiveProvider" style="color:var(--accent2);">detecting…</span></div>
+  </div>
+
+  <!-- Step 3: Field Builder -->
+  <div id="t3FieldBuilder" style="display:none;flex:1;flex-direction:column;min-height:0;">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <button class="icon-btn" onclick="t3BackToTemplates()">← Templates</button>
+      <div style="font-size:13px;font-weight:700;flex:1;" id="t3BuilderTitle">Custom Fields</div>
+      <button class="btn" style="background:var(--surface2);border:1px solid var(--border);padding:6px 12px;font-size:11px;" onclick="t3SampleDetect()">📄 Auto-detect from sample</button>
+      <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t3ShowDocLoader()">▶ Load Documents →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 280px;flex:1;min-height:0;overflow:hidden;">
+      <div style="padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;" id="t3FieldList"></div>
+      <div style="border-left:1px solid var(--border);padding:12px;overflow-y:auto;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Preview</div>
+        <div id="t3FieldPreview"></div>
+        <div style="margin-top:14px;padding:10px;background:var(--surface2);border-radius:8px;">
+          <div style="font-size:11px;font-weight:700;margin-bottom:6px;">💡 Prompt Preview</div>
+          <div id="t3PromptPreview" style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.6;white-space:pre-wrap;max-height:120px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Document Loader -->
+  <div id="t3DocLoader" style="display:none;flex:1;flex-direction:column;min-height:0;">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <button class="icon-btn" onclick="t3BackToBuilder()">← Fields</button>
+      <div style="font-size:13px;font-weight:700;flex:1;">Load Documents</div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);" id="t3DocCount">0 documents</div>
+      <button class="btn btn-save" id="t3ExtractBtn" style="padding:6px 14px;font-size:11px;" onclick="t3StartExtraction()" disabled>⚡ Extract All →</button>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;" id="t3DropZone">
+      <div style="font-size:36px;">📂</div>
+      <div style="font-size:15px;font-weight:700;">Drop Documents Here</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;">PDF · DOCX · TXT · DOC<br>All documents should be the same type (e.g. all resumes)</div>
+      <button class="drop-btn" onclick="document.getElementById('t3DocInput').click()">Choose Files</button>
+      <input type="file" id="t3DocInput" accept=".pdf,.docx,.doc,.txt" multiple style="display:none">
+    </div>
+    <!-- Doc strip -->
+    <div style="border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;display:none;flex-direction:column;" id="t3StripWrap">
+      <div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-bottom:1px solid var(--border);">
+        <button onclick="document.getElementById('t3DocInput').click()" style="background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📂 Add More</button>
+        <button onclick="t3ClearDocs()" style="background:none;border:1px solid var(--border);color:var(--danger);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">🗑 Clear</button>
+        <span id="t3StripCount" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;"></span>
+      </div>
+      <div style="display:flex;gap:6px;padding:7px 10px;overflow-x:auto;height:84px;align-items:center;" id="t3Strip"></div>
+    </div>
+  </div>
+
+  <!-- Step 5: Extraction Progress -->
+  <div id="t3Extracting" style="display:none;flex:1;flex-direction:column;min-height:0;">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="font-size:13px;font-weight:700;flex:1;">Extracting Data…</div>
+      <button id="t3PauseBtn" onclick="t3PauseExtraction()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;">⏸ Pause</button>
+      <button onclick="t3StopExtraction()" style="background:none;border:1px solid var(--danger);color:var(--danger);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;">⏹ Stop</button>
+    </div>
+    <div style="padding:16px 20px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+          <div id="t3ExtractProgress" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;width:0%;transition:width .4s;"></div>
+        </div>
+        <div id="t3ExtractPct" style="font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;">0 / 0</div>
+      </div>
+      <div style="display:flex;gap:16px;font-family:var(--mono);font-size:11px;">
+        <span>✅ <span id="t3CountOk">0</span> complete</span>
+        <span>⚠️ <span id="t3CountWarn">0</span> partial</span>
+        <span>❌ <span id="t3CountFail">0</span> failed</span>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 20px;" id="t3ExtractLog"></div>
+  </div>
+
+  <!-- Step 6: Review Table -->
+  <div id="t3Review" style="display:none;flex:1;flex-direction:column;min-height:0;">
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+      <div style="font-size:13px;font-weight:700;">Results</div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--muted);" id="t3ReviewStats"></div>
+      <select id="t3ReviewFilter" onchange="t3RenderReviewTable()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:11px;padding:4px 8px;border-radius:6px;margin-left:auto;">
+        <option value="all">All</option>
+        <option value="ok">✅ Complete</option>
+        <option value="warn">⚠️ Partial</option>
+        <option value="fail">❌ Failed</option>
+      </select>
+      <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t3ShowExport()">⬇ Export →</button>
+    </div>
+    <div style="flex:1;overflow:auto;" id="t3ReviewTableWrap"></div>
+    <!-- Fix panel -->
+    <div id="t3FixPanel" style="display:none;border-top:1px solid var(--border);padding:12px 16px;background:var(--surface);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:700;" id="t3FixTitle">Fix Extraction</div>
+        <button onclick="t3ReExtract()" style="background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;">🔄 Re-extract</button>
+        <button onclick="t3MarkReviewed()" style="background:var(--accent2);color:#0f1117;border:none;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;">✅ Mark Reviewed</button>
+        <button onclick="document.getElementById('t3FixPanel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;margin-left:auto;">×</button>
+      </div>
+      <div id="t3FixFields" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- Step 7: Export -->
+  <div id="t3Export" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;">
+    <div style="font-size:40px;">📊</div>
+    <div style="font-size:20px;font-weight:700;">Export Data</div>
+    <div id="t3ExportStats" style="font-size:13px;color:var(--muted);text-align:center;line-height:1.8;"></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Include records:</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportOk" checked> ✅ Complete records</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportWarn" checked> ⚠️ Partial records (with warnings)</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportFail"> ❌ Failed records</label>
+      <div style="border-top:1px solid var(--border);padding-top:10px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Extra columns:</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportConf"> Confidence scores</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportSrc" checked> Source filename</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" id="t3ExportTs"> Extraction timestamp</label>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn" style="background:var(--accent2);color:#0f1117;padding:10px 22px;font-size:13px;" onclick="t3ExportFresh()">📄 Fresh Excel</button>
+      <button class="btn" style="background:var(--accent);color:#fff;padding:10px 22px;font-size:13px;" onclick="t3ExportAppend()">📋 Add to Template</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="rst-btn" onclick="t3BackToReview()">↩ Back to Review</button>
+      <button class="rst-btn" onclick="showHome()">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+  <!-- DocuOps Scripts — ORDER MATTERS -->
+  <script src="js/theme.js"></script>
+  <script src="js/shared.js"></script>
+  <script>
+    document.querySelectorAll('.version-display')
+      .forEach(el => el.textContent =
+        `DocuOps v${DOCUOPS_VERSION}`);
+  </script>
+  <script src="js/tool1.js"></script>
+  <script src="js/tool2.js"></script>
+  <script src="js/learning.js"></script>
+  <script src="js/defensive.js"></script>
+  <script src="js/tool3.js"></script>
+
+
+
+
+
+<script>
+// ── SUPABASE AUTH IN APP ──
+const { createClient: _createClient } = supabase;
+const _sb = _createClient('https://mawyhvjvnkzgohujxubl.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hd3lodmp2bmt6Z29odWp4dWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDc2NDUsImV4cCI6MjA4OTQ4MzY0NX0.BGx1DABC9Algtfguw3Mh61aXJZjhRYhS3RLttivrivo');
+
+window.addEventListener('load', async () => {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+
+    // Not signed in → back to landing
+    if (!session) {
+      window.location.href = '/';
+      return;
+    }
+
+    // Signed in → show user info
+    const user = session.user;
+    const name = user.user_metadata?.full_name || 
+                 user.email?.split('@')[0] || 'User';
+
+    const userEl = document.getElementById('appUser');
+    const nameEl = document.getElementById('appUserName');
+    if (userEl) userEl.style.display = 'flex';
+    if (nameEl) nameEl.textContent = name;
+
+    // Check if specific tool requested
+    const params = new URLSearchParams(window.location.search);
+    const tool = params.get('tool');
+    if (tool === 't1') launchT1();
+    if (tool === 't2') launchT2();
+
+  } catch(e) {
+    console.log('Supabase app error:', e);
+  }
+});
+
+async function appSignOut() {
+  await _sb.auth.signOut();
+  window.location.href = '/';
+}
+</script>
+
+</body>
+</html>

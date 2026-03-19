@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "name": "docuops",
+  "rewrites": [
+    { "source": "/app", "destination": "/app/app.html" },
+    { "source": "/app/", "destination": "/app/app.html" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}
