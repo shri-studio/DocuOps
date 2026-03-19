@@ -1,24 +1,7 @@
 {
   "version": 2,
-  "name": "docuops",
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "css/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "js/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+  "rewrites": [
+    { "source": "/app/(.*)", "destination": "/app/$1" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
