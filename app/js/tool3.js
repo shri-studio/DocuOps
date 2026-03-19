@@ -934,21 +934,19 @@ async function t3ExportAppend() {
 })();
 
 // Pre-fill settings inputs when settings opens
-const _orig_openSettings_v3 = openSettings;
-function openSettings() {
-  _orig_openSettings_v3();
+document.addEventListener('settingsOpened', function() {
   const keys = t3LoadKeys();
   const g = id => document.getElementById(id);
-  if(g('settingsGeminiKey')) g('settingsGeminiKey').value = keys.gemini || '';
-  if(g('settingsHFKey')) g('settingsHFKey').value = keys.hf || '';
-  if(g('settingsClaudeKey')) g('settingsClaudeKey').value = keys.claude || '';
-  if(g('settingsOpenAIKey')) g('settingsOpenAIKey').value = keys.openai || '';
+  if(g('settingsGeminiKey')) g('settingsGeminiKey').value = keys.gemini||'';
+  if(g('settingsHFKey')) g('settingsHFKey').value = keys.hf||'';
+  if(g('settingsClaudeKey')) g('settingsClaudeKey').value = keys.claude||'';
+  if(g('settingsOpenAIKey')) g('settingsOpenAIKey').value = keys.openai||'';
   t3CheckOllama().then(ok => {
     const el = g('settingsOllamaStatus');
     if(el) el.textContent = ok ? '✅ Running' : 'Not detected';
     if(el) el.style.color = ok ? 'var(--accent2)' : 'var(--muted)';
   });
-}
+});
 
 function t3SaveFromSettings() {
   const g = id => document.getElementById(id);

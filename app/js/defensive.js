@@ -57,7 +57,7 @@ function showHome() {
   _setSessionActive(false);
 
   // Reset all panels
-  ['tool1','tool2'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['tool1','tool2','tool3'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('homePage').style.display = 'flex';
   document.getElementById('toolBadge').style.display = 'none';
   document.getElementById('modeBadge').style.display = 'none';
