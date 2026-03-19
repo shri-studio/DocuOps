@@ -282,11 +282,10 @@ async function t2StartEntry() {
 
 // ── 17. UPDATE VERSION EVERYWHERE ────────────────────
 (function updateVersion() {
-  const ver = 'v2.2.4';
   const footer = document.querySelector('.settings-footer');
-  if (footer) footer.textContent = `OCR Suite ${ver} · All processing local · No data uploaded`;
+  if (footer) footer.textContent = 'DocuOps v3.0.0 · All processing local · No data uploaded';
   const homeFooter = document.querySelector('.home-footer');
-  if (homeFooter) homeFooter.textContent = `All tools run locally · No data uploaded anywhere · DocuOps ${ver}`;
+  if (homeFooter) homeFooter.textContent = 'All tools run locally · No data uploaded anywhere · DocuOps v3.0.0';
 })();
 
 // ── 18. ADD "EDIT TEMPLATE" + "BACK" BUTTONS TO T2 WORK HEADER ──
