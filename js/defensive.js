@@ -283,9 +283,9 @@ async function t2StartEntry() {
 // ── 17. UPDATE VERSION EVERYWHERE ────────────────────
 (function updateVersion() {
   const footer = document.querySelector('.settings-footer');
-  if (footer) footer.textContent = 'DocuOps v3.0.0 · All processing local · No data uploaded';
+  if (footer) footer.textContent = `DocuOps v${DOCUOPS_VERSION} · All processing local · No data uploaded`;
   const homeFooter = document.querySelector('.home-footer');
-  if (homeFooter) homeFooter.textContent = 'All tools run locally · No data uploaded anywhere · DocuOps v3.0.0';
+  if (homeFooter) homeFooter.textContent = `All tools run locally · No data uploaded anywhere · DocuOps v${DOCUOPS_VERSION}`;
 })();
 
 // ── 18. ADD "EDIT TEMPLATE" + "BACK" BUTTONS TO T2 WORK HEADER ──

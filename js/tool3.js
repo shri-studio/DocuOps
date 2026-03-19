@@ -964,11 +964,10 @@ function t3SaveFromSettings() {
 
 // ── VERSION UPDATE ────────────────────────────────────
 (function() {
-  const ver = '3.0.0';
   const sf = document.querySelector('.settings-footer');
-  if (sf) sf.textContent = `DocuOps v${ver} · All processing local · No data uploaded`;
+  if (sf) sf.textContent = `DocuOps v${DOCUOPS_VERSION} · All processing local · No data uploaded`;
   const hf = document.querySelector('.home-footer');
-  if (hf) hf.textContent = `All tools run locally · No data uploaded anywhere · DocuOps v${ver}`;
+  if (hf) hf.textContent = `All tools run locally · No data uploaded anywhere · DocuOps v${DOCUOPS_VERSION}`;
 })();
 
 if(!navigator.onLine)document.getElementById('netWarn').style.display='block';

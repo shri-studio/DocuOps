@@ -547,13 +547,13 @@ function importProfile() {
 // Update settings footer version
 (function() {
   const footer = document.querySelector('.settings-footer');
-  if (footer) footer.textContent = 'DocuOps v3.0.0 · All processing local · No data uploaded';
+  if (footer) footer.textContent = `DocuOps v${DOCUOPS_VERSION} · All processing local · No data uploaded`;
 })();
 
 // Update home footer version
 (function() {
   const footer = document.querySelector('.home-footer');
-  if (footer) footer.textContent = 'All tools run locally · No data uploaded anywhere · DocuOps v3.0.0';
+  if (footer) footer.textContent = `All tools run locally · No data uploaded anywhere · DocuOps v${DOCUOPS_VERSION}`;
 })();
 
 
