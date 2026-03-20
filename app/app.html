@@ -108,8 +108,8 @@
 <!-- ══ HOME PAGE ══ -->
 <div id="homePage">
   <div class="home-hero">
-    <div class="home-title">DocuOps</div>
-    <div class="home-tagline">Document Operations. Automated. tools · runs in your browser · no install needed</div>
+    <div class="home-title" id="homeGreeting">DocuOps</div>
+    <div class="home-tagline">Document Operations. Automated.</div>
   </div>
   <div class="tools-grid">
     <div class="tool-card t1" onclick="launchT1()">
@@ -645,5 +645,33 @@ async function appSignOut() {
 }
 </script>
 
+
+<script>
+// ── PERSONALIZED GREETING ──
+(function() {
+  const hour = new Date().getHours();
+  const time = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+
+  // Wait for user info to load
+  const tryGreeting = setInterval(() => {
+    const nameEl = document.getElementById('appUserName');
+    const greetEl = document.getElementById('homeGreeting');
+    if (!greetEl) { clearInterval(tryGreeting); return; }
+
+    const name = nameEl?.textContent?.trim();
+    if (name && name !== 'Loading...') {
+      const firstName = name.split(' ')[0];
+      greetEl.textContent = `Good ${time}, ${firstName} 👋`;
+      greetEl.style.fontSize = 'clamp(18px, 3vw, 24px)';
+      greetEl.style.fontWeight = '700';
+      greetEl.style.letterSpacing = '-0.3px';
+      clearInterval(tryGreeting);
+    }
+  }, 300);
+
+  // Fallback after 3s if no user name
+  setTimeout(() => clearInterval(tryGreeting), 3000);
+})();
+</script>
 </body>
 </html>
