@@ -58,8 +58,26 @@
     <button class="settings-close" onclick="closeSettings()">×</button>
   </div>
   <div class="settings-body">
+
+    <!-- ACCOUNT SECTION -->
     <div class="settings-section">
-      <div class="settings-section-title">🎨 Theme</div>
+      <div class="settings-section-title">👤 Account</div>
+      <div id="settingsAccount" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div id="settingsAvatar" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0c0e14;flex-shrink:0;">?</div>
+        <div style="flex:1;min-width:0;">
+          <div id="settingsUserName" style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Loading...</div>
+          <div id="settingsUserEmail" style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+        </div>
+        <div style="flex-shrink:0;">
+          <span id="settingsPlan" style="font-size:10px;font-weight:700;font-family:var(--mono);background:rgba(45,212,160,.1);color:var(--green);border:1px solid rgba(45,212,160,.2);padding:2px 8px;border-radius:99px;">FREE</span>
+        </div>
+      </div>
+      <button onclick="appSignOut()" style="width:100%;margin-top:8px;background:none;border:1px solid var(--border);color:var(--muted);padding:8px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Sign Out</button>
+    </div>
+
+    <!-- APPEARANCE SECTION -->
+    <div class="settings-section">
+      <div class="settings-section-title">🎨 Appearance</div>
       <div class="theme-options">
         <div class="theme-opt" id="themeLight" onclick="setTheme('light')">
           <div class="theme-opt-icon">☀️</div>Light
@@ -72,11 +90,19 @@
         </div>
       </div>
     </div>
-    <div class="settings-section" style="color:var(--muted);font-size:11px;line-height:1.7;">
-      More settings coming soon — font size, OCR language, default mode, date format and more.
+
+    <!-- DOCUMENT LAYOUTS SECTION -->
+    <div class="settings-section">
+      <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        📋 Document Layouts
+        <button onclick="renderProfileManager()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--mono);">↻ Refresh</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6;">DocuOps remembers where fields are on your documents. The more you use it, the smarter it gets.</div>
+      <div id="profileManagerContent"></div>
     </div>
+
   </div>
-  <div class="settings-footer"><span class="version-display">DocuOps</span> · All processing local · No data uploaded</div>
+  <div class="settings-footer" id="settingsFooter">DocuOps · All processing local · No data uploaded</div>
 </div>
 
 <!-- ══ HOME PAGE ══ -->
@@ -105,7 +131,7 @@
       <span class="tool-card-tag" style="background:rgba(136,146,164,.15);color:var(--muted);">Coming Soon</span>
     </div>
   </div>
-  <div class="home-footer" style="color:var(--muted);">All tools run locally · No data uploaded · DocuOps <span id="appVersion"></span> · Built by <span style="color:var(--green);">Shri Studio</span></div>
+  <div class="home-footer">All tools run locally · No data uploaded anywhere · <span class="version-display">DocuOps</span></div>
 </div>
 
 <!-- ══ TOOL 1 ══ -->

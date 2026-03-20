@@ -1,7 +1,7 @@
 # DocuOps — Change Log
 
-## Current Version: 3.0.0
-## Live: https://docu-ops.vercel.app/
+## Current Version: 3.1.6
+Live: https://docu-ops.vercel.app
 
 ---
 
@@ -9,139 +9,171 @@
 - No fake/placeholder buttons ever
 - If not built → it doesn't appear
 - Every clickable element must work fully
-- Coming Soon tools = hidden in app, shown on landing only
 - Little by little — one change at a time
 - One change → Test → Commit → Next
+- Minimum 11px font everywhere
+- Clean and simple — never UI/UX heavy
+- Feels like a tool, not a website
+- Version bump = visual confirmation of deployment
 
 ---
 
 ## ✅ DEPLOYED
-- 1.0.0 — Original InvoiceRenamer.html
+- 1.0.0 — Original InvoiceRenamer
 - 2.0.0 — OCR Suite — Tool 1 + Tool 2
-- 2.1.0 — Theme system, field codes, 
-          formula engine, file naming, 
-          template save/load
-- 2.2.0 — FSM, profile key system, 
-          learning engine, suggestion engine,
-          profile manager
-- 2.2.1 — Bug fixes (settings button, 
-          add field button)
-- 2.2.2 — Defensive UX (confirmations, 
-          image load control bar, 
-          edit template button)
-- 2.2.3 — Readability (min 11px fonts, 
-          improved contrast)
-- 2.2.4 — Logo as home button, 
-          confirmation only when session active
-- 3.0.0 — Tool 3 added (placeholder),
-          renamed to DocuOps,
-          refactored to multi-file structure
+- 2.1.0 — Theme, field codes, formula engine
+- 2.2.0 — FSM, learning engine, profiles
+- 2.2.1 — Bug fixes
+- 2.2.2 — Defensive UX
+- 2.2.3 — Readability fixes
+- 2.2.4 — Logo as home button
+- 3.0.0 — Tool 3 placeholder, renamed DocuOps
+- 3.1.0 — Landing page created
+- 3.1.1 — Redirect fixes
+- 3.1.2 — Unified design system
+- 3.1.3 — Supabase auth (Google + Magic Link)
+- 3.1.4 — Settings fixed, Tool 3 coming soon
+- 3.1.5 — Footer visible, font unified, AI removed from settings
+- 3.1.6 — Supabase template + profile sync
 
 ---
 
 ## 📋 QUEUED
-(Implement one by one — in this exact order)
+(In order — one at a time)
 
-### App Fixes
-- 3.0.1 — Fix version display (v2.1 → v3.0.0)
-           Files: js/defensive.js, js/tool3.js
-           
-- 3.0.2 — Fix tool names in app
-           "OCR Document Renamer" → "Document Renamer"
-           "OCR Data Entry" → "Data Entry Assistant"
-           Files: index.html
+### Settings & Account
+- 3.1.7 — Settings redesign
+           → Remove Data Folder section
+           → Rename "Learned Profiles" → "Document Layouts"
+           → Add Account section (name, email, plan, upgrade)
+           → Clean professional layout
 
-### Landing Page
-- 3.1.0 — New landing page (landing.html)
-           Sections:
-           → Nav (logo + links + Launch App button)
-           → Hero (headline + USPs + CTA)
-           → How It Works (3 steps)
-           → Problem section
-           → Privacy/Security (main USP)
-           → Tools grid (live + coming soon)
-           → Industries section
-           → ROI Calculator
-           → Why DocuOps vs ChatGPT
-           → Pricing (Free/Pro/Team/Enterprise)
-           → FAQ
-           → Contact / Custom Request form
-           → Footer
-           NO login button until Clerk is ready
-           
-- 3.1.1 — Move app to /app/ subfolder
-           landing.html becomes index.html
-           App lives at docu-ops.vercel.app/app/
+- 3.1.8 — Font unification
+           → Remove IBM Plex Sans from app.html head
+           → Plus Jakarta Sans everywhere
 
-### Auth & Database (after presentation)
-- 3.2.0 — Clerk.dev integration
-           → Google Sign-in
-           → Magic Link email
-           → User accounts working
-           → Sign In button appears in nav
-           
-- 3.2.1 — Neon PostgreSQL setup
-           → Database tables created:
-              users, templates, profiles, 
-              entries, waitlist
-           → Connection to Vercel established
+### App Home
+- 3.1.9 — Personalized greeting
+           → "Good morning, Rishabha 👋"
+           → Subtle, clean, not heavy
+           → Time-based (morning/afternoon/evening)
 
-- 3.2.2 — Connect templates to database
-           → Templates save to Neon (not localStorage)
-           → Load on login from any device
-           → Team template sharing
+- 3.2.0 — Quick stats bar on app home
+           → Documents processed this month
+           → Time saved estimate
+           → Most used tool
+           → Simple, one line, not a dashboard
 
-- 3.2.3 — Connect learning profiles to database
-           → Profiles save to Neon
-           → Sync across devices
-           → Team shared profiles
+- 3.2.1 — Plan indicator
+           → "Free Plan · 3/50 docs used"
+           → Subtle progress — not aggressive
+           → Upgrade link at right moment
 
-### Tool 3 — Proper Build (after deployment)
-- 3.3.0 — Tool 3 backend (Vercel serverless)
-           → /api/extract endpoint
-           → Groq as primary AI provider
-           → Gemini as fallback
-           → API keys hidden server-side
-           → Users never see keys
+### Tool Experience
+- 3.2.2 — Empty states
+           → Tool 2 no template → friendly guided state
+           → Clear illustration + action buttons
+           → "Upload Template" or "Build from Scratch"
 
-- 3.3.1 — Tool 3 UI fixes
-           → Fix scrolling
-           → Tile view for results (not table)
-           → Remove API key input UI
-           → Auto-detect provider silently
+- 3.2.3 — Onboarding flow (first time only)
+           → One-time welcome after first sign in
+           → "What would you like to do first?"
+           → Skippable
+           → Never shows again after dismissed
 
-- 3.3.2 — Tool 3 document parsing
-           → Mammoth.js for DOCX
-           → PDF.js text extraction
-           → Clean text pipeline
+- 3.2.4 — Success moments
+           → After saving entries: "47 entries saved!"
+           → After renaming: "42 files renamed · ~2 hours saved"
+           → Subtle — not dramatic
+           → Auto-dismisses after 3 seconds
 
-### Payments
-- 3.4.0 — Stripe integration
-           → Free / Pro / Team plans
-           → Payment flow working
-           → Plan limits enforced
+- 3.2.5 — Progress indicators
+           → OCR running: "Reading document 3 of 12..."
+           → Percentage + cancel button
+           → Estimated time remaining
+
+- 3.2.6 — Field activation clearer (Tool 2)
+           → Animated pulse on first field
+           → Tooltip on first use
+           → Clear active state
+
+### Communication & Trust
+- 3.2.7 — Humanised error messages
+           → "Couldn't read that area — try a clearer region"
+           → "Image resolution might be low — try zooming in"
+           → "No text found — is this a scanned document?"
+           → Friendly, actionable, not technical
+
+- 3.2.8 — Loading states micro-copy
+           → "Reading your document..."
+           → "Extracting text..."
+           → "Almost done..."
+           → Feels alive, not robotic
+
+- 3.2.9 — Cloud sync indicator
+           → Small "Synced ✅" in corner when saved
+           → Builds trust
+           → Subtle green dot, auto-hides after 2s
+
+- 3.3.0 — Tooltips
+           → Hover any button → explains what it does
+           → Field code badges explained
+           → Formula fields explained
+           → First-use hints only (not permanent)
+
+### Navigation
+- 3.3.1 — Keyboard shortcut panel
+           → ? key opens shortcuts overlay
+           → Clean, dismissable
+           → Shows all available shortcuts
+
+- 3.3.2 — Processing history
+           → Recent activity on app home
+           → "Invoice renamed 2 hours ago"
+           → Last 5 actions only
+           → Subtle, not prominent
+
+### Mobile
+- 3.3.3 — Mobile responsiveness
+           → Landing page perfect on mobile
+           → App home accessible on mobile
+           → Settings accessible on mobile
+           → Tool 1 usable on mobile
 
 ---
 
 ## 🗒️ BACKLOG
-(Discussed — prioritised — not yet versioned)
+### App Improvements
+- Arabic OCR support (🔴 High)
+- OCR confidence score display (🔴 High)
+- Entry review table before export (🔴 High)
+- Duplicate detection Tool 2 (🟡 Medium)
+- Search/filter image strip (🟡 Medium)
+- Template library — multiple named templates (🟡 Medium)
+- Batch auto-fill / lock field value (🟡 Medium)
+- Font size/family settings panel (🟡 Medium)
+- Undo Ctrl+Z (🟢 Low)
+- Click-to-paste OCR text (🟢 Low)
 
-### High Priority
-- Arabic OCR support
-- OCR confidence score display
-- Entry review table before export
-- Duplicate detection (Tool 2)
+### Tool 3 — Proper Build
+- 3.4.0 — Tool 3 backend (Vercel serverless)
+           → /api/extract endpoint
+           → Groq primary, Gemini fallback
+           → API keys server-side only
 
-### Medium Priority
-- Search/filter image strip
-- Template library (multiple named)
-- Batch auto-fill / lock field value
-- Font size/family settings panel
+- 3.4.1 — Tool 3 UI rebuild
+           → Tile view for results
+           → Fix scrolling
+           → No API key UI for users
 
-### Low Priority
-- Keyboard shortcut cheatsheet
-- Click-to-paste from full OCR text
-- Undo Ctrl+Z last field fill
+- 3.4.2 — Tool 3 Arabic support
+           → Qwen 2.5 for Arabic documents
+
+### Payments
+- 3.5.0 — Stripe integration
+           → Free / Pro / Team plans
+           → Plan limits enforced
+           → Upgrade flow
 
 ### Future Tools
 - Tool 4: Document Translator
@@ -155,42 +187,31 @@
 - Tool 12: Document Validator
 - Tool 13: Analytics Dashboard
 
-### Future Features
-- Visual auto-grouping (TensorFlow.js)
-- Ollama local AI (optional advanced setting)
-- Team admin dashboard
-- API access for enterprise
-- White label option
-- Audit trail
-- SLA tracking
-- Client portal
-
 ---
 
 ## 🏗️ DEPLOYMENT STACK
-- Hosting: Vercel ✅ Live
-- Version control: GitHub ✅ Connected
-- Database: Neon PostgreSQL (pending)
-- Auth: Clerk.dev (pending)
+- Hosting: Vercel ✅
+- Version control: GitHub ✅
+- Auth: Supabase ✅
+- Database: Supabase PostgreSQL ✅
+- Tables: profiles, templates, learning_profiles, waitlist ✅
 - Payments: Stripe (pending)
-- AI providers: Groq + Gemini (pending)
+- AI: Groq + Gemini (pending — Tool 3)
 - Domain: docuops.com (pending)
-- Ads: Google AdSense — free tier only (future)
 
 ---
 
 ## 📐 NAMING CONVENTION
-- MAJOR.0.0 — Complete rebuild or new tool
+- MAJOR.0.0 — Complete rebuild or major new feature
 - x.MINOR.0 — New feature or section
 - x.x.PATCH — Bug fix or small improvement
-```
 
 ---
 
-## What To Do Now
-```
-1. Open CHANGE_LOG.md in Cursor
-2. Select all (Ctrl+A)
-3. Paste the above
-4. Save (Ctrl+S)
-5. Commit to GitHub
+## 🛠️ DEVELOPMENT WORKFLOW
+- Claude → architecture, design, complex builds
+- Cursor → daily coding, bug fixes
+- GitHub → version control
+- Vercel → auto-deploy on push
+- Every change → version bump in shared.js
+- Version on screen = deployment confirmed

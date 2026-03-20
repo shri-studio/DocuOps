@@ -27,13 +27,8 @@ function initTheme(){
 function openSettings(){
   document.getElementById('settingsOverlay').style.display='block';
   document.getElementById('settingsPanel').classList.add('open');
-  // Render profile manager
+  // v2.2: render profile manager each time settings opens
   if(typeof renderProfileManager==='function') setTimeout(renderProfileManager, 50);
-  // Update version in settings footer
-  const sf = document.querySelector('.settings-footer');
-  if(sf && typeof DOCUOPS_VERSION !== 'undefined'){
-    sf.textContent = `DocuOps v${DOCUOPS_VERSION} · All processing local · No data uploaded`;
-  }
 }
 function closeSettings(){
   document.getElementById('settingsOverlay').style.display='none';

@@ -163,77 +163,7 @@ function saveAllProfiles(profiles) {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   // Also write to FSM if available
   FSM.writeJSON('profiles', 'all_profiles', profiles);
-  // Silent cloud sync
-  _syncProfilesToCloud(profiles).catch(()=>{});
 }
-
-async function _syncProfilesToCloud(profiles) {
-  const sb = window._sb;
-  if (!sb) return;
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
-    const userId = session.user.id;
-
-    // Upsert each profile
-    for (const [profileKey, profile] of Object.entries(profiles)) {
-      await sb.from('learning_profiles').upsert({
-        user_id: userId,
-        profile_key: profileKey,
-        profile_label: profile.label || profileKey,
-        fields: profile.fields || {},
-        total_entries: profile.totalEntries || 0,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id,profile_key' });
-    }
-  } catch(e) {
-    console.warn('Profile cloud sync failed:', e.message);
-  }
-}
-
-async function loadProfilesFromCloud() {
-  const sb = window._sb;
-  if (!sb) return null;
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return null;
-    const userId = session.user.id;
-
-    const { data } = await sb
-      .from('learning_profiles')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (!data || !data.length) return null;
-
-    // Convert array to profiles object
-    const profiles = {};
-    data.forEach(row => {
-      profiles[row.profile_key] = {
-        id: row.profile_key,
-        label: row.profile_label,
-        fields: row.fields || {},
-        totalEntries: row.total_entries || 0
-      };
-    });
-    return profiles;
-  } catch(e) {
-    console.warn('Profile cloud load failed:', e.message);
-    return null;
-  }
-}
-
-// Load profiles from cloud on init (merge with localStorage)
-(async () => {
-  const cloudProfiles = await loadProfilesFromCloud();
-  if (cloudProfiles) {
-    const local = loadAllProfiles();
-    // Merge: cloud takes priority
-    const merged = { ...local, ...cloudProfiles };
-    localStorage.setItem(PROFILES_KEY, JSON.stringify(merged));
-    console.log('✅ Profiles synced from cloud');
-  }
-})();
 
 function learnFromEntry(profileId, fieldId, canvasSel, viewer) {
   if (!profileId || !fieldId || !canvasSel) return;
@@ -492,7 +422,7 @@ function renderProfileManager() {
   const keys = Object.keys(profiles);
 
   if (!keys.length) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--muted);">No profiles learned yet. Use OCR Data Entry with Profile Keys set to start learning.</div>';
+    container.innerHTML = '<div style="font-size:11px;color:var(--muted);">No document layouts learned yet. Use the Data Entry tool to start building layouts automatically.</div>';
     return;
   }
 
@@ -583,47 +513,7 @@ function importProfile() {
 // ════════════════════════════════════════════════════
 // v2.2 — PATCH SETTINGS PANEL with Profile Manager
 // ════════════════════════════════════════════════════
-(function patchSettingsPanel() {
-  const body = document.querySelector('.settings-body');
-  if (!body) return;
-
-  // Add FSM data folder section
-  const fsmSection = document.createElement('div');
-  fsmSection.className = 'settings-section';
-  fsmSection.innerHTML = `
-    <div class="settings-section-title">📁 Data Folder</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6;">Pick a folder where OCR Suite stores profiles, templates and entries. Use a shared network drive for team access.</div>
-    <button class="tmpl-btn" style="width:100%;margin-bottom:6px;" onclick="FSM.pickDataFolder()">📁 Choose Data Folder</button>
-    <span id="fsmFolderName" style="display:none;font-size:11px;font-family:var(--mono);color:var(--accent2);"></span>
-  `;
-  body.insertBefore(fsmSection, body.firstChild);
-
-  // Add Profile Manager section
-  const pmSection = document.createElement('div');
-  pmSection.className = 'settings-section';
-  pmSection.innerHTML = `
-    <div class="settings-section-title" style="display:flex;align-items:center;justify-content:space-between;">
-      🧠 Learned Profiles
-      <button onclick="renderProfileManager()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;">↻ Refresh</button>
-    </div>
-    <div id="profileManagerContent" style="margin-top:8px;"></div>
-  `;
-  body.appendChild(pmSection);
-})();
-
 // Patch openSettings to refresh profile manager
 // openSettings patched inline — renderProfileManager called inside openSettings body below
-
-// Update settings footer version
-(function() {
-  const footer = document.querySelector('.settings-footer');
-  if (footer) footer.textContent = 'DocuOps v2.2 · All processing local · No data uploaded';
-})();
-
-// Update home footer version
-(function() {
-  const footer = document.querySelector('.home-footer');
-  if (footer) footer.textContent = 'All tools run locally · No data uploaded anywhere · DocuOps v2.2';
-})();
 
 
