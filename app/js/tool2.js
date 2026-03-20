@@ -41,20 +41,111 @@ let t2Files=[],t2ActiveFile=0,t2Entries=[],t2ActiveFieldId=null;
 let t2RepeatData={},t2TemplateFile=null,t2NamingPatternOverride=null;
 const T2_AUTOSAVE_KEY='ocrSuite_t2Template';
 
+// ── SUPABASE TEMPLATE SYNC ──────────────────────────
+const _sbUrl = 'https://mawyhvjvnkzgohujxubl.supabase.co';
+const _sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hd3lodmp2bmt6Z29odWp4dWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MDc2NDUsImV4cCI6MjA4OTQ4MzY0NX0.BGx1DABC9Algtfguw3Mh61aXJZjhRYhS3RLttivrivo';
+
+async function _getSupabase() {
+  if (window._sb) return window._sb;
+  return null;
+}
+
+async function _getCurrentUserId() {
+  const sb = await _getSupabase();
+  if (!sb) return null;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.user?.id || null;
+  } catch(e) { return null; }
+}
+
+async function t2SaveTemplateToCloud(data) {
+  const sb = await _getSupabase();
+  const userId = await _getCurrentUserId();
+  if (!sb || !userId) return; // offline — localStorage only
+
+  try {
+    // Check if template exists for this user
+    const { data: existing } = await sb
+      .from('templates')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', 'default')
+      .single();
+
+    if (existing) {
+      // Update existing
+      await sb.from('templates').update({
+        fields: data.fields,
+        naming_pattern: data.namingPattern,
+        updated_at: new Date().toISOString()
+      }).eq('id', existing.id);
+    } else {
+      // Insert new
+      await sb.from('templates').insert({
+        user_id: userId,
+        name: 'default',
+        fields: data.fields,
+        naming_pattern: data.namingPattern || ''
+      });
+    }
+    console.log('✅ Template synced to cloud');
+  } catch(e) {
+    console.warn('Template cloud sync failed:', e.message);
+  }
+}
+
+async function t2LoadTemplateFromCloud() {
+  const sb = await _getSupabase();
+  const userId = await _getCurrentUserId();
+  if (!sb || !userId) return null;
+
+  try {
+    const { data } = await sb
+      .from('templates')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('name', 'default')
+      .single();
+
+    if (data) {
+      return {
+        fields: data.fields || [],
+        namingPattern: data.naming_pattern || '',
+        savedAt: new Date(data.updated_at).toLocaleString()
+      };
+    }
+  } catch(e) {
+    console.warn('Template cloud load failed:', e.message);
+  }
+  return null;
+}
+
+
+
 function t2ShowSetup(){
   ['t2Setup','t2Builder','t2Work','t2Done'].forEach(id=>{
     const el=document.getElementById(id);
     el.style.display=id==='t2Setup'?'flex':'none';
   });
-  // Check for auto-saved template
-  const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
-  if(saved){
-    try{
-      const d=JSON.parse(saved);
-      document.getElementById('t2TmplName').textContent=`Auto-saved: ${d.savedAt||''}`;
+  // Check cloud first, then localStorage
+  (async () => {
+    const cloud = await t2LoadTemplateFromCloud();
+    if(cloud){
+      localStorage.setItem(T2_AUTOSAVE_KEY, JSON.stringify(cloud));
+      document.getElementById('t2TmplName').textContent=`Saved: ${cloud.savedAt||''}`;
       document.getElementById('t2TmplName').style.display='inline';
-    }catch(e){}
-  }
+      return;
+    }
+    const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
+    if(saved){
+      try{
+        const d=JSON.parse(saved);
+        document.getElementById('t2TmplName').textContent=`Auto-saved: ${d.savedAt||''}`;
+        document.getElementById('t2TmplName').style.display='inline';
+      }catch(e){}
+    }
+  })();
 }
 
 // Template persistence
@@ -65,13 +156,15 @@ function t2SaveTemplate(){
     namingPattern:document.getElementById('t2NamingPattern')?.value||'{A}',
     savedAt:new Date().toLocaleString()
   };
-  // Auto-save to localStorage
+  // Save to localStorage (instant)
   localStorage.setItem(T2_AUTOSAVE_KEY,JSON.stringify(data));
+  // Save to Supabase (sync across devices)
+  t2SaveTemplateToCloud(data).then(()=>{});
   // Export as JSON file
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='ocr_template.json';a.click();
-  alert('Template saved!\n\nAlso auto-saved in your browser for next time.');
+  a.download='docuops_template.json';a.click();
+  alert('Template saved!\n\nSynced to your account — available on any device.');
 }
 
 function t2LoadTemplateFile(){
@@ -145,6 +238,8 @@ function t2AutoSave(){
   const np=document.getElementById('t2NamingPattern');
   const data={fields:t2Fields,namingPattern:np?np.value:'{A}',savedAt:new Date().toLocaleString()};
   localStorage.setItem(T2_AUTOSAVE_KEY,JSON.stringify(data));
+  // Silent cloud sync
+  t2SaveTemplateToCloud(data).catch(()=>{});
 }
 
 function t2RenderBuilder(){

@@ -163,7 +163,77 @@ function saveAllProfiles(profiles) {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   // Also write to FSM if available
   FSM.writeJSON('profiles', 'all_profiles', profiles);
+  // Silent cloud sync
+  _syncProfilesToCloud(profiles).catch(()=>{});
 }
+
+async function _syncProfilesToCloud(profiles) {
+  const sb = window._sb;
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const userId = session.user.id;
+
+    // Upsert each profile
+    for (const [profileKey, profile] of Object.entries(profiles)) {
+      await sb.from('learning_profiles').upsert({
+        user_id: userId,
+        profile_key: profileKey,
+        profile_label: profile.label || profileKey,
+        fields: profile.fields || {},
+        total_entries: profile.totalEntries || 0,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,profile_key' });
+    }
+  } catch(e) {
+    console.warn('Profile cloud sync failed:', e.message);
+  }
+}
+
+async function loadProfilesFromCloud() {
+  const sb = window._sb;
+  if (!sb) return null;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return null;
+    const userId = session.user.id;
+
+    const { data } = await sb
+      .from('learning_profiles')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (!data || !data.length) return null;
+
+    // Convert array to profiles object
+    const profiles = {};
+    data.forEach(row => {
+      profiles[row.profile_key] = {
+        id: row.profile_key,
+        label: row.profile_label,
+        fields: row.fields || {},
+        totalEntries: row.total_entries || 0
+      };
+    });
+    return profiles;
+  } catch(e) {
+    console.warn('Profile cloud load failed:', e.message);
+    return null;
+  }
+}
+
+// Load profiles from cloud on init (merge with localStorage)
+(async () => {
+  const cloudProfiles = await loadProfilesFromCloud();
+  if (cloudProfiles) {
+    const local = loadAllProfiles();
+    // Merge: cloud takes priority
+    const merged = { ...local, ...cloudProfiles };
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(merged));
+    console.log('✅ Profiles synced from cloud');
+  }
+})();
 
 function learnFromEntry(profileId, fieldId, canvasSel, viewer) {
   if (!profileId || !fieldId || !canvasSel) return;
