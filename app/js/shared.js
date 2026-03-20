@@ -1,4 +1,4 @@
-const DOCUOPS_VERSION = '3.1.4';
+const DOCUOPS_VERSION = '3.1.5';
 
 // ============================================================
 // DocuOps v3.0.0 — Shared Utilities & Viewer Engine
@@ -84,7 +84,24 @@ function guessNo(t){
 }
 
 // Navigation
-// showHome defined in v2.2.4 patch below
+function showHome(){
+  const confirm_needed = typeof _sessionActive !== 'undefined' && _sessionActive;
+  if(confirm_needed){
+    if(!confirm('Go back to home?\n\nAny unsaved work will be lost.')) return;
+  }
+  document.getElementById('homePage').style.display='flex';
+  document.getElementById('tool1').style.display='none';
+  document.getElementById('tool2').style.display='none';
+  const t3 = document.getElementById('tool3');
+  if(t3) t3.style.display='none';
+  const b=document.getElementById('toolBadge');
+  if(b){b.style.display='none';b.textContent='';}
+  const mb=document.getElementById('modeBadge');
+  if(mb) mb.style.display='none';
+  const sb=document.getElementById('statsBar');
+  if(sb) sb.style.display='none';
+  if(typeof _setSessionActive==='function') _setSessionActive(false);
+}
 
 
 function launchT1(){

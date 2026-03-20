@@ -85,7 +85,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .tool-card-tag{display:inline-block;margin-top:10px;font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;font-weight:600;}
 .tag-t1{background:rgba(91,141,246,.12);color:var(--blue);}
 .tag-t2{background:rgba(155,126,248,.12);color:var(--purple);}
-.home-footer{font-size:11px;color:var(--border);font-family:var(--mono);text-align:center;}
+.home-footer{font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;}
 
 /* SHARED VIEWER */
 .img-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;padding:10px;gap:7px;min-height:0;overflow:hidden;}
