@@ -766,11 +766,27 @@ function typeLoop(){
   const line=lines[li];
   rEl.className='rotating-text'+(line.arabic?' arabic':'');
   if(typing){
-    if(ci<=line.text.length){rEl.textContent=line.text.slice(0,ci);rEl.classList.add('visible');ci++;setTimeout(typeLoop,line.arabic?80:45);}
-    else{typing=false;setTimeout(typeLoop,2500);}
-  }else{
+    // Typing speed: 40ms per char (smooth)
+    if(ci<=line.text.length){
+      rEl.textContent=line.text.slice(0,ci);
+      rEl.classList.add('visible');
+      ci++;
+      setTimeout(typeLoop, line.arabic ? 90 : 40);
+    } else {
+      // Stay duration: 3500ms — enough time to read
+      typing=false;
+      setTimeout(typeLoop, 3500);
+    }
+  } else {
+    // Fade out then pause before next line
     rEl.classList.remove('visible');
-    setTimeout(()=>{li=(li+1)%lines.length;ci=0;typing=true;rEl.textContent='';setTimeout(typeLoop,300);},400);
+    setTimeout(()=>{
+      li=(li+1)%lines.length;
+      ci=0;
+      typing=true;
+      rEl.textContent='';
+      setTimeout(typeLoop, 400);
+    }, 500);
   }
 }
 typeLoop();
