@@ -687,8 +687,108 @@ function t2Finish(){
   if(t2Entries.length===0&&!confirm('No entries yet. Export empty file?'))return;
   document.getElementById('t2Work').style.display='none';
   document.getElementById('t2Done').style.display='flex';
-  document.getElementById('t2DE').textContent=t2Entries.length;
-  document.getElementById('t2DF').textContent=t2Fields.filter(f=>f.type!=='formula').length;
+  document.getElementById('t2ExportPanel').style.display='none';
+  t2RenderReviewTable();
+}
+
+function t2RenderReviewTable(){
+  const wrap = document.getElementById('t2ReviewTableWrap');
+  const count = document.getElementById('t2ReviewCount');
+  if(!wrap) return;
+
+  const n = t2Entries.length;
+  if(count) count.textContent = n + ' entr' + (n===1?'y':'ies');
+
+  if(!n){
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">No entries yet.</div>';
+    return;
+  }
+
+  // Build headers — skip internal fields
+  const skip = ['_file','_timestamp','_savedAs'];
+  const headers = t2Fields.map(f=>f.name);
+
+  const table = document.createElement('table');
+  table.className = 't2-review-table';
+
+  // Header row
+  const thead = document.createElement('thead');
+  const hrow = document.createElement('tr');
+  hrow.innerHTML = '<th>#</th><th>Source File</th>' +
+    headers.map(h=>`<th>${h}</th>`).join('') +
+    '<th>Actions</th>';
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  // Body rows
+  const tbody = document.createElement('tbody');
+  t2Entries.forEach((entry, idx) => {
+    const tr = document.createElement('tr');
+    let cells = `<td style="color:var(--muted);font-family:var(--mono);">${idx+1}</td>`;
+    cells += `<td style="color:var(--muted);font-size:11px;" title="${entry._file||''}">${(entry._file||'—').slice(0,20)}</td>`;
+
+    headers.forEach(h => {
+      const val = entry[h] || '';
+      cells += `<td class="editable" title="${val}" onclick="t2EditCell(this, ${idx}, '${h.replace(/'/g,"\'")}')">
+        ${val || '<span style="color:var(--border);">—</span>'}
+      </td>`;
+    });
+
+    cells += `<td>
+      <button onclick="t2DeleteEntry(${idx})" style="background:none;border:1px solid var(--border);color:var(--danger);font-size:10px;padding:2px 7px;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--danger)'">Delete</button>
+    </td>`;
+
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  wrap.innerHTML = '';
+  wrap.appendChild(table);
+}
+
+function t2EditCell(td, entryIdx, fieldName){
+  const current = t2Entries[entryIdx][fieldName] || '';
+  const input = document.createElement('input');
+  input.className = 'cell-edit';
+  input.value = current;
+  td.innerHTML = '';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+
+  function save(){
+    t2Entries[entryIdx][fieldName] = input.value;
+    td.innerHTML = input.value || '<span style="color:var(--border);">—</span>';
+    td.onclick = () => t2EditCell(td, entryIdx, fieldName);
+  }
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter') { e.preventDefault(); save(); }
+    if(e.key === 'Escape') { td.innerHTML = current || '<span style="color:var(--border);">—</span>'; td.onclick = () => t2EditCell(td, entryIdx, fieldName); }
+  });
+}
+
+function t2DeleteEntry(idx){
+  if(!confirm(`Delete entry ${idx+1}?\nThis cannot be undone.`)) return;
+  t2Entries.splice(idx, 1);
+  t2RenderReviewTable();
+}
+
+function t2ShowExportPanel(){
+  const wrap = document.getElementById('t2ReviewTableWrap');
+  const panel = document.getElementById('t2ExportPanel');
+  const summary = document.getElementById('t2ExportSummary');
+  if(wrap) wrap.style.display='none';
+  if(panel) panel.style.display='flex';
+  if(summary) summary.textContent = `${t2Entries.length} entries · ${t2Fields.length} fields ready to export`;
+}
+
+function t2BackToReview(){
+  const wrap = document.getElementById('t2ReviewTableWrap');
+  const panel = document.getElementById('t2ExportPanel');
+  if(wrap) wrap.style.display='block';
+  if(panel) panel.style.display='none';
 }
 
 function t2Continue(){document.getElementById('t2Done').style.display='none';document.getElementById('t2Work').style.display='flex';}

@@ -17,6 +17,17 @@
 
   <!-- DocuOps Styles -->
   <link rel="stylesheet" href="css/style.css">
+
+<style>
+/* ── TOOL 2 REVIEW TABLE ── */
+.t2-review-table{width:100%;border-collapse:collapse;font-size:12px;}
+.t2-review-table th{background:var(--surface);border-bottom:2px solid var(--border);padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;position:sticky;top:0;z-index:1;font-family:var(--mono);}
+.t2-review-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.t2-review-table tr:hover td{background:rgba(91,141,246,.03);}
+.t2-review-table td.editable{cursor:pointer;}
+.t2-review-table td.editable:hover{background:rgba(45,212,160,.05);color:var(--green);}
+.t2-review-table input.cell-edit{background:var(--surface2);border:1px solid var(--green);border-radius:4px;padding:3px 7px;font-size:12px;color:var(--text);font-family:var(--sans);outline:none;width:100%;min-width:80px;}
+</style>
 </head>
 <body>
 
@@ -398,21 +409,31 @@
     <div class="strip-wrap" id="t2StripWrap"><div class="strip" id="t2Strip"></div></div>
   </div>
 
-  <!-- Done -->
-  <div id="t2Done">
-    <div class="done-icon">📊</div><div class="done-title">Data Entry Complete!</div>
-    <div class="done-stats">
-      <div class="done-stat"><div class="done-val" id="t2DE">0</div><div class="done-lbl">Entries</div></div>
-      <div class="done-stat"><div class="done-val" id="t2DF">0</div><div class="done-lbl">Fields</div></div>
+  <!-- Done / Review -->
+  <div id="t2Done" style="flex-direction:column;min-height:0;">
+    <!-- Header -->
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="font-size:13px;font-weight:700;flex:1;">Review Entries</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="t2ReviewCount"></div>
+      <button class="rst-btn" onclick="t2Continue()" style="font-size:11px;padding:5px 12px;">↩ Add More</button>
+      <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t2ShowExportPanel()">⬇ Export →</button>
     </div>
-    <div class="done-sub">Choose how to download your data:</div>
-    <div class="t2-dl-btns">
-      <button class="t2-dl-btn" style="background:var(--accent2);color:#0f1117;" onclick="t2ExportAppend()">📋 Add to My Template</button>
-      <button class="t2-dl-btn" style="background:var(--accent);color:#fff;" onclick="t2ExportFresh()">📄 Fresh Excel</button>
+    <!-- Review Table -->
+    <div style="flex:1;overflow:auto;" id="t2ReviewTableWrap"></div>
+    <!-- Export Panel (hidden by default) -->
+    <div id="t2ExportPanel" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;">
+      <div style="font-size:36px;">📊</div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:-.3px;">Export Data</div>
+      <div style="font-size:13px;color:var(--muted);" id="t2ExportSummary"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button class="t2-dl-btn" style="background:var(--green);color:#0c0e14;padding:11px 24px;" onclick="t2ExportAppend()">📋 Add to My Template</button>
+        <button class="t2-dl-btn" style="background:var(--blue);color:#fff;padding:11px 24px;" onclick="t2ExportFresh()">📄 Fresh Excel</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="rst-btn" onclick="t2BackToReview()">↩ Back to Review</button>
+        <button class="rst-btn" onclick="showHome()">🏠 Home</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:6px;">
-      <button class="rst-btn" onclick="t2Continue()">↩ Continue Entry</button>
-      <button class="rst-btn" onclick="showHome()">🏠 Home</button>
     </div>
   </div>
 </div>
