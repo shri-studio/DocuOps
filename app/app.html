@@ -86,7 +86,6 @@
   <div class="hdr-right">
     <div id="appUser" style="display:none;align-items:center;gap:8px;">
       <span id="appUserName" style="font-size:12px;color:var(--muted);font-family:var(--mono);"></span>
-      <button onclick="appSignOut()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s;" onmouseover="this.style.color='var(--danger)';this.style.borderColor='var(--danger)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Sign Out</button>
     </div>
     <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
   </div>
@@ -709,22 +708,19 @@
   <script src="js/shared.js"></script>
   <script>
   // ── VERSION DISPLAY ──
-  // Runs after shared.js (which defines DOCUOPS_VERSION)
-  (function applyVersion(){
+  document.addEventListener('DOMContentLoaded', function(){
     const v = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : '?';
-
-    // All .version-display spans
-    document.querySelectorAll('.version-display')
-      .forEach(el => el.textContent = `v${v}`);
-
-    // Settings footer
+    document.querySelectorAll('.version-display').forEach(el => el.textContent = `v${v}`);
     const sf = document.getElementById('settingsFooter');
     if(sf) sf.textContent = `DocuOps v${v} · All processing local · No data uploaded`;
-
-    // App version span
     const av = document.getElementById('appVersion');
     if(av) av.textContent = `v${v}`;
-  })();
+    const hf = document.querySelector('.home-footer');
+    if(hf) {
+      const span = hf.querySelector('.version-display');
+      if(span) span.textContent = `v${v}`;
+    }
+  });
   </script>
   <script src="js/tool1.js"></script>
   <script src="js/tool2.js"></script>
