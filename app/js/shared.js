@@ -1,4 +1,4 @@
-const DOCUOPS_VERSION = '3.2.3';
+const DOCUOPS_VERSION = '3.2.4';
 
 // ============================================================
 // DocuOps v3.0.0 — Shared Utilities & Viewer Engine

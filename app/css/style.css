@@ -233,9 +233,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .builder-sub{font-size:11px;color:var(--muted);flex:1;}
 .builder-actions{display:flex;gap:8px;}
 .builder-body{flex:1;display:grid;grid-template-columns:1fr 300px;min-height:0;overflow:hidden;}
-.builder-fields{padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;}
-.field-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
-.field-card-top{display:flex;align-items:center;gap:7px;}
+.builder-fields{padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+.field-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 10px;transition:border-color .15s;}
+.field-card:hover{border-color:rgba(91,141,246,.3);}
+.field-card-top{display:flex;align-items:center;gap:6px;}
 .field-code-badge{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:4px;cursor:pointer;flex-shrink:0;min-width:28px;text-align:center;}
 .field-code-inp{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:transparent;border:none;outline:none;width:40px;text-align:center;}
 .field-name-inp{background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;font-family:var(--sans);outline:none;flex:1;min-width:0;}

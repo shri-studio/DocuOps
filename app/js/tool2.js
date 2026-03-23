@@ -254,34 +254,147 @@ function t2RenderBuilder(){
     const showRepeat=f.type==='repeat';
     const showFormula=f.type==='formula';
 
-    const card=document.createElement('div');card.className='field-card';
-    card.innerHTML=`
-      <div class="field-card-top">
-        <div class="field-code-badge" style="background:${col};" title="Click to rename code" onclick="t2RenameCode(${i})">
-          ${f.customCode?`<input class="field-code-inp" value="${f.code}" onchange="t2SetCode(${i},this.value)" onclick="event.stopPropagation()" style="color:#fff;">`:`<span>${f.code}</span>`}
-        </div>
-        <input class="field-name-inp" value="${f.name}" onchange="t2FieldSet(${i},'name',this.value)" placeholder="Field name">
-        <select class="field-type-sel" onchange="t2FieldSet(${i},'type',this.value)">
-          <option value="text" ${f.type==='text'?'selected':''}>📝 Text</option>
-          <option value="number" ${f.type==='number'?'selected':''}>🔢 Number</option>
-          <option value="date" ${f.type==='date'?'selected':''}>📅 Date</option>
-          <option value="dropdown" ${f.type==='dropdown'?'selected':''}>📋 Dropdown</option>
-          <option value="repeat" ${f.type==='repeat'?'selected':''}>➕ Repeating</option>
-          <option value="formula" ${f.type==='formula'?'selected':''}>🧮 Formula</option>
-        </select>
-        <label class="field-req"><input type="checkbox" ${f.required?'checked':''} onchange="t2FieldSet(${i},'required',this.checked)"> Req</label>
-        <button title="${f.isProfileKey?'Profile Key — click to remove':'Set as Profile Key'}" onclick="t2Fields[${i}].isProfileKey=!t2Fields[${i}].isProfileKey;t2RenderBuilder();" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0;color:${f.isProfileKey?'#f7a94f':'var(--border)'};">${f.isProfileKey?'★':'☆'}</button>
-        <button class="field-del" onclick="t2DelField(${i})">×</button>
-      </div>
-      <div class="field-extra ${showOpts||showRepeat||showFormula?'show':''}">
-        ${showOpts?`<textarea class="field-textarea" placeholder="Options — one per line" onchange="t2FieldSet(${i},'options',this.value)">${f.options}</textarea>`:''}
-        ${showRepeat?t2RenderSubFields(f,i):''}
-        ${showFormula?`
-          <input class="field-inp-sm" placeholder="e.g. ={EB}*{EC} or =ROUND({D}*0.05,2)" value="${f.formula}" onchange="t2FieldSet(${i},'formula',this.value)">
-          <div style="font-size:11px;color:var(--muted);">Use ={FieldCode} or ={FieldName}. Functions: ROUND, IF, SUM, AVERAGE, COUNT</div>
-        `:''}
-      </div>
-    `;
+    const card=document.createElement('div');
+    card.className='field-card';
+    card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 10px;';
+
+    // Top row — compact single line
+    const top=document.createElement('div');
+    top.style.cssText='display:flex;align-items:center;gap:6px;';
+
+    // Code badge
+    const codeBadge=document.createElement('div');
+    codeBadge.style.cssText=`background:${col};color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;cursor:pointer;flex-shrink:0;min-width:24px;text-align:center;`;
+    codeBadge.title='Click to rename';
+    codeBadge.onclick=()=>t2RenameCode(i);
+    if(f.customCode){
+      const codeInp=document.createElement('input');
+      codeInp.value=f.code;
+      codeInp.style.cssText='color:#fff;background:transparent;border:none;outline:none;width:28px;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;';
+      codeInp.onchange=e=>t2SetCode(i,e.target.value);
+      codeInp.onclick=e=>e.stopPropagation();
+      codeBadge.appendChild(codeInp);
+    } else {
+      codeBadge.textContent=f.code;
+    }
+    top.appendChild(codeBadge);
+
+    // Field name
+    const nameInp=document.createElement('input');
+    nameInp.value=f.name;
+    nameInp.placeholder='Field name';
+    nameInp.style.cssText='background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;font-family:var(--sans);outline:none;flex:1;min-width:0;';
+    nameInp.onchange=e=>t2FieldSet(i,'name',e.target.value);
+    top.appendChild(nameInp);
+
+    // Type selector — compact
+    const typeSel=document.createElement('select');
+    typeSel.style.cssText='background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-family:var(--mono);border-radius:4px;padding:2px 4px;cursor:pointer;outline:none;flex-shrink:0;';
+    [['text','Text'],['number','Num'],['date','Date'],['dropdown','Drop'],['repeat','Rpt'],['formula','Fx']].forEach(([val,label])=>{
+      const opt=document.createElement('option');
+      opt.value=val;opt.textContent=label;
+      if(f.type===val)opt.selected=true;
+      typeSel.appendChild(opt);
+    });
+    typeSel.onchange=e=>t2FieldSet(i,'type',e.target.value);
+    top.appendChild(typeSel);
+
+    // Required checkbox — compact
+    const reqLabel=document.createElement('label');
+    reqLabel.style.cssText='display:flex;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer;flex-shrink:0;';
+    reqLabel.title='Required field';
+    const reqChk=document.createElement('input');
+    reqChk.type='checkbox';reqChk.checked=f.required;
+    reqChk.style.cssText='width:11px;height:11px;cursor:pointer;accent-color:var(--green);';
+    reqChk.onchange=e=>t2FieldSet(i,'required',e.target.checked);
+    reqLabel.appendChild(reqChk);
+    reqLabel.appendChild(document.createTextNode('R'));
+    top.appendChild(reqLabel);
+
+    // Profile key star
+    const star=document.createElement('button');
+    star.style.cssText=`background:none;border:none;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;color:${f.isProfileKey?'#f59e0b':'var(--border)'};transition:color .15s;`;
+    star.title=f.isProfileKey?'Profile Key — click to remove':'Set as Profile Key';
+    star.textContent=f.isProfileKey?'★':'☆';
+    star.onclick=()=>{t2Fields[i].isProfileKey=!t2Fields[i].isProfileKey;t2RenderBuilder();};
+    top.appendChild(star);
+
+    // Delete button — using addEventListener (fixes the onclick issue)
+    const delBtn=document.createElement('button');
+    delBtn.style.cssText='background:none;border:none;color:var(--border);cursor:pointer;font-size:15px;padding:0 2px;flex-shrink:0;line-height:1;transition:color .15s;';
+    delBtn.textContent='×';
+    delBtn.title='Delete field';
+    delBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      t2Fields.splice(i,1);
+      t2RenderBuilder();
+    });
+    top.appendChild(delBtn);
+
+    card.appendChild(top);
+
+    // Extra row for formula/dropdown/repeat
+    if(showOpts||showRepeat||showFormula){
+      const extra=document.createElement('div');
+      extra.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:5px;';
+
+      if(showOpts){
+        const ta=document.createElement('textarea');
+        ta.className='field-textarea';
+        ta.placeholder='Options — one per line';
+        ta.value=f.options;
+        ta.onchange=e=>t2FieldSet(i,'options',e.target.value);
+        extra.appendChild(ta);
+      }
+
+      if(showRepeat){
+        extra.innerHTML+=t2RenderSubFields(f,i);
+      }
+
+      if(showFormula){
+        // Formula input
+        const fInp=document.createElement('input');
+        fInp.className='field-inp-sm';
+        fInp.id=`formula_inp_${i}`;
+        fInp.placeholder='e.g. ={A}*{B} or =ROUND({C}*0.15,2)';
+        fInp.value=f.formula||'';
+        fInp.style.fontFamily='var(--mono)';
+
+        // Validate on change
+        fInp.oninput=e=>{
+          t2Fields[i].formula=e.target.value;
+          t2ValidateFormula(e.target, e.target.value, i);
+          setTimeout(t2AutoSave,200);
+        };
+
+        // Validation indicator
+        const fStatus=document.createElement('div');
+        fStatus.id=`formula_status_${i}`;
+        fStatus.style.cssText='font-size:11px;font-family:var(--mono);';
+
+        // Examples
+        const fHint=document.createElement('div');
+        fHint.style.cssText='font-size:10px;color:var(--muted);line-height:1.7;';
+        fHint.innerHTML=`
+          <b style="color:var(--text);">Examples:</b>
+          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='={A}*{B}';t2FieldSet(${i},'formula','={A}*{B}')">={A}*{B}</span> ·
+          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='=ROUND({A}*0.15,2)';t2FieldSet(${i},'formula','=ROUND({A}*0.15,2)')">VAT 15%</span> ·
+          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='={A}+{B}+{C}';t2FieldSet(${i},'formula','={A}+{B}+{C}')">={A}+{B}+{C}</span> ·
+          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='=IF({A}>100,\"High\",\"Low\")';t2FieldSet(${i},'formula','=IF({A}>100,\"High\",\"Low\")')">IF condition</span>
+          <br><b style="color:var(--text);">Functions:</b> ROUND · ROUNDUP · ROUNDDOWN · IF · SUM · AVERAGE · COUNT
+        `;
+
+        extra.appendChild(fInp);
+        extra.appendChild(fStatus);
+        extra.appendChild(fHint);
+
+        // Validate existing value
+        if(f.formula) setTimeout(()=>t2ValidateFormula(fInp, f.formula, i), 100);
+      }
+
+      card.appendChild(extra);
+    }
+
     list.appendChild(card);
 
     // Preview
@@ -338,6 +451,34 @@ function t2AddField(){t2Fields.push({id:'f'+Date.now(),name:'New Field',type:'te
 function t2AddSubField(fi){if(!t2Fields[fi].subFields)t2Fields[fi].subFields=[];t2Fields[fi].subFields.push({name:'Sub '+( t2Fields[fi].subFields.length+1),customCode:false});assignCodes(t2Fields);t2RenderBuilder();}
 function t2DelSubField(fi,si){t2Fields[fi].subFields.splice(si,1);assignCodes(t2Fields);t2RenderBuilder();}
 function t2SubFieldName(fi,si,v){t2Fields[fi].subFields[si].name=v;t2RenderBuilder();}
+
+function t2ValidateFormula(inp, formula, fieldIdx) {
+  const statusEl = document.getElementById('formula_status_' + fieldIdx);
+  if (!statusEl) return;
+  if (!formula || formula === '=') {
+    statusEl.textContent = '';
+    inp.style.borderColor = 'var(--border)';
+    return;
+  }
+  if (!formula.startsWith('=')) {
+    statusEl.innerHTML = '<span style="color:var(--danger);">❌ Formula must start with =</span>';
+    inp.style.borderColor = 'var(--danger)';
+    return;
+  }
+  // Test with dummy values
+  try {
+    const dummyFields = t2Fields.map(f => ({ ...f }));
+    const getVal = (id) => '10'; // dummy value
+    const getRepeat = (code) => ['10'];
+    evalFormula(formula, dummyFields, getVal, getRepeat);
+    statusEl.innerHTML = '<span style="color:var(--green);">✅ Valid formula</span>';
+    inp.style.borderColor = 'var(--green)';
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--warn);">⚠️ ${e.message||'Check formula syntax'}</span>`;
+    inp.style.borderColor = 'var(--warn)';
+  }
+}
+
 function t2RenameCode(i){t2Fields[i].customCode=!t2Fields[i].customCode;t2RenderBuilder();}
 function t2SetCode(i,v){t2Fields[i].code=v.toUpperCase();t2Fields[i].customCode=true;t2RenderBuilder();}
 
