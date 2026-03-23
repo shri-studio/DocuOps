@@ -184,7 +184,7 @@
       <span class="tool-card-tag" style="background:rgba(136,146,164,.15);color:var(--muted);">Coming Soon</span>
     </div>
   </div>
-  <div class="home-footer">All tools run locally · No data uploaded anywhere · <span class="version-display">DocuOps</span></div>
+  <div class="home-footer">All tools run locally · No data uploaded anywhere · <span class="version-display"></span></div>
 </div>
 
 <!-- ══ TOOL 1 ══ -->
@@ -708,9 +708,23 @@
   <script src="js/theme.js"></script>
   <script src="js/shared.js"></script>
   <script>
+  // ── VERSION DISPLAY ──
+  // Runs after shared.js (which defines DOCUOPS_VERSION)
+  (function applyVersion(){
+    const v = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : '?';
+
+    // All .version-display spans
     document.querySelectorAll('.version-display')
-      .forEach(el => el.textContent =
-        `DocuOps v${DOCUOPS_VERSION}`);
+      .forEach(el => el.textContent = `v${v}`);
+
+    // Settings footer
+    const sf = document.getElementById('settingsFooter');
+    if(sf) sf.textContent = `DocuOps v${v} · All processing local · No data uploaded`;
+
+    // App version span
+    const av = document.getElementById('appVersion');
+    if(av) av.textContent = `v${v}`;
+  })();
   </script>
   <script src="js/tool1.js"></script>
   <script src="js/tool2.js"></script>
