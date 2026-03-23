@@ -244,191 +244,370 @@ function t2AutoSave(){
 
 function t2RenderBuilder(){
   assignCodes(t2Fields);
-  const list=document.getElementById('t2FieldList');
-  const prev=document.getElementById('t2Preview');
-  list.innerHTML='';prev.innerHTML='';
+  const list = document.getElementById('t2FieldList');
+  const prev = document.getElementById('t2Preview');
+  if(!list) return;
+  list.innerHTML = '';
+  if(prev) prev.innerHTML = '';
 
-  t2Fields.forEach((f,i)=>{
-    const col=codeColor(f.code||'A');
-    const showOpts=f.type==='dropdown';
-    const showRepeat=f.type==='repeat';
-    const showFormula=f.type==='formula';
+  t2Fields.forEach((f, i) => {
+    const col = codeColor(f.code || 'A');
+    const showOpts = f.type === 'dropdown';
+    const showRepeat = f.type === 'repeat';
+    const showFormula = f.type === 'formula';
 
-    const card=document.createElement('div');
-    card.className='field-card';
-    card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 10px;';
+    const card = document.createElement('div');
+    card.className = 'fc';
+    card.dataset.index = i;
 
-    // Top row — compact single line
-    const top=document.createElement('div');
-    top.style.cssText='display:flex;align-items:center;gap:6px;';
+    // ── TOP ROW ──────────────────────────────
+    const top = document.createElement('div');
+    top.className = 'fc-top';
+
+    // Drag handle
+    const handle = document.createElement('span');
+    handle.className = 'fc-handle';
+    handle.textContent = '⠿';
+    handle.title = 'Drag to reorder';
+    handle.draggable = true;
+    handle.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', i);
+      card.style.opacity = '0.5';
+    });
+    handle.addEventListener('dragend', () => card.style.opacity = '1');
+    top.appendChild(handle);
 
     // Code badge
-    const codeBadge=document.createElement('div');
-    codeBadge.style.cssText=`background:${col};color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;cursor:pointer;flex-shrink:0;min-width:24px;text-align:center;`;
-    codeBadge.title='Click to rename';
-    codeBadge.onclick=()=>t2RenameCode(i);
+    const codeBadge = document.createElement('div');
+    codeBadge.className = 'fc-code';
+    codeBadge.style.background = col;
+    codeBadge.title = 'Click to rename code';
+    codeBadge.onclick = () => t2RenameCode(i);
     if(f.customCode){
-      const codeInp=document.createElement('input');
-      codeInp.value=f.code;
-      codeInp.style.cssText='color:#fff;background:transparent;border:none;outline:none;width:28px;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;';
-      codeInp.onchange=e=>t2SetCode(i,e.target.value);
-      codeInp.onclick=e=>e.stopPropagation();
-      codeBadge.appendChild(codeInp);
+      const ci = document.createElement('input');
+      ci.value = f.code;
+      ci.style.cssText = 'color:#fff;background:transparent;border:none;outline:none;width:26px;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;';
+      ci.onchange = e => t2SetCode(i, e.target.value);
+      ci.onclick = e => e.stopPropagation();
+      codeBadge.appendChild(ci);
     } else {
-      codeBadge.textContent=f.code;
+      codeBadge.textContent = f.code;
     }
     top.appendChild(codeBadge);
 
     // Field name
-    const nameInp=document.createElement('input');
-    nameInp.value=f.name;
-    nameInp.placeholder='Field name';
-    nameInp.style.cssText='background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;font-family:var(--sans);outline:none;flex:1;min-width:0;';
-    nameInp.onchange=e=>t2FieldSet(i,'name',e.target.value);
+    const nameInp = document.createElement('input');
+    nameInp.className = 'fc-name';
+    nameInp.value = f.name;
+    nameInp.placeholder = 'Field name';
+    nameInp.onchange = e => t2FieldSet(i, 'name', e.target.value);
+    if(f.required) nameInp.title = f.name + ' *';
     top.appendChild(nameInp);
 
-    // Type selector — compact
-    const typeSel=document.createElement('select');
-    typeSel.style.cssText='background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:10px;font-family:var(--mono);border-radius:4px;padding:2px 4px;cursor:pointer;outline:none;flex-shrink:0;';
-    [['text','Text'],['number','Num'],['date','Date'],['dropdown','Drop'],['repeat','Rpt'],['formula','Fx']].forEach(([val,label])=>{
-      const opt=document.createElement('option');
-      opt.value=val;opt.textContent=label;
-      if(f.type===val)opt.selected=true;
+    // Type selector — full labels with icons
+    const typeSel = document.createElement('select');
+    typeSel.className = 'fc-type';
+    [
+      ['text','📝 Text'],
+      ['number','🔢 Number'],
+      ['date','📅 Date'],
+      ['dropdown','📋 Dropdown'],
+      ['repeat','➕ Repeating'],
+      ['formula','🧮 Formula']
+    ].forEach(([val, label]) => {
+      const opt = document.createElement('option');
+      opt.value = val; opt.textContent = label;
+      if(f.type === val) opt.selected = true;
       typeSel.appendChild(opt);
     });
-    typeSel.onchange=e=>t2FieldSet(i,'type',e.target.value);
+    typeSel.onchange = e => t2FieldSet(i, 'type', e.target.value);
     top.appendChild(typeSel);
 
-    // Required checkbox — compact
-    const reqLabel=document.createElement('label');
-    reqLabel.style.cssText='display:flex;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer;flex-shrink:0;';
-    reqLabel.title='Required field';
-    const reqChk=document.createElement('input');
-    reqChk.type='checkbox';reqChk.checked=f.required;
-    reqChk.style.cssText='width:11px;height:11px;cursor:pointer;accent-color:var(--green);';
-    reqChk.onchange=e=>t2FieldSet(i,'required',e.target.checked);
-    reqLabel.appendChild(reqChk);
-    reqLabel.appendChild(document.createTextNode('R'));
-    top.appendChild(reqLabel);
+    // Action buttons
+    const actions = document.createElement('div');
+    actions.className = 'fc-actions';
 
-    // Profile key star
-    const star=document.createElement('button');
-    star.style.cssText=`background:none;border:none;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;color:${f.isProfileKey?'#f59e0b':'var(--border)'};transition:color .15s;`;
-    star.title=f.isProfileKey?'Profile Key — click to remove':'Set as Profile Key';
-    star.textContent=f.isProfileKey?'★':'☆';
-    star.onclick=()=>{t2Fields[i].isProfileKey=!t2Fields[i].isProfileKey;t2RenderBuilder();};
-    top.appendChild(star);
+    // Required toggle — asterisk icon
+    const reqBtn = document.createElement('button');
+    reqBtn.className = 'fc-btn ' + (f.required ? 'fc-req-on' : 'fc-req-off');
+    reqBtn.textContent = '*';
+    reqBtn.style.fontWeight = '900';
+    reqBtn.style.fontSize = '16px';
+    reqBtn.title = f.required ? 'Required — click to make optional' : 'Optional — click to make required';
+    reqBtn.onclick = () => { t2Fields[i].required = !t2Fields[i].required; t2RenderBuilder(); };
+    actions.appendChild(reqBtn);
 
-    // Delete button — using addEventListener (fixes the onclick issue)
-    const delBtn=document.createElement('button');
-    delBtn.style.cssText='background:none;border:none;color:var(--border);cursor:pointer;font-size:15px;padding:0 2px;flex-shrink:0;line-height:1;transition:color .15s;';
-    delBtn.textContent='×';
-    delBtn.title='Delete field';
-    delBtn.addEventListener('click', (e)=>{
+    // Profile key — brain icon
+    const keyBtn = document.createElement('button');
+    keyBtn.className = 'fc-btn ' + (f.isProfileKey ? 'fc-key-on' : 'fc-key-off');
+    keyBtn.textContent = '🧠';
+    keyBtn.style.fontSize = '12px';
+    keyBtn.title = f.isProfileKey
+      ? 'Profile Key — AI learns layout from this field. Click to remove.'
+      : 'Set as Profile Key — AI will learn field positions from this.';
+    keyBtn.onclick = () => { t2Fields[i].isProfileKey = !t2Fields[i].isProfileKey; t2RenderBuilder(); };
+    actions.appendChild(keyBtn);
+
+    // Up arrow
+    if(i > 0){
+      const upBtn = document.createElement('button');
+      upBtn.className = 'fc-btn';
+      upBtn.textContent = '↑';
+      upBtn.style.color = 'var(--muted)';
+      upBtn.title = 'Move up';
+      upBtn.onclick = () => {
+        [t2Fields[i-1], t2Fields[i]] = [t2Fields[i], t2Fields[i-1]];
+        t2RenderBuilder();
+      };
+      actions.appendChild(upBtn);
+    }
+
+    // Down arrow
+    if(i < t2Fields.length - 1){
+      const dnBtn = document.createElement('button');
+      dnBtn.className = 'fc-btn';
+      dnBtn.textContent = '↓';
+      dnBtn.style.color = 'var(--muted)';
+      dnBtn.title = 'Move down';
+      dnBtn.onclick = () => {
+        [t2Fields[i], t2Fields[i+1]] = [t2Fields[i+1], t2Fields[i]];
+        t2RenderBuilder();
+      };
+      actions.appendChild(dnBtn);
+    }
+
+    // Delete — trash icon with confirmation
+    const delBtn = document.createElement('button');
+    delBtn.className = 'fc-btn fc-del';
+    delBtn.textContent = '🗑';
+    delBtn.style.fontSize = '12px';
+    delBtn.title = 'Delete this field';
+    delBtn.addEventListener('click', e => {
       e.stopPropagation();
-      t2Fields.splice(i,1);
+      if(!confirm(`Delete field "${f.name}"?\n\nThis cannot be undone.`)) return;
+      t2Fields.splice(i, 1);
       t2RenderBuilder();
     });
-    top.appendChild(delBtn);
+    actions.appendChild(delBtn);
 
+    top.appendChild(actions);
     card.appendChild(top);
 
-    // Extra row for formula/dropdown/repeat
-    if(showOpts||showRepeat||showFormula){
-      const extra=document.createElement('div');
-      extra.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:5px;';
+    // ── HOVER HINT ────────────────────────────
+    const hint = document.createElement('div');
+    hint.className = 'fc-hint';
+    const typeDesc = {
+      text: 'Free text input',
+      number: 'Numeric input only',
+      date: 'Date picker',
+      dropdown: 'User picks from a list of options',
+      repeat: 'Multiple rows — e.g. invoice line items',
+      formula: 'Auto-calculated from other fields'
+    };
+    const reqNote = f.required ? ' · <span style="color:var(--warn);">* Required</span>' : '';
+    const keyNote = f.isProfileKey ? ' · <span style="color:var(--warn);">🧠 Profile Key</span>' : '';
+    hint.innerHTML = `<b style="color:var(--text);">${f.name}</b> — ${typeDesc[f.type]||f.type}${reqNote}${keyNote}`;
+    card.appendChild(hint);
+
+    // ── EXTRA SECTION (dropdown/repeat/formula) ──
+    if(showOpts || showRepeat || showFormula){
+      const extra = document.createElement('div');
+      extra.className = 'fc-extra';
 
       if(showOpts){
-        const ta=document.createElement('textarea');
-        ta.className='field-textarea';
-        ta.placeholder='Options — one per line';
-        ta.value=f.options;
-        ta.onchange=e=>t2FieldSet(i,'options',e.target.value);
+        const label = document.createElement('div');
+        label.style.cssText = 'font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);';
+        label.textContent = 'Options (one per line)';
+        extra.appendChild(label);
+        const ta = document.createElement('textarea');
+        ta.className = 'field-textarea';
+        ta.placeholder = 'Option 1\nOption 2\nOption 3';
+        ta.value = f.options || '';
+        ta.rows = 3;
+        ta.onchange = e => t2FieldSet(i, 'options', e.target.value);
         extra.appendChild(ta);
       }
 
       if(showRepeat){
-        extra.innerHTML+=t2RenderSubFields(f,i);
+        extra.innerHTML += t2RenderSubFields(f, i);
       }
 
       if(showFormula){
-        // Formula input
-        const fInp=document.createElement('input');
-        fInp.className='field-inp-sm';
-        fInp.id=`formula_inp_${i}`;
-        fInp.placeholder='e.g. ={A}*{B} or =ROUND({C}*0.15,2)';
-        fInp.value=f.formula||'';
-        fInp.style.fontFamily='var(--mono)';
+        const fLabel = document.createElement('div');
+        fLabel.style.cssText = 'font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);';
+        fLabel.textContent = 'Formula';
+        extra.appendChild(fLabel);
 
-        // Validate on change
-        fInp.oninput=e=>{
-          t2Fields[i].formula=e.target.value;
+        const fInp = document.createElement('input');
+        fInp.className = 'field-inp-sm';
+        fInp.id = `formula_inp_${i}`;
+        fInp.placeholder = 'e.g. ={A}*{B} or =ROUND({C}*0.15,2)';
+        fInp.value = f.formula || '';
+        fInp.style.fontFamily = 'var(--mono)';
+        fInp.oninput = e => {
+          t2Fields[i].formula = e.target.value;
           t2ValidateFormula(e.target, e.target.value, i);
-          setTimeout(t2AutoSave,200);
+          setTimeout(t2AutoSave, 200);
         };
-
-        // Validation indicator
-        const fStatus=document.createElement('div');
-        fStatus.id=`formula_status_${i}`;
-        fStatus.style.cssText='font-size:11px;font-family:var(--mono);';
-
-        // Examples
-        const fHint=document.createElement('div');
-        fHint.style.cssText='font-size:10px;color:var(--muted);line-height:1.7;';
-        fHint.innerHTML=`
-          <b style="color:var(--text);">Examples:</b>
-          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='={A}*{B}';t2FieldSet(${i},'formula','={A}*{B}')">={A}*{B}</span> ·
-          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='=ROUND({A}*0.15,2)';t2FieldSet(${i},'formula','=ROUND({A}*0.15,2)')">VAT 15%</span> ·
-          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='={A}+{B}+{C}';t2FieldSet(${i},'formula','={A}+{B}+{C}')">={A}+{B}+{C}</span> ·
-          <span style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('formula_inp_${i}').value='=IF({A}>100,\"High\",\"Low\")';t2FieldSet(${i},'formula','=IF({A}>100,\"High\",\"Low\")')">IF condition</span>
-          <br><b style="color:var(--text);">Functions:</b> ROUND · ROUNDUP · ROUNDDOWN · IF · SUM · AVERAGE · COUNT
-        `;
-
         extra.appendChild(fInp);
-        extra.appendChild(fStatus);
-        extra.appendChild(fHint);
 
-        // Validate existing value
-        if(f.formula) setTimeout(()=>t2ValidateFormula(fInp, f.formula, i), 100);
+        const fStatus = document.createElement('div');
+        fStatus.id = `formula_status_${i}`;
+        fStatus.style.cssText = 'font-size:11px;font-family:var(--mono);min-height:16px;';
+        extra.appendChild(fStatus);
+
+        const fExamples = document.createElement('div');
+        fExamples.style.cssText = 'font-size:10px;color:var(--muted);line-height:1.8;';
+        fExamples.innerHTML = `
+          <span style="color:var(--text);font-weight:600;">Examples:</span>
+          <span class="formula-ex" onclick="t2SetFormula(${i},'={A}*{B}')">={A}*{B}</span>
+          <span class="formula-ex" onclick="t2SetFormula(${i},'=ROUND({A}*0.15,2)')">VAT 15%</span>
+          <span class="formula-ex" onclick="t2SetFormula(${i},'={A}+{B}+{C}')">Sum 3 fields</span>
+          <span class="formula-ex" onclick="t2SetFormula(${i},'=IF({A}>100,&quot;High&quot;,&quot;Low&quot;)')">IF condition</span>
+          <br><span style="color:var(--text);font-weight:600;">Functions:</span> ROUND · IF · SUM · AVERAGE · COUNT
+        `;
+        extra.appendChild(fExamples);
+
+        if(f.formula) setTimeout(() => t2ValidateFormula(fInp, f.formula, i), 100);
       }
 
       card.appendChild(extra);
     }
 
-    list.appendChild(card);
+    // ── DRAG DROP TARGET ──────────────────────
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      card.style.borderColor = 'var(--green)';
+    });
+    card.addEventListener('dragleave', () => {
+      card.style.borderColor = '';
+    });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.style.borderColor = '';
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = i;
+      if(fromIdx === toIdx) return;
+      const moved = t2Fields.splice(fromIdx, 1)[0];
+      t2Fields.splice(toIdx, 0, moved);
+      t2RenderBuilder();
+    });
 
-    // Preview
-    const pf=document.createElement('div');pf.className='prev-field';
-    pf.innerHTML=`<div class="prev-field-lbl"><span class="prev-field-code" style="background:${col};">${f.code}</span> ${f.name}${f.required?' *':''}</div>`;
-    if(f.type==='dropdown'){
-      const opts=f.options.split('\n').filter(Boolean);
-      pf.innerHTML+=`<select class="prev-inp"><option>— Select —</option>${opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
-    } else if(f.type==='formula'){
-      pf.innerHTML+=`<div class="prev-inp" style="color:var(--accent);font-family:var(--mono);font-size:11px;">${f.formula||'=formula'}</div>`;
-    } else if(f.type==='repeat'){
-      const subs=(f.subFields||[]);
-      pf.innerHTML+=`<div style="font-size:11px;color:var(--muted);">Repeating: ${subs.map(sf=>`<span style="background:${codeColor(sf.code||'A')};color:#fff;padding:1px 5px;border-radius:3px;font-size:11px;font-family:var(--mono);margin-right:3px;">${sf.code}</span>${sf.name}`).join(' · ')||'add sub-fields ↑'}</div>`;
-    } else {
-      pf.innerHTML+=`<input class="prev-inp" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" placeholder="${f.name}">`;
-    }
-    prev.appendChild(pf);
+    list.appendChild(card);
   });
 
   // Profile key summary
-  const pkFields=t2Fields.filter(f=>f.isProfileKey);
-  const pkSum=document.createElement('div');
-  pkSum.style.cssText='font-size:11px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:4px;border-left:3px solid '+(pkFields.length?'var(--warn)':'var(--border)')+';';
-  pkSum.innerHTML=pkFields.length
-    ?'🧠 <b>Profile Keys:</b> '+pkFields.map(f=>`<span style="background:${codeColor(f.code)};color:#fff;padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:11px;">${f.code}</span> ${f.name}`).join(' + ')+' — system learns from these'
-    :'☆ No Profile Keys set — click ★ on a field to enable learning';
+  const pkFields = t2Fields.filter(f => f.isProfileKey);
+  const pkSum = document.createElement('div');
+  pkSum.style.cssText = 'font-size:11px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;margin:4px 0;border-left:3px solid ' + (pkFields.length ? 'var(--warn)' : 'var(--border)') + ';';
+  pkSum.innerHTML = pkFields.length
+    ? '🧠 <b style="color:var(--text);">Profile Keys:</b> ' + pkFields.map(f => `<span style="background:${codeColor(f.code)};color:#fff;padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:10px;">${f.code}</span> ${f.name}`).join(' + ')
+    : '☆ No Profile Keys set — click 🧠 on a field to enable AI layout learning';
   list.appendChild(pkSum);
 
-  const addBtn=document.createElement('button');
-  addBtn.className='add-field-btn';addBtn.textContent='+ Add Field';
-  addBtn.onclick=t2AddField;list.appendChild(addBtn);
+  // Add field button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-field-btn';
+  addBtn.textContent = '+ Add Field';
+  addBtn.onclick = t2AddField;
+  list.appendChild(addBtn);
 
-  // Auto-save on every render
-  setTimeout(t2AutoSave,200);
+  // Update all panels
+  t2RenderFormPreview();
+  t2RenderExcelPreview();
+
+  setTimeout(t2AutoSave, 200);
+}
+
+function t2SetFormula(idx, formula) {
+  t2Fields[idx].formula = formula;
+  const inp = document.getElementById(`formula_inp_${idx}`);
+  if(inp) { inp.value = formula; t2ValidateFormula(inp, formula, idx); }
+  setTimeout(t2AutoSave, 200);
+}
+
+
+// Add formula-ex style dynamically
+(function(){
+  const s = document.createElement('style');
+  s.textContent = '.formula-ex{color:var(--blue);cursor:pointer;margin-right:6px;font-family:var(--mono);font-size:10px;}.formula-ex:hover{text-decoration:underline;}';
+  document.head.appendChild(s);
+})();
+
+function switchBuilderTab(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById(`bPanel${i}`).style.display = i === n ? 'flex' : 'none';
+    document.getElementById(`bTab${i}`).classList.toggle('active', i === n);
+  });
+  if(n === 3) t2RenderExcelPreview();
+}
+
+function t2RenderFormPreview() {
+  const prev = document.getElementById('t2Preview');
+  if(!prev) return;
+  prev.innerHTML = '';
+  t2Fields.forEach(f => {
+    const col = codeColor(f.code || 'A');
+    const wrap = document.createElement('div');
+    wrap.className = 'prev-field';
+    const lbl = document.createElement('div');
+    lbl.className = 'prev-field-lbl';
+    lbl.innerHTML = `<span class="prev-field-code" style="background:${col};">${f.code}</span> ${f.name}${f.required ? ' <span style="color:var(--warn);">*</span>' : ''}`;
+    wrap.appendChild(lbl);
+
+    if(f.type === 'dropdown'){
+      const opts = (f.options||'').split('\n').filter(Boolean);
+      const sel = document.createElement('select');
+      sel.className = 'prev-inp';
+      sel.innerHTML = '<option>— Select —</option>' + opts.map(o=>`<option>${o}</option>`).join('');
+      wrap.appendChild(sel);
+    } else if(f.type === 'formula'){
+      const div = document.createElement('div');
+      div.className = 'prev-inp';
+      div.style.cssText = 'color:var(--blue);font-family:var(--mono);font-size:11px;';
+      div.textContent = f.formula || '=formula';
+      wrap.appendChild(div);
+    } else if(f.type === 'repeat'){
+      const subs = f.subFields || [];
+      const div = document.createElement('div');
+      div.style.cssText = 'font-size:11px;color:var(--muted);';
+      div.innerHTML = 'Repeating: ' + (subs.map(sf => `<span style="background:${codeColor(sf.code||'A')};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;font-family:var(--mono);">${sf.code}</span> ${sf.name}`).join(' · ') || 'add sub-fields');
+      wrap.appendChild(div);
+    } else {
+      const inp = document.createElement('input');
+      inp.className = 'prev-inp';
+      inp.type = f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text';
+      inp.placeholder = f.name;
+      wrap.appendChild(inp);
+    }
+    prev.appendChild(wrap);
+  });
+}
+
+function t2RenderExcelPreview() {
+  const wrap = document.getElementById('t2ExcelPreview');
+  if(!wrap) return;
+  if(!t2Fields.length){ wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);">Add fields to see Excel preview.</div>'; return; }
+
+  const headers = ['Source File', 'Timestamp', ...t2Fields.map(f => f.name)];
+  const sampleRow = ['invoice_001.jpg', new Date().toLocaleDateString(), ...t2Fields.map(f => {
+    if(f.type === 'number') return '100';
+    if(f.type === 'date') return new Date().toLocaleDateString();
+    if(f.type === 'formula') return '=formula';
+    if(f.type === 'dropdown') return (f.options||'').split('\n')[0] || 'Option';
+    return f.name + ' value';
+  })];
+
+  let html = '<table class="excel-preview-table">';
+  // Row number header
+  html += '<thead><tr><th class="excel-row-num">#</th>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+  html += '<tbody>';
+  // Sample rows
+  [sampleRow, sampleRow.map((v,i) => i===0?'invoice_002.jpg':i===1?new Date().toLocaleDateString():v+'2')].forEach((row, ri) => {
+    html += `<tr><td class="excel-row-num">${ri+1}</td>` + row.map(v => `<td>${v}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
 }
 
 function t2RenderSubFields(f,fi){
