@@ -393,6 +393,8 @@ function t2RenderBuilder(){
     top.appendChild(actions);
     card.appendChild(top);
 
+
+
     // ── EXTRA SECTION (dropdown/repeat/formula) ──
     if(showOpts || showRepeat || showFormula){
       const extra = document.createElement('div');
@@ -519,19 +521,27 @@ function t2SetFormula(idx, formula) {
 })();
 
 function switchBuilderTab(n) {
-  if (n === 1) {
-    document.getElementById('bPanel1').style.display = 'flex';
-    document.getElementById('bPanel2').style.display = 'none';
-    document.getElementById('bTab1').classList.add('active');
-    document.getElementById('bTab2').classList.remove('active');
-  } else if (n === 2) {
-    document.getElementById('bPanel1').style.display = 'none';
-    document.getElementById('bPanel2').style.display = 'flex';
-    document.getElementById('bTab1').classList.remove('active');
-    document.getElementById('bTab2').classList.add('active');
-    if (typeof t2RenderExcelPreview === 'function') {
-      t2RenderExcelPreview();
-    }
+  // Tab 1: Fields + Form Preview (side by side)
+  // Tab 2: Excel Preview
+  const p1 = document.getElementById('bPanel1');
+  const p1b = document.getElementById('bPanel1b'); // form preview
+  const p2 = document.getElementById('bPanel2');
+  const t1 = document.getElementById('bTab1');
+  const t2 = document.getElementById('bTab2');
+
+  if(n === 1) {
+    if(p1) p1.style.display = 'flex';
+    if(p1b) p1b.style.display = 'flex';
+    if(p2) p2.style.display = 'none';
+    if(t1) t1.classList.add('active');
+    if(t2) t2.classList.remove('active');
+  } else {
+    if(p1) p1.style.display = 'none';
+    if(p1b) p1b.style.display = 'none';
+    if(p2) p2.style.display = 'flex';
+    if(t1) t1.classList.remove('active');
+    if(t2) t2.classList.add('active');
+    t2RenderExcelPreview();
   }
 }
 
