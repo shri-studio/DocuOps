@@ -190,6 +190,7 @@ function t2PopulateTemplateSelector(){
     opt.textContent = `${h.name || 'Template'} · ${h.savedAt || ''}`;
     sel.appendChild(opt);
   });
+  sel.selectedIndex = 0; // Default to most recent
 }
 
 function t2LoadTemplateSelector(){
