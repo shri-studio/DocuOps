@@ -365,45 +365,50 @@
   </div>
 
   <!-- Builder -->
+  <!-- Tool 2 Builder -->
   <div id="t2Builder">
-    <div class="builder-hdr">
-      <div class="builder-title">Form Builder</div>
-      <div class="builder-sub">Configure fields — drag ≡ to reorder</div>
-      <div class="builder-actions">
-        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:6px 12px;font-size:11px;" onclick="t2SaveTemplate()">💾 Save Template</button>
-        <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t2StartEntry()">▶ Start Entry →</button>
+  <div class="builder-hdr">
+    <div class="builder-title">Form Builder</div>
+    <div class="builder-sub">Configure fields — drag ≡ to reorder</div>
+    <div class="builder-actions">
+      <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:6px 12px;font-size:11px;" onclick="t2SaveTemplate()">💾 Save Template</button>
+      <button class="btn btn-save" style="padding:6px 14px;font-size:11px;" onclick="t2StartEntry()">▶ Start Entry →</button>
+    </div>
+  </div>
+
+  <!-- File naming pattern -->
+  <div style="padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
+    <div class="naming-row">
+      <div class="naming-lbl">📝 File Naming Pattern</div>
+      <input class="naming-inp" id="t2NamingPattern" placeholder="e.g. {A}-{B}-{C}" value="{A}">
+      <div class="naming-hint">Use field codes in curly braces</div>
+    </div>
+  </div>
+
+  <!-- Tab Buttons (2 tabs) -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0;flex-shrink:0;">
+    <button class="builder-tab active" id="bTab1" onclick="switchBuilderTab(1)">⚙️ Form Builder</button>
+    <button class="builder-tab" id="bTab2" onclick="switchBuilderTab(2)">📊 Excel Preview</button>
+  </div>
+
+  <!-- Tab Panels -->
+  <div class="builder-body">
+    <!-- Panel 1: Fields + Preview side by side -->
+    <div id="bPanel1" style="display:flex; gap:20px; padding:16px; overflow:hidden; flex:1; min-height:0;">
+      <!-- Left: Fields List -->
+      <div style="flex:1; overflow-y:auto; border-right:1px solid var(--border); padding-right:16px;">
+        <div id="t2FieldList"></div>
+      </div>
+      <!-- Right: Live Form Preview -->
+      <div style="flex:1; overflow-y:auto; padding-left:8px;">
+        <div id="t2Preview"></div>
       </div>
     </div>
-    <!-- File naming pattern -->
-    <div style="padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
-      <div class="naming-row">
-        <div class="naming-lbl">📝 File Naming Pattern</div>
-        <input class="naming-inp" id="t2NamingPattern" placeholder="e.g. {A}-{B}-{C}  →  INV-AlMaha-2026-03-18" value="{A}">
-        <div class="naming-hint">Use field codes in curly braces. Empty fields are skipped with a warning.</div>
-      </div>
+    <!-- Panel 2: Excel Preview -->
+    <div id="bPanel2" style="display:none; overflow:auto; padding:16px; flex:1; min-height:0;">
+      <div id="t2ExcelPreview"></div>
     </div>
-    <!-- Builder panel tabs -->
-    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0;flex-shrink:0;">
-      <button class="builder-tab active" id="bTab1" onclick="switchBuilderTab(1)">⚙️ Fields</button>
-      <button class="builder-tab" id="bTab2" onclick="switchBuilderTab(2)">📊 Excel Preview</button>
-    </div>
-    <div class="builder-body">
-      <!-- Panel 1: Fields -->
-      <div id="bPanel1" style="display:flex;flex-direction:column;overflow-y:auto;padding:10px;flex:1;min-height:0;">
-        <div id="t2FieldList" style="display:flex;flex-direction:column;gap:4px;"></div>
-      </div>
-      <!-- Panel 2: Form Preview -->
-      <div id="bPanel2" style="display:none;flex-direction:column;overflow-y:auto;padding:16px;flex:1;min-height:0;">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:var(--mono);">Form Preview</div>
-        <div id="t2Preview" style="display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-      <!-- Panel 3: Excel Preview -->
-      <div id="bPanel3" style="display:none;flex-direction:column;overflow:auto;padding:16px;flex:1;min-height:0;">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:var(--mono);">Excel Preview</div>
-        <div id="t2ExcelPreview" style="overflow-x:auto;"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6;">This shows how your exported Excel will look. Each row = one saved entry.</div>
-      </div>
-    </div>
+  </div>
   </div>
 
   <!-- Work -->
