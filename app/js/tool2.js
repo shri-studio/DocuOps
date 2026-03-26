@@ -393,22 +393,6 @@ function t2RenderBuilder(){
     top.appendChild(actions);
     card.appendChild(top);
 
-    // ── HOVER HINT ────────────────────────────
-    const hint = document.createElement('div');
-    hint.className = 'fc-hint';
-    const typeDesc = {
-      text: 'Free text input',
-      number: 'Numeric input only',
-      date: 'Date picker',
-      dropdown: 'User picks from a list of options',
-      repeat: 'Multiple rows — e.g. invoice line items',
-      formula: 'Auto-calculated from other fields'
-    };
-    const reqNote = f.required ? ' · <span style="color:var(--warn);">* Required</span>' : '';
-    const keyNote = f.isProfileKey ? ' · <span style="color:var(--warn);">🧠 Profile Key</span>' : '';
-    hint.innerHTML = `<b style="color:var(--text);">${f.name}</b> — ${typeDesc[f.type]||f.type}${reqNote}${keyNote}`;
-    card.appendChild(hint);
-
     // ── EXTRA SECTION (dropdown/repeat/formula) ──
     if(showOpts || showRepeat || showFormula){
       const extra = document.createElement('div');
