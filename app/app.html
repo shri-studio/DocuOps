@@ -890,16 +890,19 @@ function t2ShowSetup() {
       _origT2ShowSetup();
     }
     // Check for saved template
-  const saved = localStorage.getItem('ocrSuite_t2Template');
-  if (saved) {
-    try {
-      const data = JSON.parse(saved);
-      const fields = data.fields || [];
-      const info = `${fields.length} field${fields.length !== 1 ? 's' : ''} · Saved ${data.savedAt || ''}`;
-      t2ShowReturn(info);
-    } catch(e) { t2ShowEmpty(); }
-  } else {
-    t2ShowEmpty();
+    const saved = localStorage.getItem('ocrSuite_t2Template');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        const fields = data.fields || [];
+        const info = `${fields.length} field${fields.length !== 1 ? 's' : ''} · Saved ${data.savedAt || ''}`;
+        t2ShowReturn(info);
+      } catch(e) { t2ShowEmpty(); }
+    } else {
+      t2ShowEmpty();
+    }
+  } finally {
+    t2ShowSetup.__isReentrant = false;
   }
 }
 </script>
