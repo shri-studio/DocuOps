@@ -161,13 +161,23 @@ function t2DelField(i) {
 }
 
 // ── 11. T2 — CHANGE FIELD TYPE WITH SAVED ENTRIES ────
-const _orig_t2FieldSet = t2FieldSet;
-function t2FieldSet(i, k, v) {
-  if (k === 'type' && t2Entries.length > 0 && t2Fields[i].type !== v) {
-    if (!confirm(`Change "${t2Fields[i].name}" from ${t2Fields[i].type} to ${v}?\n\n⚠️ You have ${t2Entries.length} saved entries. Changing field type may affect data consistency.`)) return;
+// Delay patching until t2FieldSet exists
+let _orig_t2FieldSet = null;
+function patchT2FieldSet() {
+  if (typeof t2FieldSet !== 'undefined' && !_orig_t2FieldSet) {
+    _orig_t2FieldSet = t2FieldSet;
+    window.t2FieldSet = function(i, k, v) {
+      if (k === 'type' && t2Entries.length > 0 && t2Fields[i] && t2Fields[i].type !== v) {
+        if (!confirm(`Change "${t2Fields[i].name}" from ${t2Fields[i].type} to ${v}?\n\n⚠️ You have ${t2Entries.length} saved entries. Changing field type may affect data consistency.`)) return;
+      }
+      _orig_t2FieldSet(i, k, v);
+    };
+    console.log('✅ t2FieldSet patched successfully');
   }
-  _orig_t2FieldSet(i, k, v);
 }
+patchT2FieldSet();
+setTimeout(patchT2FieldSet, 200);
+setTimeout(patchT2FieldSet, 500);
 
 // ── 12. T2 — LOAD JSON TEMPLATE OVER EXISTING ────────
 const _orig_t2LoadTemplateFile = t2LoadTemplateFile;
