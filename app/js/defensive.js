@@ -21,11 +21,21 @@ window.addEventListener('beforeunload', e => {
 function _setSessionActive(v) { _sessionActive = v; }
 
 // ── 2. PATCH t1Start to activate session ─────────────
-const _orig_t1Start = t1Start;
-async function t1Start(files) {
-  _setSessionActive(true);
-  await _orig_t1Start(files);
+// Wait for t1Start to be defined before patching
+let _orig_t1Start = null;
+function patchT1Start() {
+  if (typeof t1Start !== 'undefined' && !_orig_t1Start) {
+    _orig_t1Start = t1Start;
+    window.t1Start = async function(files) {
+      _setSessionActive(true);
+      await _orig_t1Start(files);
+    };
+  }
 }
+
+// Try to patch now, and again after a short delay
+patchT1Start();
+setTimeout(patchT1Start, 100);
 
 // Deactivate when done
 const _orig_t1ShowDone = t1ShowDone;
