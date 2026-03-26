@@ -193,12 +193,38 @@ function t2PopulateTemplateSelector(){
   sel.selectedIndex = 0; // Default to most recent
 }
 
+function t2ShowLoadModal(){
+  t2PopulateTemplateSelector();
+  document.getElementById('t2LoadModal').style.display = 'flex';
+}
+
+function t2CloseLoadModal(){
+  document.getElementById('t2LoadModal').style.display = 'none';
+}
+
+function t2BrowseTemplate(){
+  document.getElementById('t2TmplIn').click();
+}
+
 function t2LoadTemplateSelector(){
-  const sel=document.getElementById('t2TemplateSelector');
+  const sel = document.getElementById('t2TemplateSelector');
   if(!sel || !sel.value) return;
-  const index=parseInt(sel.value,10);
+  const index = parseInt(sel.value, 10);
   if(Number.isNaN(index)) return;
   t2LoadTemplateFromHistory(index);
+  t2CloseLoadModal();
+}
+
+function t2LoadTemplateFromHistory(index){
+  const history = JSON.parse(localStorage.getItem(T2_HISTORY_KEY) || '[]');
+  if(index < 0 || index >= history.length) return;
+  const data = history[index];
+  t2Fields = data.fields || [];
+  t2ShowBuilder();
+  if(data.namingPattern){
+    const np = document.getElementById('t2NamingPattern');
+    if(np) np.value = data.namingPattern;
+  }
 }
 
 // Template persistence
@@ -223,20 +249,9 @@ function t2SaveTemplate(){
 function t2LoadTemplateFile(){
   document.getElementById('t2TmplLoadIn').click();
 }
-document.getElementById('t2TmplLoadIn').addEventListener('change',async e=>{
-  const file=e.target.files[0];if(!file)return;
-  try{
-    const text=await file.text();
-    const data=JSON.parse(text);
-    t2Fields=data.fields||[];
-    t2ShowBuilder();
-    if(data.namingPattern){
-      const np=document.getElementById('t2NamingPattern');
-      if(np)np.value=data.namingPattern;
-    }
-    alert('Template loaded successfully!');
-  }catch(ex){alert('Error loading template: '+ex.message);}
-});
+document.getElementById('t2LoadBtn').addEventListener('click', t2LoadTemplateSelector);
+document.getElementById('t2CloseModalBtn').addEventListener('click', t2CloseLoadModal);
+document.getElementById('t2BrowseBtn').addEventListener('click', t2BrowseTemplate);
 
 function t2CheckAutoSave(){
   const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
