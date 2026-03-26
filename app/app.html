@@ -878,10 +878,9 @@ function t2LoadLastTemplate() {
 }
 
 // Check on Tool 2 open — show correct state
-const _origT2ShowSetup = t2ShowSetup;
-function t2ShowSetup() {
-  _origT2ShowSetup();
-  // Check for saved template
+// Check on Tool 2 open — show correct state
+// This runs after t2ShowSetup is defined
+function initTool2EmptyState() {
   const saved = localStorage.getItem('ocrSuite_t2Template');
   if (saved) {
     try {
@@ -894,6 +893,13 @@ function t2ShowSetup() {
     t2ShowEmpty();
   }
 }
+
+// Override t2ShowSetup to include empty state check
+const _originalT2ShowSetup = t2ShowSetup;
+t2ShowSetup = function() {
+  _originalT2ShowSetup();
+  initTool2EmptyState();
+};
 </script>
 </body>
 </html>
