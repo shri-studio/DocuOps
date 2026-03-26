@@ -535,11 +535,20 @@ function t2SetFormula(idx, formula) {
 })();
 
 function switchBuilderTab(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById(`bPanel${i}`).style.display = i === n ? 'flex' : 'none';
-    document.getElementById(`bTab${i}`).classList.toggle('active', i === n);
-  });
-  if(n === 3) t2RenderExcelPreview();
+  if (n === 1) {
+    document.getElementById('bPanel1').style.display = 'flex';
+    document.getElementById('bPanel2').style.display = 'none';
+    document.getElementById('bTab1').classList.add('active');
+    document.getElementById('bTab2').classList.remove('active');
+  } else if (n === 2) {
+    document.getElementById('bPanel1').style.display = 'none';
+    document.getElementById('bPanel2').style.display = 'flex';
+    document.getElementById('bTab1').classList.remove('active');
+    document.getElementById('bTab2').classList.add('active');
+    if (typeof t2RenderExcelPreview === 'function') {
+      t2RenderExcelPreview();
+    }
+  }
 }
 
 function t2RenderFormPreview() {
