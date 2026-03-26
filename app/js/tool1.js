@@ -7,6 +7,7 @@
 // TOOL 1
 // ════════════════════════════════════════════════════
 let t1Files=[],t1Idx=0,t1Renamed=0,t1Skipped=0,t1Log=[],t1OcrMode='whole';
+let t1PendingFiles = []; // Store files selected before starting
 
 function t1Mode(m){
   t1OcrMode=m;
@@ -17,12 +18,48 @@ function t1Mode(m){
 document.getElementById('t1FileIn').addEventListener('change',e=>{
   const f=Array.from(e.target.files).filter(f=>ACCEPT.test(f.name));
   if(!f.length){alert('No supported files.');return;}
-  t1Start(f);
+  
+  // Store the selected files but don't start yet
+  t1PendingFiles = f;
+  
+  // Show the Start button
+  const startBtn = document.getElementById('t1StartBtn');
+  if(startBtn) {
+    startBtn.style.display = 'inline-block';
+    startBtn.textContent = `▶ Start Renaming (${f.length} files)`;
+  }
 });
 const t1da=document.getElementById('t1DropArea');
 t1da.addEventListener('dragover',e=>{e.preventDefault();t1da.classList.add('drag');});
 t1da.addEventListener('dragleave',()=>t1da.classList.remove('drag'));
-t1da.addEventListener('drop',e=>{e.preventDefault();t1da.classList.remove('drag');const f=Array.from(e.dataTransfer.files).filter(f=>ACCEPT.test(f.name));if(f.length)t1Start(f);});
+t1da.addEventListener('drop',e=>{
+  e.preventDefault();
+  t1da.classList.remove('drag');
+  const f=Array.from(e.dataTransfer.files).filter(f=>ACCEPT.test(f.name));
+  if(f.length){
+    t1PendingFiles = f;
+    const startBtn = document.getElementById('t1StartBtn');
+    if(startBtn) {
+      startBtn.style.display = 'inline-block';
+      startBtn.textContent = `▶ Start Renaming (${f.length} files)`;
+    }
+  }
+});
+
+// New: Start session when user clicks Start button
+async function t1StartSession(){
+  if(!t1PendingFiles || t1PendingFiles.length === 0){
+    alert('Please select files first.');
+    return;
+  }
+  
+  // Hide the Start button
+  const startBtn = document.getElementById('t1StartBtn');
+  if(startBtn) startBtn.style.display = 'none';
+  
+  // Start the actual renaming process
+  await t1Start(t1PendingFiles);
+}
 
 async function t1Start(files){
   t1Files=files;t1Idx=0;t1Renamed=0;t1Skipped=0;t1Log=[];
