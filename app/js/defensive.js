@@ -20,7 +20,7 @@ window.addEventListener('beforeunload', e => {
 // Activate session protection when work starts
 function _setSessionActive(v) { _sessionActive = v; }
 
-// ── 2. PATCH t1Start to activate session ─────────────
+// ── 2. PATCH t1Start to activate session (DELAYED) ─────────────
 // Wait for t1Start to be defined before patching
 let _orig_t1Start = null;
 function patchT1Start() {
@@ -30,53 +30,31 @@ function patchT1Start() {
       _setSessionActive(true);
       await _orig_t1Start(files);
     };
+    console.log('✅ t1Start patched successfully');
   }
 }
-
-// Try to patch now, and again after a short delay
+// Try immediately and again after delay
 patchT1Start();
-setTimeout(patchT1Start, 100);
+setTimeout(patchT1Start, 200);
+setTimeout(patchT1Start, 500);
 
-// Deactivate when done
-const _orig_t1ShowDone = t1ShowDone;
-function t1ShowDone() {
-  _setSessionActive(false);
-  _orig_t1ShowDone();
-}
-
-// ── 3. PATCH showHome to protect both tools ───────────
-function showHome() {
-  // Already on home — do nothing silently
-  if (document.getElementById('homePage').style.display !== 'none') return;
-
-  // Only confirm if user has actually started working
-  if (_sessionActive) {
-    const t1Active = document.getElementById('t1Work').style.display !== 'none';
-    const t2Active = document.getElementById('t2Work').style.display !== 'none';
-    const t2BuilderActive = document.getElementById('t2Builder').style.display !== 'none';
-
-    if (t1Active) {
-      if (!confirm(`⚠️ Go back to Home?\n\nTool 1 session in progress:\n✔ Renamed: ${t1Renamed}  ⏭ Skipped: ${t1Skipped}  📄 Remaining: ${t1Files.length - t1Idx}\n\nFiles already saved are safe.\nUnsaved progress will be lost.`)) return;
-    } else if (t2Active) {
-      if (!confirm(`⚠️ Go back to Home?\n\nData Entry session in progress:\n✔ Saved entries: ${t2Entries.length}\n\nExport your data first if needed.\nUnsaved form data will be lost.`)) return;
-    } else if (t2BuilderActive) {
-      if (!confirm('⚠️ Go back to Home?\n\nYour template builder has unsaved changes.\nMake sure to Save Template before leaving.')) return;
-    }
+// ── 3. PATCH t2 functions (DELAYED) ────────────────────────────
+let _orig_t2ShowSetup = null;
+function patchT2ShowSetup() {
+  if (typeof t2ShowSetup !== 'undefined' && !_orig_t2ShowSetup) {
+    _orig_t2ShowSetup = t2ShowSetup;
+    window.t2ShowSetup = function() {
+      _setSessionActive(false);
+      _orig_t2ShowSetup();
+    };
+    console.log('✅ t2ShowSetup patched successfully');
   }
-
-  _setSessionActive(false);
-
-  // Reset all panels
-  ['tool1','tool2','tool3'].forEach(id => document.getElementById(id).style.display = 'none');
-  document.getElementById('homePage').style.display = 'flex';
-  document.getElementById('toolBadge').style.display = 'none';
-  document.getElementById('modeBadge').style.display = 'none';
-  document.getElementById('statsBar').style.display = 'none';
-  document.getElementById('progressWrap').style.display = 'none';
 }
+patchT2ShowSetup();
+setTimeout(patchT2ShowSetup, 200);
+setTimeout(patchT2ShowSetup, 500);
 
 // ── 4. T1 — DROP NEW FILES ON ACTIVE SESSION ─────────
-const _orig_t1da_drop = null; // handled by patching the event listener below
 document.getElementById('t1DropArea').addEventListener('dragover', e => e.preventDefault());
 document.getElementById('t1DropArea').addEventListener('drop', e => {
   e.preventDefault();
@@ -84,7 +62,19 @@ document.getElementById('t1DropArea').addEventListener('drop', e => {
     if (!confirm('⚠️ A rename session is already active.\n\nLoading new files will reset the current session.\n\nContinue?')) return;
   }
   const f = Array.from(e.dataTransfer.files).filter(f => ACCEPT.test(f.name));
-  if (f.length) t1Start(f);
+  if (f.length) {
+    // Store files and show start button instead of auto-starting
+    if (typeof t1PendingFiles !== 'undefined') {
+      t1PendingFiles = f;
+      const startBtn = document.getElementById('t1StartBtn');
+      if(startBtn) {
+        startBtn.style.display = 'inline-block';
+        startBtn.textContent = `▶ Start Renaming (${f.length} files)`;
+      }
+    } else {
+      t1Start(f);
+    }
+  }
 });
 
 // ── 5. T2 — CLEAR FORM CONFIRMATION ──────────────────
@@ -149,7 +139,7 @@ document.getElementById('t2TmplIn').addEventListener('change', async e => {
   t2Fields = headers.map((h, i) => ({id:'f'+i, name:h, type:'text', options:'', formula:'', required:false, subFields:[], customCode:false}));
   assignCodes(t2Fields);
   t2ShowBuilder();
-}, true); // use capture to override original listener
+}, true);
 
 // ── 9. T2 — BACK TO SETUP FROM BUILDER ───────────────
 function t2BackToSetup() {
@@ -198,12 +188,10 @@ FSM.pickDataFolder = async function() {
 };
 
 // ── 14. T2 — IMAGE LOADING CONTROL BAR ───────────────
-// Replace auto-prompt with explicit load bar in t2StripWrap
 function t2SetupStripControls() {
   const wrap = document.getElementById('t2StripWrap');
   if (!wrap || wrap.querySelector('.strip-controls')) return;
 
-  // Insert controls bar above strip
   const bar = document.createElement('div');
   bar.className = 'strip-controls';
   bar.style.cssText = 'display:flex;align-items:center;gap:7px;padding:5px 10px;border-bottom:1px solid var(--border);flex-shrink:0;';
@@ -248,7 +236,6 @@ function t2ClearStrip() {
   t2ActiveFile = 0;
   document.getElementById('t2Strip').innerHTML = '';
   t2UpdateStripCount();
-  // Clear viewer
   v2.reset();
   document.getElementById('t2FName').textContent = '—';
 }
@@ -287,14 +274,13 @@ async function t2StartEntry() {
     t2FillField(t2ActiveFieldId, text.trim());
   };
   v2.attachEvents('de');
-  // No auto-prompt — user clicks "Load Documents" when ready
 }
 
 // ── 17. UPDATE VERSION EVERYWHERE ────────────────────
 (function updateVersion() {
-  const ver = 'v2.2.4';
+  const ver = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : 'v3.2.6';
   const footer = document.querySelector('.settings-footer');
-  if (footer) footer.textContent = `OCR Suite ${ver} · All processing local · No data uploaded`;
+  if (footer) footer.textContent = `DocuOps ${ver} · All processing local · No data uploaded`;
   const homeFooter = document.querySelector('.home-footer');
   if (homeFooter) homeFooter.textContent = `All tools run locally · No data uploaded anywhere · DocuOps ${ver}`;
 })();
@@ -311,7 +297,6 @@ async function t2StartEntry() {
   actionsBar.appendChild(editBtn);
 })();
 
-// Add "Back to Setup" button in builder header
 (function addBuilderBackBtn() {
   const bh = document.querySelector('.builder-hdr');
   if (!bh || bh.querySelector('.back-setup-btn')) return;
@@ -322,6 +307,3 @@ async function t2StartEntry() {
   backBtn.onclick = t2BackToSetup;
   bh.insertBefore(backBtn, bh.querySelector('.builder-actions'));
 })();
-
-
-
