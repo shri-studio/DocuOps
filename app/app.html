@@ -882,11 +882,14 @@ function t2LoadLastTemplate() {
 // Check on Tool 2 open — show correct state
 const _origT2ShowSetup = (typeof t2ShowSetup === 'function' && t2ShowSetup.__t2ShowSetupBase) ? t2ShowSetup.__t2ShowSetupBase : t2ShowSetup;
 function t2ShowSetup() {
-  _setSessionActive(false);
-  if (typeof _origT2ShowSetup === 'function') {
-    _origT2ShowSetup();
-  }
-  // Check for saved template
+  if (t2ShowSetup.__isReentrant) return;
+  t2ShowSetup.__isReentrant = true;
+  try {
+    _setSessionActive(false);
+    if (typeof _origT2ShowSetup === 'function' && _origT2ShowSetup !== t2ShowSetup) {
+      _origT2ShowSetup();
+    }
+    // Check for saved template
   const saved = localStorage.getItem('ocrSuite_t2Template');
   if (saved) {
     try {
