@@ -84,10 +84,17 @@ function guessNo(t){
 }
 
 // Navigation
+function t2HasUnsavedWork(){
+  if(typeof t2Fields==='undefined') return false;
+  if(!document.getElementById('tool2') || document.getElementById('tool2').style.display==='none') return false;
+  return t2Fields.length>0 || (typeof t2Entries!=='undefined' && t2Entries.length>0);
+}
+
 function showHome(){
-  const confirm_needed = typeof _sessionActive !== 'undefined' && _sessionActive;
-  if(confirm_needed){
-    if(!confirm('Go back to home?\n\nAny unsaved work will be lost.')) return;
+  const confirm_session = typeof _sessionActive !== 'undefined' && _sessionActive;
+  const confirm_t2work = t2HasUnsavedWork();
+  if(confirm_session || confirm_t2work){
+    if(!confirm('Go back to home?\n\nAny unsaved work in Tool 2 may be lost.')) return;
   }
   document.getElementById('homePage').style.display='flex';
   document.getElementById('tool1').style.display='none';

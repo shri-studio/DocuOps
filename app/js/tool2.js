@@ -40,6 +40,30 @@ let t2Fields=[];
 let t2Files=[],t2ActiveFile=0,t2Entries=[],t2ActiveFieldId=null;
 let t2RepeatData={},t2TemplateFile=null,t2NamingPatternOverride=null;
 const T2_AUTOSAVE_KEY='ocrSuite_t2Template';
+const T2_AUTOSAVE_HISTORY_KEY='ocrSuite_t2TemplateHistory';
+
+function t2GetTemplateHistory(){
+  try{
+    const raw = localStorage.getItem(T2_AUTOSAVE_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+
+function t2SetTemplateHistory(history){
+  localStorage.setItem(T2_AUTOSAVE_HISTORY_KEY, JSON.stringify(history));
+}
+
+function t2AddTemplateHistoryRecord(data){
+  const history = t2GetTemplateHistory();
+  const stamp = new Date().toLocaleString();
+  const name = data.name || `Session ${stamp}`;
+  const existing = history.find(h => h.name===name);
+  if(existing){ existing.savedAt = stamp; existing.data = data; }
+  else { history.unshift({name, savedAt: stamp, data}); }
+  const keep = history.slice(0, 10);
+  t2SetTemplateHistory(keep);
+}
+
 
 // ── SUPABASE TEMPLATE SYNC ──────────────────────────
 const _sbUrl = 'https://mawyhvjvnkzgohujxubl.supabase.co';
@@ -146,6 +170,34 @@ function t2ShowSetup(){
       }catch(e){}
     }
   })();
+  t2PopulateTemplateSelector();
+}
+
+function t2PopulateTemplateSelector(){
+  const sel=document.getElementById('t2TemplateSelector');
+  if(!sel) return;
+  const history = t2GetTemplateHistory();
+  sel.innerHTML = '';
+  if(history.length===0){
+    const opt = document.createElement('option');
+    opt.value=''; opt.textContent='No saved templates';
+    sel.appendChild(opt);
+    return;
+  }
+  history.forEach((h,i)=>{
+    const opt=document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${h.name || 'Template'} · ${h.savedAt || ''}`;
+    sel.appendChild(opt);
+  });
+}
+
+function t2LoadTemplateSelector(){
+  const sel=document.getElementById('t2TemplateSelector');
+  if(!sel || !sel.value) return;
+  const index=parseInt(sel.value,10);
+  if(Number.isNaN(index)) return;
+  t2LoadTemplateFromHistory(index);
 }
 
 // Template persistence
@@ -224,10 +276,24 @@ function t2BuildManual(){
   t2ShowBuilder();
 }
 
+function t2EnsureBackToSetupBtn(){
+  const bh=document.querySelector('.builder-hdr');
+  if(!bh || bh.querySelector('.back-setup-btn')) return;
+  const backBtn=document.createElement('button');
+  backBtn.className='btn back-setup-btn';
+  backBtn.style.cssText='padding:6px 12px;font-size:11px;background:none;border:1px solid var(--border);color:var(--muted);margin-right:8px;';
+  backBtn.textContent='↩ Setup';
+  backBtn.onclick=t2BackToSetup;
+  const actions = bh.querySelector('.builder-actions');
+  if(actions){ bh.insertBefore(backBtn, actions); }
+  else { bh.appendChild(backBtn); }
+}
+
 function t2ShowBuilder(){
   ['t2Setup','t2Builder','t2Work','t2Done'].forEach(id=>{
     document.getElementById(id).style.display=id==='t2Builder'?'flex':'none';
   });
+  t2EnsureBackToSetupBtn();
   // Auto-save on builder open
   t2AutoSave();
   t2RenderBuilder();
@@ -238,9 +304,23 @@ function t2AutoSave(){
   const np=document.getElementById('t2NamingPattern');
   const data={fields:t2Fields,namingPattern:np?np.value:'{A}',savedAt:new Date().toLocaleString()};
   localStorage.setItem(T2_AUTOSAVE_KEY,JSON.stringify(data));
+  t2AddTemplateHistoryRecord(data);
   // Silent cloud sync
   t2SaveTemplateToCloud(data).catch(()=>{});
 }
+
+function t2LoadTemplateFromHistory(index){
+  const history = t2GetTemplateHistory();
+  if(index < 0 || index >= history.length) return;
+  const data = history[index].data;
+  if(!data) return;
+  t2Fields = data.fields || [];
+  t2ShowBuilder();
+  const np = document.getElementById('t2NamingPattern');
+  if(np) np.value = data.namingPattern || '{A}';
+  document.getElementById('t2TmplName').textContent = `Loaded: ${history[index].savedAt || ''}`;
+}
+
 
 function t2RenderBuilder(){
   assignCodes(t2Fields);
