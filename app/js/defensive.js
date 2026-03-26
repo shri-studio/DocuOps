@@ -42,11 +42,17 @@ setTimeout(patchT1Start, 500);
 let _orig_t2ShowSetup = null;
 function patchT2ShowSetup() {
   if (typeof t2ShowSetup !== 'undefined' && !_orig_t2ShowSetup) {
-    _orig_t2ShowSetup = t2ShowSetup;
-    window.t2ShowSetup = function() {
+    const currentSetup = t2ShowSetup;
+    _orig_t2ShowSetup = currentSetup.__t2ShowSetupBase || currentSetup;
+    const patched = function() {
       _setSessionActive(false);
-      _orig_t2ShowSetup();
+      if (typeof _orig_t2ShowSetup === 'function' && _orig_t2ShowSetup !== patched) {
+        _orig_t2ShowSetup();
+      }
     };
+    patched.__t2ShowSetupBase = _orig_t2ShowSetup;
+    patched.__t2ShowSetupPatched = true;
+    window.t2ShowSetup = patched;
     console.log('✅ t2ShowSetup patched successfully');
   }
 }

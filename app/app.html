@@ -880,9 +880,12 @@ function t2LoadLastTemplate() {
 }
 
 // Check on Tool 2 open — show correct state
-const _origT2ShowSetup = t2ShowSetup;
+const _origT2ShowSetup = (typeof t2ShowSetup === 'function' && t2ShowSetup.__t2ShowSetupBase) ? t2ShowSetup.__t2ShowSetupBase : t2ShowSetup;
 function t2ShowSetup() {
-  _origT2ShowSetup();
+  _setSessionActive(false);
+  if (typeof _origT2ShowSetup === 'function') {
+    _origT2ShowSetup();
+  }
   // Check for saved template
   const saved = localStorage.getItem('ocrSuite_t2Template');
   if (saved) {
@@ -912,20 +915,23 @@ document.getElementById('t1FileIn').addEventListener('change', function(e){
 });
 
 // Also handle drag and drop on t1DropArea
-const t1da = document.getElementById('t1DropArea');
-if(t1da){
-  t1da.addEventListener('dragover', e=>{ e.preventDefault(); t1da.style.borderColor='var(--green)'; });
-  t1da.addEventListener('dragleave', ()=>{ t1da.style.borderColor=''; });
-  t1da.addEventListener('drop', e=>{
-    e.preventDefault(); t1da.style.borderColor='';
-    const files = Array.from(e.dataTransfer.files).filter(f=>/\.(jpg|jpeg|png|webp|bmp|gif|pdf|mp4)$/i.test(f.name));
-    if(!files.length) return;
-    const startRow = document.getElementById('t1StartRow');
-    const countEl = document.getElementById('t1FileCount');
-    if(startRow) startRow.style.display = 'flex';
-    if(countEl) countEl.textContent = `${files.length} file${files.length!==1?'s':''} selected`;
-    window._t1PendingFiles = files;
-  });
+if (!window._t1DaBound) {
+  const t1da = document.getElementById('t1DropArea');
+  if(t1da){
+    t1da.addEventListener('dragover', e=>{ e.preventDefault(); t1da.style.borderColor='var(--green)'; });
+    t1da.addEventListener('dragleave', ()=>{ t1da.style.borderColor=''; });
+    t1da.addEventListener('drop', e=>{
+      e.preventDefault(); t1da.style.borderColor='';
+      const files = Array.from(e.dataTransfer.files).filter(f=>/\.(jpg|jpeg|png|webp|bmp|gif|pdf|mp4)$/i.test(f.name));
+      if(!files.length) return;
+      const startRow = document.getElementById('t1StartRow');
+      const countEl = document.getElementById('t1FileCount');
+      if(startRow) startRow.style.display = 'flex';
+      if(countEl) countEl.textContent = `${files.length} file${files.length!==1?'s':''} selected`;
+      window._t1PendingFiles = files;
+    });
+  }
+  window._t1DaBound = true;
 }
 
 function t1StartProcess(){
