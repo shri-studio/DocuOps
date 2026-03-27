@@ -300,7 +300,7 @@ async function t2StartEntry() {
 
 // ── 17. UPDATE VERSION EVERYWHERE ────────────────────
 (function updateVersion() {
-  const ver = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : 'v3.2.6';
+  const ver = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : 'v3.3.6';
   const footer = document.querySelector('.settings-footer');
   if (footer) footer.textContent = `DocuOps ${ver} · All processing local · No data uploaded`;
   const homeFooter = document.querySelector('.home-footer');

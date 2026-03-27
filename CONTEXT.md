@@ -6,7 +6,7 @@
 ## Project Overview
 **Name:** DocuOps  
 **Tagline:** Document Operations. Automated.  
-**Version:** 3.0.0  
+**Version:** 3.2.6  
 **Type:** Browser-based document intelligence platform  
 **Target Market:** BPO companies, data entry teams, document processing operations  
 
