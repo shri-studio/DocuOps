@@ -1362,6 +1362,7 @@ async function t2ExportAppend(){
 
 // Image strip
 function t2PromptFiles(){
+  console.trace('t2PromptFiles called');
   const inp=document.createElement('input');inp.type='file';inp.multiple=true;
   inp.accept='.jpg,.jpeg,.png,.webp,.bmp,.gif,.pdf,.mp4';
   inp.onchange=async e=>{

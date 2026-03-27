@@ -228,6 +228,7 @@ function t2SetupStripControls() {
 }
 
 function t2LoadDocuments(addMore) {
+  console.trace('t2LoadDocuments called with addMore=' + addMore);
   if (!addMore && t2Files.length > 0) {
     if (!confirm(`Load new documents?\n\nThis will replace the current ${t2Files.length} document(s) in the strip.\n\nUse "Add More" to keep existing and add new files.`)) return;
   }
