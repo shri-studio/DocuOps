@@ -262,7 +262,6 @@ footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
   </div>
   <div class="nav-cta">
     <button class="btn-ghost" id="navSignIn" onclick="showSignIn('app')">Sign In</button>
-    <button class="btn-nav" id="navLaunch" onclick="showSignIn('app')">Launch DocuOps →</button>
   </div>
 </nav>
 
@@ -772,9 +771,9 @@ function typeLoop(){
       ci++;
       setTimeout(typeLoop, line.arabic ? 90 : 40);
     } else {
-      // Stay duration: 6000ms — enough time to read
+      // Stay duration: 8000ms — text stays visible longer
       typing=false;
-      setTimeout(typeLoop, 6000);
+      setTimeout(typeLoop, 8000);
     }
   } else {
     // Fade out then pause before next line
