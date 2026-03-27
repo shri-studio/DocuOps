@@ -249,9 +249,12 @@ function t2SaveTemplate(){
 function t2LoadTemplateFile(){
   document.getElementById('t2TmplLoadIn').click();
 }
-document.getElementById('t2LoadBtn').addEventListener('click', t2LoadTemplateSelector);
-document.getElementById('t2CloseModalBtn').addEventListener('click', t2CloseLoadModal);
-document.getElementById('t2BrowseBtn').addEventListener('click', t2BrowseTemplate);
+const t2LoadBtn = document.getElementById('t2LoadBtn');
+if (t2LoadBtn) t2LoadBtn.addEventListener('click', t2LoadTemplateSelector);
+const t2CloseModalBtn = document.getElementById('t2CloseModalBtn');
+if (t2CloseModalBtn) t2CloseModalBtn.addEventListener('click', t2CloseLoadModal);
+const t2BrowseBtn = document.getElementById('t2BrowseBtn');
+if (t2BrowseBtn) t2BrowseBtn.addEventListener('click', t2BrowseTemplate);
 
 function t2CheckAutoSave(){
   const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
@@ -269,7 +272,9 @@ function t2CheckAutoSave(){
 }
 
 // Upload Excel template
-document.getElementById('t2TmplIn').addEventListener('change',async e=>{
+const t2TmplIn = document.getElementById('t2TmplIn');
+if (t2TmplIn) {
+  t2TmplIn.addEventListener('change', async e => {
   const file=e.target.files[0];if(!file)return;
   t2TemplateFile=file;
   const data=await file.arrayBuffer();
@@ -285,6 +290,7 @@ document.getElementById('t2TmplIn').addEventListener('change',async e=>{
   assignCodes(t2Fields);
   t2ShowBuilder();
 });
+}
 
 function t2BuildManual(){
   t2Fields=[{id:'f0',name:'Field 1',type:'text',options:'',formula:'',required:false,subFields:[],customCode:false}];
