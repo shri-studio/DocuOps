@@ -343,14 +343,15 @@
     <div id="t2ReturnState" style="display:none;">
       <div style="font-size:36px;margin-bottom:12px;">📊</div>
       <div style="font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;">Data Entry Assistant</div>
-      <div id="t2SavedInfo" style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;"></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;max-width:360px;text-align:center;">Select a saved template to load, or start fresh.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px;">
         <button class="btn btn-save" style="padding:11px 20px;font-size:13px;" onclick="t2ShowEmpty()">
           + New Template
         </button>
+        <button class="btn" style="background:var(--green);color:#0c0e14;padding:11px 20px;font-size:13px;" onclick="t2LoadLastTemplate()">
+          ▶ Resume
+        </button>
         <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;font-size:13px;" onclick="t2ShowLoadModal()">
-          Load Template
+          Load Other
         </button>
       </div>
     </div>

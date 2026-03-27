@@ -962,7 +962,6 @@ async function t2StartEntry(){
     t2FillField(t2ActiveFieldId,text.trim());
   };
   v2.attachEvents('de');
-  t2PromptFiles();
 }
 
 function t2RenderForm(){
