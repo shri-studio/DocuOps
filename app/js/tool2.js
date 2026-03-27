@@ -738,26 +738,38 @@ function t2RenderFormPreview() {
 
 function t2RenderExcelPreview() {
   const wrap = document.getElementById('t2ExcelPreview');
-  if(!wrap) return;
-  if(!t2Fields.length){ wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);">Add fields to see Excel preview.</div>'; return; }
+  if (!wrap) return;
 
-  const headers = ['Source File', 'Timestamp', ...t2Fields.map(f => f.name)];
-  const sampleRow = ['invoice_001.jpg', new Date().toLocaleDateString(), ...t2Fields.map(f => {
-    if(f.type === 'number') return '100';
-    if(f.type === 'date') return new Date().toLocaleDateString();
-    if(f.type === 'formula') return '=formula';
-    if(f.type === 'dropdown') return (f.options||'').split('\n')[0] || 'Option';
-    return f.name + ' value';
-  })];
+  // If no entries, show a message
+  if (!t2Entries.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">📊 No entries yet.<br>Save your first entry to see the Excel preview.</div>';
+    return;
+  }
 
+  // Build headers: include internal fields (source file, timestamp, saved as) + user fields
+  const internalHeaders = ['Source File', 'Timestamp', 'Saved As'];
+  const userHeaders = t2Fields.map(f => f.name);
+  const headers = [...internalHeaders, ...userHeaders];
+
+  // Build table
   let html = '<table class="excel-preview-table">';
-  // Row number header
-  html += '<thead><tr><th class="excel-row-num">#</th>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+  html += '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
   html += '<tbody>';
-  // Sample rows
-  [sampleRow, sampleRow.map((v,i) => i===0?'invoice_002.jpg':i===1?new Date().toLocaleDateString():v+'2')].forEach((row, ri) => {
-    html += `<tr><td class="excel-row-num">${ri+1}</td>` + row.map(v => `<td>${v}</td>`).join('') + '</tr>';
+
+  t2Entries.forEach((entry, idx) => {
+    html += '<tr>';
+    // Internal columns
+    html += `<td>${entry._file || '—'}</td>`;
+    html += `<td>${entry._timestamp || '—'}</td>`;
+    html += `<td>${entry._savedAs || '—'}</td>`;
+    // User fields
+    userHeaders.forEach(h => {
+      const val = entry[h] || '';
+      html += `<td>${val}</td>`;
+    });
+    html += '</tr>';
   });
+
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
@@ -863,6 +875,22 @@ function evalFormula(expr,fields,getVal,getRepeatVals){
     const result=Function('"use strict";return ('+e+')')();
     return isNaN(result)||result===Infinity?'#ERR':Math.round(result*1e6)/1e6;
   }catch(err){return '#ERR';}
+}
+
+function t2CheckDuplicate(fieldId, value, currentEntryIndex) {
+  if (!value || value.trim() === '') return null;
+  const f = t2Fields.find(f => f.id === fieldId);
+  if (!f || !f.isUnique) return null;
+  const duplicateEntry = t2Entries.find((entry, idx) => {
+    // Skip the current entry if we're editing (for future use)
+    if (currentEntryIndex !== undefined && idx === currentEntryIndex) return false;
+    return entry[f.name] === value;
+  });
+  if (duplicateEntry) {
+    const entryIndex = t2Entries.indexOf(duplicateEntry) + 1;
+    return entryIndex;
+  }
+  return null;
 }
 
 function t2GetFieldVal(fieldId){
@@ -1005,6 +1033,26 @@ function t2RenderForm(){
       const inp=document.createElement('input');inp.className='de-inp';inp.id='dei_'+f.id;
       inp.type=f.type==='number'?'number':f.type==='date'?'date':'text';inp.placeholder=f.name;
       inp.oninput=()=>{t2UpdateFormulas();t2UpdateEntryFilename();};
+      if(f.isUnique){
+        inp.classList.add('unique-field');
+        inp.addEventListener('input',function(){
+          const duplicateEntryIndex=t2CheckDuplicate(f.id,this.value);
+          if(duplicateEntryIndex){
+            this.classList.add('duplicate-warning');
+            this.title=`⚠️ Duplicate of entry #${duplicateEntryIndex}`;
+          }else{
+            this.classList.remove('duplicate-warning');
+            this.title='';
+          }
+        });
+        setTimeout(()=>{
+          const duplicateEntryIndex=t2CheckDuplicate(f.id,inp.value);
+          if(duplicateEntryIndex){
+            inp.classList.add('duplicate-warning');
+            inp.title=`⚠️ Duplicate of entry #${duplicateEntryIndex}`;
+          }
+        },10);
+      }
       wrap.appendChild(inp);
     }
     container.appendChild(wrap);
@@ -1150,6 +1198,9 @@ async function t2SaveEntry(){
     }
   });
   t2Entries.push(row);
+
+  // Refresh Excel preview with real data
+  t2RenderExcelPreview();
 
   // Save renamed file
   if(v2.s.blob){
@@ -1350,6 +1401,59 @@ async function t2LoadInViewer(i){
   if(ft==='pdf')await v2.loadPDF(file);
   else if(ft==='mp4')await v2.loadVideo(file);
   else await v2.loadImg(file);
+}
+
+function t2SaveProject() {
+  const project = {
+    version: 1,
+    savedAt: new Date().toLocaleString(),
+    fields: t2Fields,
+    namingPattern: document.getElementById('t2NamingPattern')?.value || '{A}',
+    entries: t2Entries
+  };
+  const dataStr = JSON.stringify(project, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'docuops_project.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function t2LoadProject() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const project = JSON.parse(text);
+      // Basic validation
+      if (!project.fields || !project.entries) {
+        alert('Invalid project file: missing fields or entries.');
+        return;
+      }
+      // Confirm replacement
+      if (!confirm('Replace current work with loaded project?\nAny unsaved changes will be lost.')) return;
+      // Restore state
+      t2Fields = project.fields;
+      if (project.namingPattern) {
+        const np = document.getElementById('t2NamingPattern');
+        if (np) np.value = project.namingPattern;
+      }
+      t2Entries = project.entries;
+      // Refresh UI – go to builder (or you can go to work area)
+      t2ShowBuilder();
+      t2RenderBuilder();
+      t2RenderExcelPreview();
+      alert(`Project loaded: ${t2Entries.length} entries.`);
+    } catch (err) {
+      alert('Error loading project: ' + err.message);
+    }
+  };
+  inp.click();
 }
 
 // T2 keyboard

@@ -346,3 +346,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 .fc-duplicate-on { color: var(--accent2); }
 .fc-duplicate-off { color: var(--border); }
+
+/* Duplicate warning style for unique fields */
+.unique-field.duplicate-warning {
+  border-color: var(--danger) !important;
+  border-width: 2px !important;
+  background-color: rgba(248, 113, 113, 0.05) !important;
+}
+.unique-field.duplicate-warning:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+}
