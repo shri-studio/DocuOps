@@ -26,14 +26,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:h
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 6%;transition:all .3s;}
 nav.scrolled{background:rgba(12,14,20,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;width:200px;}
 .nav-logo-mark{width:34px;height:34px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .nav-logo-mark svg{width:18px;height:18px;}
 .nav-logo-text{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.4px;}
-.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-links{display:flex;gap:28px;align-items:center;justify-content:center;flex:1;}
 .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .15s;}
 .nav-links a:hover{color:var(--text);}
-.nav-cta{display:flex;gap:10px;align-items:center;}
+.nav-cta{display:flex;gap:10px;align-items:center;width:200px;justify-content:flex-end;}
 .btn-nav{background:var(--green);color:#0c0e14;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:var(--sans);transition:opacity .15s;}
 .btn-nav:hover{opacity:.85;}
 .btn-ghost{background:none;border:1px solid var(--border);color:var(--text);padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;}
@@ -590,9 +590,9 @@ footer{border-top:1px solid var(--border);padding:48px 6% 32px;}
     </div>
   </div>
   <div class="footer-bottom">
-    <span class="footer-copy">© 2026 DocuOps. All rights reserved. · Built by <a href="#" style="color:var(--green);text-decoration:none;">Shri Studio</a></span>
+    <span class="footer-copy">© 2026 DocuOps. All rights reserved. · <span class="version-display" style="font-family:var(--mono);color:var(--muted);"></span> · Built by <a href="#" style="color:var(--green);text-decoration:none;">shri Studio</a></span>
     <span class="footer-privacy" style="display:flex;align-items:center;gap:12px;">
-      <span id="landingVersion" style="font-family:var(--mono);font-size:11px;color:var(--border);"></span>
+      <span id="landingVersion" style="font-family:var(--mono);font-size:11px;color:var(--border);display:none;"></span>
       🔒 Your data never leaves your system
     </span>
   </div>
@@ -772,9 +772,9 @@ function typeLoop(){
       ci++;
       setTimeout(typeLoop, line.arabic ? 90 : 40);
     } else {
-      // Stay duration: 3500ms — enough time to read
+      // Stay duration: 6000ms — enough time to read
       typing=false;
-      setTimeout(typeLoop, 3500);
+      setTimeout(typeLoop, 6000);
     }
   } else {
     // Fade out then pause before next line
@@ -826,6 +826,13 @@ function submitForm(e){
   document.getElementById('contactForm').style.display='none';
   document.getElementById('formSuccess').style.display='block';
 }
+</script>
+<script>
+  // ── VERSION DISPLAY FOR LANDING PAGE ──
+  document.addEventListener('DOMContentLoaded', function(){
+    const v = typeof DOCUOPS_VERSION !== 'undefined' ? DOCUOPS_VERSION : '3.4.11';
+    document.querySelectorAll('.version-display').forEach(el => el.textContent = 'v' + v);
+  });
 </script>
 </body>
 </html>
