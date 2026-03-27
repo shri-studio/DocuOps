@@ -345,3 +345,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 /* AI SETTINGS */
 .ai-settings-section .ai-key-input{margin-top:5px;}
+
+.fc-duplicate-on { color: var(--accent2); }
+.fc-duplicate-off { color: var(--border); }

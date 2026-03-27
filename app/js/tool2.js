@@ -444,6 +444,17 @@ function t2RenderBuilder(){
     keyBtn.onclick = () => { t2Fields[i].isProfileKey = !t2Fields[i].isProfileKey; t2RenderBuilder(); };
     actions.appendChild(keyBtn);
 
+    // Duplicate check — magnifying glass icon
+    const dupBtn = document.createElement('button');
+    dupBtn.className = 'fc-btn ' + (f.isUnique ? 'fc-duplicate-on' : 'fc-duplicate-off');
+    dupBtn.textContent = '🔍';
+    dupBtn.style.fontSize = '12px';
+    dupBtn.title = f.isUnique
+      ? 'Warn on duplicate — click to disable'
+      : 'Check for duplicates — warn if same value exists';
+    dupBtn.onclick = () => { t2Fields[i].isUnique = !t2Fields[i].isUnique; t2RenderBuilder(); };
+    actions.appendChild(dupBtn);
+
     // Up arrow
     if(i > 0){
       const upBtn = document.createElement('button');
@@ -1057,6 +1068,24 @@ async function t2SaveEntry(){
     }
   });
   if(!valid){alert('Please fill required fields (*).');return;}
+
+  // Duplicate check for fields marked isUnique
+  for (const f of t2Fields) {
+    if (f.isUnique && f.type !== 'formula' && f.type !== 'repeat') {
+      const currentVal = t2GetFieldVal(f.id);
+      if (currentVal && currentVal.trim() !== '') {
+        const duplicateEntry = t2Entries.find(entry => entry[f.name] === currentVal);
+        if (duplicateEntry) {
+          const entryIndex = t2Entries.indexOf(duplicateEntry) + 1;
+          const confirmMsg = `⚠️ Duplicate value found for "${f.name}": "${currentVal}"\nThis already exists in entry #${entryIndex}.\n\nSave anyway?`;
+          if (!confirm(confirmMsg)) {
+            return; // Cancel save
+          }
+          break; // Only warn once per save
+        }
+      }
+    }
+  }
 
   const{name,warnings}=t2BuildFilename();
   const row={_file:t2Files[t2ActiveFile]?.name||'—',_timestamp:new Date().toLocaleString(),_savedAs:name+'.jpg'};
