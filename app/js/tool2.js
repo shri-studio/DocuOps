@@ -194,6 +194,7 @@ function t2PopulateTemplateSelector(){
 }
 
 function t2ShowLoadModal(){
+  console.trace('t2ShowLoadModal called');
   t2PopulateTemplateSelector();
   document.getElementById('t2LoadModal').style.display = 'flex';
 }
@@ -1421,6 +1422,7 @@ function t2SaveProject() {
 }
 
 function t2LoadProject() {
+  console.trace('t2LoadProject called');
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = '.json';
