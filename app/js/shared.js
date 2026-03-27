@@ -1,7 +1,10 @@
 // ============================================================
-// DocuOps v3.0.0 — Shared Utilities & Viewer Engine
+// DocuOps v3.3.7 — Shared Utilities & Viewer Engine
 // FSM utilities, makeViewer factory, navigation, shared helpers
 // ============================================================
+
+// ── VERSION ──
+const DOCUOPS_VERSION = '3.3.7';
 
 // ════════════════════════════════════════════════════
 // SHARED

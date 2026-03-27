@@ -1,6 +1,6 @@
 # DocuOps — Change Log
 
-## Current Version: 3.2.6
+## Current Version: 3.3.7
 Live: https://docu-ops.vercel.app
 
 ---
