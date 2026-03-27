@@ -276,6 +276,42 @@ const t2TmplIn = document.getElementById('t2TmplIn');
 if (t2TmplIn) {
   t2TmplIn.addEventListener('change', async e => {
   const file=e.target.files[0];if(!file)return;
+  // Handle JSON template loading
+  if(file.name.endsWith('.json')){
+    const text=await file.text();
+    try{
+      const data=JSON.parse(text);
+      t2Fields=data.fields||[];
+      t2ShowBuilder();
+      if(data.namingPattern){
+        const np=document.getElementById('t2NamingPattern');
+        if(np)np.value=data.namingPattern;
+      }
+      document.getElementById('t2TmplName').textContent=`Loaded: ${file.name}`;
+    }catch(err){alert('Invalid template file: '+err.message);}
+    return;
+  }
+  // Handle Excel files
+  const data=await file.arrayBuffer();
+  const wb=XLSX.read(data);
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const headers=[];
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1');
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=ws[XLSX.utils.encode_cell({r:range.s.r,c})];
+    if(cell&&cell.v)headers.push(String(cell.v));
+  }
+  t2Fields=headers.map((h,i)=>({id:'f'+i,name:h,type:'text',options:'',formula:'',required:false,subFields:[],customCode:false}));
+  assignCodes(t2Fields);
+  t2ShowBuilder();
+});
+}
+
+// Upload Excel template via separate input
+const t2ExcelIn = document.getElementById('t2ExcelIn');
+if (t2ExcelIn) {
+  t2ExcelIn.addEventListener('change', async e => {
+  const file=e.target.files[0];if(!file)return;
   t2TemplateFile=file;
   const data=await file.arrayBuffer();
   const wb=XLSX.read(data);
