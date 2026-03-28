@@ -62,16 +62,16 @@ document.getElementById('t1DropArea').addEventListener('drop', e => {
 });
 
 // ── 5. T2 — CLEAR FORM CONFIRMATION ──────────────────
-const _orig_t2ClearForm = t2ClearForm;
-function t2ClearForm() {
-  // Check if any field has data
+// Cannot patch t2ClearForm directly — same recursion issue as t2LoadInViewer.
+// Expose _t2ClearGuard() which tool2.js calls at the top of t2ClearForm.
+function _t2ClearGuard() {
   const hasData = t2Fields.some(f => {
     const el = document.getElementById('dei_' + f.id);
     if (!el) return false;
     return el.tagName === 'SELECT' ? el.selectedIndex > 0 : el.value !== '';
   });
-  if (hasData && !confirm('↺ Clear all form fields?\n\nAll unsaved data in the current form will be lost.')) return;
-  _orig_t2ClearForm();
+  if (!hasData) return true;
+  return confirm('↺ Clear all form fields?\n\nAll unsaved data in the current form will be lost.');
 }
 
 // ── 6. T2 — SWITCHING IMAGE WITH UNSAVED FORM DATA ───

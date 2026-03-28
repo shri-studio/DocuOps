@@ -1119,6 +1119,8 @@ function t2FillField(id,text){
 }
 
 function t2ClearForm(){
+  // Guard: confirm if form has data (defined in defensive.js)
+  if(typeof _t2ClearGuard==='function' && !_t2ClearGuard()) return;
   t2Fields.forEach(f=>{
     const el=document.getElementById('dei_'+f.id);
     if(el){if(el.tagName==='SELECT')el.selectedIndex=0;else if(el.tagName==='INPUT')el.value='';else el.textContent='—';}
