@@ -77,16 +77,15 @@ function t2ClearForm() {
 // ── 6. T2 — SWITCHING IMAGE WITH UNSAVED FORM DATA ───
 const _orig_t2LoadInViewer = t2LoadInViewer;
 async function t2LoadInViewer(i) {
-  if (i === t2ActiveFile) { await _orig_t2LoadInViewer(i); return; }
   const hasData = t2Fields.some(f => {
     const el = document.getElementById('dei_' + f.id);
     if (!el) return false;
     return el.tagName === 'SELECT' ? el.selectedIndex > 0 : el.value !== '';
   });
-  if (hasData) {
+  if (hasData && i !== t2ActiveFile) {
     if (!confirm('Switch to a different document?\n\nYou have unsaved data in the current form.\nClick "Save Entry" first to keep it, or switch anyway to discard.')) return;
   }
-  await _orig_t2LoadInViewer(i);
+  await _orig_t2LoadInViewer.call(this, i);
 }
 
 // ── 7. T2 — EXPORT WITH PARTIALLY FILLED FORM ────────
