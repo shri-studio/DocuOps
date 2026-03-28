@@ -1396,6 +1396,8 @@ async function t2BuildStrip(){
 }
 
 async function t2LoadInViewer(i){
+  // Guard: check for unsaved form data before switching (defined in defensive.js)
+  if(typeof _t2SwitchGuard === 'function' && !_t2SwitchGuard(i)) return;
   t2ActiveFile=i;
   document.querySelectorAll('.s-thumb').forEach((t,idx)=>t.classList.toggle('active',idx===i));
   const file=t2Files[i];const ft=getFileType(file.name);const tb=getTypeBadge(ft);

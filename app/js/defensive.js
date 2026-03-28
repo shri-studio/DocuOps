@@ -75,17 +75,21 @@ function t2ClearForm() {
 }
 
 // ── 6. T2 — SWITCHING IMAGE WITH UNSAVED FORM DATA ───
-const _orig_t2LoadInViewer = t2LoadInViewer;
-async function t2LoadInViewer(i) {
-  const hasData = t2Fields.some(f => {
+// Cannot patch t2LoadInViewer directly — captured reference resolves to the
+// patched version at call time, causing infinite recursion.
+// Instead we expose _t2SwitchGuard() which tool2.js calls at the top of
+// t2LoadInViewer before doing any work.
+function _t2HasUnsavedFormData() {
+  return t2Fields.some(f => {
     const el = document.getElementById('dei_' + f.id);
     if (!el) return false;
     return el.tagName === 'SELECT' ? el.selectedIndex > 0 : el.value !== '';
   });
-  if (hasData && i !== t2ActiveFile) {
-    if (!confirm('Switch to a different document?\n\nYou have unsaved data in the current form.\nClick "Save Entry" first to keep it, or switch anyway to discard.')) return;
-  }
-  await _orig_t2LoadInViewer.call(this, i);
+}
+function _t2SwitchGuard(targetIdx) {
+  if (targetIdx === t2ActiveFile) return true;
+  if (!_t2HasUnsavedFormData()) return true;
+  return confirm('Switch to a different document?\n\nYou have unsaved data in the current form.\nClick "Save Entry" first to keep it, or switch anyway to discard.');
 }
 
 // ── 7. T2 — EXPORT WITH PARTIALLY FILLED FORM ────────
@@ -199,7 +203,6 @@ function t2SetupStripControls() {
 }
 
 function t2LoadDocuments(addMore) {
-  console.trace('t2LoadDocuments called with addMore=' + addMore);
   if (!addMore && t2Files.length > 0) {
     if (!confirm(`Load new documents?\n\nThis will replace the current ${t2Files.length} document(s) in the strip.\n\nUse "Add More" to keep existing and add new files.`)) return;
   }
