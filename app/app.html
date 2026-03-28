@@ -304,52 +304,27 @@
   <div id="t2Setup">
 
     <!-- Empty state — shown when no template saved -->
-    <div id="t2EmptyState">
+    <!-- Setup — always shows two primary actions -->
+    <div id="t2EmptyState" style="display:none;flex-direction:column;align-items:center;">
       <div style="font-size:48px;margin-bottom:16px;">📋</div>
-      <div style="font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px;">No template yet</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:380px;text-align:center;margin-bottom:28px;">
-        Upload your Excel file and DocuOps turns your column headers into form fields automatically.
-        Or build your own from scratch.
+      <div style="font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px;">New Template</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:360px;text-align:center;margin-bottom:24px;">Build a form from your Excel headers, or start from scratch.</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 24px;font-size:13px;" onclick="t2BuildManual()">✏️ Build from Scratch</button>
+        <button class="btn btn-save" style="padding:12px 24px;font-size:13px;" onclick="document.getElementById('t2ExcelIn').click()">📋 Upload Excel Template</button>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;">
-        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 24px;font-size:13px;" onclick="t2BuildManual()">
-          ✏️ Build from Scratch
-        </button>
-        <button class="btn btn-save" style="padding:12px 24px;font-size:13px;" onclick="document.getElementById('t2ExcelIn').click()">
-          📋 Upload Excel Template
-        </button>
-      </div>
-      <!-- How it works — subtle -->
-      <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">
-        <div style="text-align:center;max-width:120px;">
-          <div style="font-size:20px;margin-bottom:6px;">📂</div>
-          <div style="font-size:11px;font-weight:700;margin-bottom:3px;">Upload Template</div>
-          <div style="font-size:11px;color:var(--muted);">Excel columns become fields</div>
-        </div>
-        <div style="text-align:center;max-width:120px;">
-          <div style="font-size:20px;margin-bottom:6px;">✏️</div>
-          <div style="font-size:11px;font-weight:700;margin-bottom:3px;">Draw a Box</div>
-          <div style="font-size:11px;color:var(--muted);">Click field → select area on doc</div>
-        </div>
-        <div style="text-align:center;max-width:120px;">
-          <div style="font-size:20px;margin-bottom:6px;">📊</div>
-          <div style="font-size:11px;font-weight:700;margin-bottom:3px;">Export Excel</div>
-          <div style="font-size:11px;color:var(--muted);">Data fills your template</div>
-        </div>
-      </div>
+      <button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px;" onclick="t2ShowReturn()">← Back</button>
     </div>
 
-    <!-- Returning user state — shown when template exists -->
-    <div id="t2ReturnState" style="display:none;">
-      <div style="font-size:36px;margin-bottom:12px;">📊</div>
-      <div style="font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;">Data Entry Assistant</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px;">
-        <button class="btn btn-save" style="padding:11px 20px;font-size:13px;" onclick="t2ShowEmpty()">
-          + New Template
-        </button>
-        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;font-size:13px;" onclick="t2ShowLoadModal()">
-          Load Template/Project
-        </button>
+    <!-- Return state — shown when a saved template exists -->
+    <div id="t2ReturnState" style="display:none;flex-direction:column;align-items:center;">
+      <div style="font-size:40px;margin-bottom:14px;">📊</div>
+      <div style="font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px;">Data Entry Assistant</div>
+      <div id="t2SavedInfo" style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:24px;"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn btn-save" style="padding:12px 22px;font-size:13px;" onclick="t2LoadLastTemplate()">▶ Continue Last Template</button>
+        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 22px;font-size:13px;" onclick="t2ShowLoadModal()">📂 Load Template / Project</button>
+        <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 22px;font-size:13px;" onclick="t2ShowEmpty()">✏️ New Template</button>
       </div>
     </div>
 
@@ -497,7 +472,7 @@
       <div style="font-size:18px;font-weight:800;letter-spacing:-.3px;">Export Data</div>
       <div style="font-size:13px;color:var(--muted);" id="t2ExportSummary"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-        <button class="t2-dl-btn" style="background:var(--green);color:#0c0e14;padding:11px 24px;" onclick="t2ExportAppend()">📋 Add to My Template</button>
+        <button id="t2ExportAppendBtn" class="t2-dl-btn" style="background:var(--green);color:#0c0e14;padding:11px 24px;display:none;" onclick="t2ExportAppend()">📋 Add to My Template</button>
         <button class="t2-dl-btn" style="background:var(--blue);color:#fff;padding:11px 24px;" onclick="t2ExportFresh()">📄 Fresh Excel</button>
       </div>
       <div style="display:flex;gap:8px;">
@@ -864,37 +839,30 @@ async function appSignOut() {
 </script>
 
 <script>
-// ── TOOL 2 EMPTY STATE LOGIC ──
+// ── TOOL 2 SETUP STATE ──
 function t2ShowEmpty() {
   document.getElementById('t2EmptyState').style.display = 'flex';
-  document.getElementById('t2EmptyState').style.flexDirection = 'column';
-  document.getElementById('t2EmptyState').style.alignItems = 'center';
   document.getElementById('t2ReturnState').style.display = 'none';
 }
 
 function t2ShowReturn(info) {
   document.getElementById('t2EmptyState').style.display = 'none';
   document.getElementById('t2ReturnState').style.display = 'flex';
-  document.getElementById('t2ReturnState').style.flexDirection = 'column';
-  document.getElementById('t2ReturnState').style.alignItems = 'center';
   const infoEl = document.getElementById('t2SavedInfo');
-  if (infoEl && info) infoEl.textContent = info;
+  if(infoEl && info) infoEl.textContent = info;
 }
 
 function t2LoadLastTemplate() {
-  // Load from localStorage (already synced from cloud)
   const saved = localStorage.getItem('ocrSuite_t2Template');
-  if (!saved) { t2ShowEmpty(); return; }
+  if(!saved){ t2ShowEmpty(); return; }
   try {
     const data = JSON.parse(saved);
     t2Fields = data.fields || [];
     t2ShowBuilder();
     const np = document.getElementById('t2NamingPattern');
-    if (np && data.namingPattern) np.value = data.namingPattern;
-  } catch(e) { t2ShowEmpty(); }
-  t2PopulateTemplateSelector();
+    if(np && data.namingPattern) np.value = data.namingPattern;
+  } catch(e){ t2ShowEmpty(); }
 }
-
 </script>
 
 <script>
