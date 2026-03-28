@@ -190,7 +190,6 @@ function t2PopulateTemplateSelector(){
 }
 
 function t2ShowLoadModal(){
-  console.trace('t2ShowLoadModal called');
   t2PopulateTemplateSelector();
   document.getElementById('t2LoadModal').style.display = 'flex';
 }
@@ -628,10 +627,23 @@ function t2SetFormula(idx, formula) {
 }
 
 
-// Add formula-ex style dynamically
+// Add dynamic styles for field card buttons + formula examples
 (function(){
   const s = document.createElement('style');
-  s.textContent = '.formula-ex{color:var(--blue);cursor:pointer;margin-right:6px;font-family:var(--mono);font-size:10px;}.formula-ex:hover{text-decoration:underline;}';
+  s.textContent = [
+    '.formula-ex{color:var(--blue);cursor:pointer;margin-right:6px;font-family:var(--mono);font-size:10px;}',
+    '.formula-ex:hover{text-decoration:underline;}',
+    // Brain icon — profile key active state
+    '.fc-key-on{color:#f59e0b !important;background:rgba(245,158,11,.15) !important;border-radius:4px;}',
+    '.fc-key-off{color:var(--border);}',
+    '.fc-key-off:hover{color:var(--muted);}',
+    // Search icon — duplicate check active state
+    '.fc-duplicate-on{color:#5b8df6 !important;background:rgba(91,141,246,.15) !important;border-radius:4px;}',
+    '.fc-duplicate-off{color:var(--border);}',
+    '.fc-duplicate-off:hover{color:var(--muted);}',
+    // Duplicate warning on input
+    '.duplicate-warning{border-color:var(--danger) !important;background:rgba(248,113,113,.06) !important;}',
+  ].join('');
   document.head.appendChild(s);
 })();
 
@@ -706,35 +718,36 @@ function t2RenderExcelPreview() {
   const wrap = document.getElementById('t2ExcelPreview');
   if (!wrap) return;
 
-  // If no entries, show a message
-  if (!t2Entries.length) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">📊 No entries yet.<br>Save your first entry to see the Excel preview.</div>';
+  // No fields yet — nothing to show
+  if (!t2Fields.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;">Add fields to see the Excel structure.</div>';
     return;
   }
 
-  // Build headers: include internal fields (source file, timestamp, saved as) + user fields
   const internalHeaders = ['Source File', 'Timestamp', 'Saved As'];
   const userHeaders = t2Fields.map(f => f.name);
   const headers = [...internalHeaders, ...userHeaders];
 
-  // Build table
   let html = '<table class="excel-preview-table">';
   html += '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
   html += '<tbody>';
 
-  t2Entries.forEach((entry, idx) => {
-    html += '<tr>';
-    // Internal columns
-    html += `<td>${entry._file || '—'}</td>`;
-    html += `<td>${entry._timestamp || '—'}</td>`;
-    html += `<td>${entry._savedAs || '—'}</td>`;
-    // User fields
-    userHeaders.forEach(h => {
-      const val = entry[h] || '';
-      html += `<td>${val}</td>`;
+  if (!t2Entries.length) {
+    // Show placeholder row so column structure is visible immediately
+    html += '<tr>' + headers.map(() => `<td style="color:var(--border);font-size:11px;font-family:var(--mono);">—</td>`).join('') + '</tr>';
+    html += `<tr><td colspan="${headers.length}" style="text-align:center;color:var(--muted);font-size:11px;padding:14px 12px;border:none;font-style:italic;">Entries will appear here as you save them</td></tr>`;
+  } else {
+    t2Entries.forEach(entry => {
+      html += '<tr>';
+      html += `<td>${entry._file || '—'}</td>`;
+      html += `<td>${entry._timestamp || '—'}</td>`;
+      html += `<td>${entry._savedAs || '—'}</td>`;
+      userHeaders.forEach(h => {
+        html += `<td>${entry[h] || ''}</td>`;
+      });
+      html += '</tr>';
     });
-    html += '</tr>';
-  });
+  }
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
@@ -1347,7 +1360,6 @@ function t2ExportPrompt(){
 
 // Image strip
 function t2PromptFiles(){
-  console.trace('t2PromptFiles called');
   const inp=document.createElement('input');inp.type='file';inp.multiple=true;
   inp.accept='.jpg,.jpeg,.png,.webp,.bmp,.gif,.pdf,.mp4';
   inp.onchange=async e=>{
@@ -1421,7 +1433,6 @@ function t2SaveProject() {
 }
 
 function t2LoadProject() {
-  console.trace('t2LoadProject called');
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = '.json';
@@ -1465,3 +1476,5 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft')t2LoadInViewer(Math.max(0,t2ActiveFile-1));
   if(e.key==='ArrowRight')t2LoadInViewer(Math.min(t2Files.length-1,t2ActiveFile+1));
 });
+
+
