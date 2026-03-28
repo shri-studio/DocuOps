@@ -150,27 +150,29 @@ async function t2LoadTemplateFromCloud() {
 function t2ShowSetup(){
   ['t2Setup','t2Builder','t2Work','t2Done'].forEach(id=>{
     const el=document.getElementById(id);
-    el.style.display=id==='t2Setup'?'flex':'none';
+    if(el) el.style.display=id==='t2Setup'?'flex':'none';
   });
-  // Check cloud first, then localStorage
+
   (async () => {
     const cloud = await t2LoadTemplateFromCloud();
     if(cloud){
       localStorage.setItem(T2_AUTOSAVE_KEY, JSON.stringify(cloud));
-      document.getElementById('t2TmplName').textContent=`Saved: ${cloud.savedAt||''}`;
-      document.getElementById('t2TmplName').style.display='inline';
-      return;
     }
-    const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
+    const saved = localStorage.getItem(T2_AUTOSAVE_KEY);
     if(saved){
       try{
-        const d=JSON.parse(saved);
-        document.getElementById('t2TmplName').textContent=`Auto-saved: ${d.savedAt||''}`;
-        document.getElementById('t2TmplName').style.display='inline';
-      }catch(e){}
+        const data = JSON.parse(saved);
+        const fields = data.fields || [];
+        const info = `${fields.length} field${fields.length!==1?'s':''} · Saved ${data.savedAt||''}`;
+        if(typeof t2ShowReturn==='function') t2ShowReturn(info);
+      } catch(e){
+        if(typeof t2ShowEmpty==='function') t2ShowEmpty();
+      }
+    } else {
+      if(typeof t2ShowEmpty==='function') t2ShowEmpty();
     }
+    t2PopulateTemplateSelector();
   })();
-  t2PopulateTemplateSelector();
 }
 
 function t2PopulateTemplateSelector(){
@@ -216,18 +218,6 @@ function t2LoadTemplateSelector(){
   t2CloseLoadModal();
 }
 
-function t2LoadTemplateFromHistory(index){
-  const history = JSON.parse(localStorage.getItem(T2_HISTORY_KEY) || '[]');
-  if(index < 0 || index >= history.length) return;
-  const data = history[index];
-  t2Fields = data.fields || [];
-  t2ShowBuilder();
-  if(data.namingPattern){
-    const np = document.getElementById('t2NamingPattern');
-    if(np) np.value = data.namingPattern;
-  }
-}
-
 // Template persistence
 function t2SaveTemplate(){
   if(t2Fields.length===0){alert('No fields to save.');return;}
@@ -250,12 +240,6 @@ function t2SaveTemplate(){
 function t2LoadTemplateFile(){
   document.getElementById('t2TmplLoadIn').click();
 }
-const t2LoadBtn = document.getElementById('t2LoadBtn');
-if (t2LoadBtn) t2LoadBtn.addEventListener('click', t2LoadTemplateSelector);
-const t2CloseModalBtn = document.getElementById('t2CloseModalBtn');
-if (t2CloseModalBtn) t2CloseModalBtn.addEventListener('click', t2CloseLoadModal);
-const t2BrowseBtn = document.getElementById('t2BrowseBtn');
-if (t2BrowseBtn) t2BrowseBtn.addEventListener('click', t2BrowseTemplate);
 
 function t2CheckAutoSave(){
   const saved=localStorage.getItem(T2_AUTOSAVE_KEY);

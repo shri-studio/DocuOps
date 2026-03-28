@@ -38,34 +38,6 @@ patchT1Start();
 setTimeout(patchT1Start, 200);
 setTimeout(patchT1Start, 500);
 
-// ── 3. PATCH t2 functions (DELAYED) ────────────────────────────
-let _orig_t2ShowSetup = null;
-function patchT2ShowSetup() {
-  if (typeof t2ShowSetup !== 'undefined' && !t2ShowSetup.__t2ShowSetupPatched && !_orig_t2ShowSetup) {
-    const currentSetup = t2ShowSetup;
-    _orig_t2ShowSetup = currentSetup.__t2ShowSetupBase || currentSetup;
-    const patched = function() {
-      if (patched.__isReentrant) return;
-      patched.__isReentrant = true;
-      try {
-        _setSessionActive(false);
-        if (typeof _orig_t2ShowSetup === 'function' && _orig_t2ShowSetup !== patched) {
-          _orig_t2ShowSetup();
-        }
-      } finally {
-        patched.__isReentrant = false;
-      }
-    };
-    patched.__t2ShowSetupBase = _orig_t2ShowSetup;
-    patched.__t2ShowSetupPatched = true;
-    window.t2ShowSetup = patched;
-    console.log('✅ t2ShowSetup patched successfully');
-  }
-}
-patchT2ShowSetup();
-setTimeout(patchT2ShowSetup, 200);
-setTimeout(patchT2ShowSetup, 500);
-
 // ── 4. T1 — DROP NEW FILES ON ACTIVE SESSION ─────────
 document.getElementById('t1DropArea').addEventListener('dragover', e => e.preventDefault());
 document.getElementById('t1DropArea').addEventListener('drop', e => {
