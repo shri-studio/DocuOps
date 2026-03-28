@@ -145,32 +145,28 @@ async function t2LoadTemplateFromCloud() {
   return null;
 }
 
-
-
 function t2ShowSetup(){
   ['t2Setup','t2Builder','t2Work','t2Done'].forEach(id=>{
     const el=document.getElementById(id);
-    el.style.display=id==='t2Setup'?'flex':'none';
+    if(el) el.style.display=id==='t2Setup'?'flex':'none';
   });
-  // Check cloud first, then localStorage
-  (async () => {
-    const cloud = await t2LoadTemplateFromCloud();
-    if(cloud){
-      localStorage.setItem(T2_AUTOSAVE_KEY, JSON.stringify(cloud));
-      document.getElementById('t2TmplName').textContent=`Saved: ${cloud.savedAt||''}`;
-      document.getElementById('t2TmplName').style.display='inline';
-      return;
-    }
+  (async()=>{
+    const cloud=await t2LoadTemplateFromCloud();
+    if(cloud) localStorage.setItem(T2_AUTOSAVE_KEY,JSON.stringify(cloud));
     const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
     if(saved){
       try{
-        const d=JSON.parse(saved);
-        document.getElementById('t2TmplName').textContent=`Auto-saved: ${d.savedAt||''}`;
-        document.getElementById('t2TmplName').style.display='inline';
-      }catch(e){}
+        const data=JSON.parse(saved);
+        const fields=data.fields||[];
+        const info=`${fields.length} field${fields.length!==1?'s':''} · Saved ${data.savedAt||''}`;
+        if(typeof t2ShowReturn==='function') t2ShowReturn(info);
+      }catch(e){
+        if(typeof t2ShowEmpty==='function') t2ShowEmpty();
+      }
+    } else {
+      if(typeof t2ShowEmpty==='function') t2ShowEmpty();
     }
   })();
-  t2PopulateTemplateSelector();
 }
 
 function t2PopulateTemplateSelector(){
@@ -216,18 +212,6 @@ function t2LoadTemplateSelector(){
   t2CloseLoadModal();
 }
 
-function t2LoadTemplateFromHistory(index){
-  const history = JSON.parse(localStorage.getItem(T2_HISTORY_KEY) || '[]');
-  if(index < 0 || index >= history.length) return;
-  const data = history[index];
-  t2Fields = data.fields || [];
-  t2ShowBuilder();
-  if(data.namingPattern){
-    const np = document.getElementById('t2NamingPattern');
-    if(np) np.value = data.namingPattern;
-  }
-}
-
 // Template persistence
 function t2SaveTemplate(){
   if(t2Fields.length===0){alert('No fields to save.');return;}
@@ -250,12 +234,6 @@ function t2SaveTemplate(){
 function t2LoadTemplateFile(){
   document.getElementById('t2TmplLoadIn').click();
 }
-const t2LoadBtn = document.getElementById('t2LoadBtn');
-if (t2LoadBtn) t2LoadBtn.addEventListener('click', t2LoadTemplateSelector);
-const t2CloseModalBtn = document.getElementById('t2CloseModalBtn');
-if (t2CloseModalBtn) t2CloseModalBtn.addEventListener('click', t2CloseLoadModal);
-const t2BrowseBtn = document.getElementById('t2BrowseBtn');
-if (t2BrowseBtn) t2BrowseBtn.addEventListener('click', t2BrowseTemplate);
 
 function t2CheckAutoSave(){
   const saved=localStorage.getItem(T2_AUTOSAVE_KEY);
@@ -367,19 +345,6 @@ function t2AutoSave(){
   // Silent cloud sync
   t2SaveTemplateToCloud(data).catch(()=>{});
 }
-
-function t2LoadTemplateFromHistory(index){
-  const history = t2GetTemplateHistory();
-  if(index < 0 || index >= history.length) return;
-  const data = history[index].data;
-  if(!data) return;
-  t2Fields = data.fields || [];
-  t2ShowBuilder();
-  const np = document.getElementById('t2NamingPattern');
-  if(np) np.value = data.namingPattern || '{A}';
-  document.getElementById('t2TmplName').textContent = `Loaded: ${history[index].savedAt || ''}`;
-}
-
 
 function t2RenderBuilder(){
   assignCodes(t2Fields);
@@ -1338,9 +1303,9 @@ function t2ExportFresh(){
   const headers=['Source File','Timestamp','Saved As',...t2Fields.map(f=>f.name)];
   const rows=[headers,...t2Entries.map(e=>headers.map(h=>e[h]||''))];
   const ws=XLSX.utils.aoa_to_sheet(rows);
-  // Style header row
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data');
-  XLSX.writeFile(wb,'ocr_data_entry.xlsx');
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Data');
+  XLSX.writeFile(wb,'docuops_data.xlsx');
 }
 
 async function t2ExportAppend(){
@@ -1351,17 +1316,38 @@ async function t2ExportAppend(){
   const range=XLSX.utils.decode_range(ws['!ref']||'A1');
   let lastRow=range.e.r+1;
   const headers=[];
-  for(let c=range.s.c;c<=range.e.c;c++){const cell=ws[XLSX.utils.encode_cell({r:range.s.r,c})];headers.push(cell?String(cell.v):'');}
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=ws[XLSX.utils.encode_cell({r:range.s.r,c})];
+    headers.push(cell?String(cell.v):'');
+  }
   t2Entries.forEach(entry=>{
-    headers.forEach((h,c)=>{if(entry[h]!==undefined)ws[XLSX.utils.encode_cell({r:lastRow,c})]={v:entry[h],t:'s'};});
+    headers.forEach((h,c)=>{
+      if(entry[h]!==undefined)
+        ws[XLSX.utils.encode_cell({r:lastRow,c})]={v:entry[h],t:'s'};
+    });
     lastRow++;
   });
   ws['!ref']=XLSX.utils.encode_range({s:{r:range.s.r,c:range.s.c},e:{r:lastRow-1,c:range.e.c}});
-  XLSX.writeFile(wb,'ocr_data_appended.xlsx');
+  XLSX.writeFile(wb,'docuops_data_appended.xlsx');
+}
+
+// Unified export prompt — called from Export button in Done screen
+function t2ExportPrompt(){
+  const panel=document.getElementById('t2ExportPanel');
+  const wrap=document.getElementById('t2ReviewTableWrap');
+  if(wrap) wrap.style.display='none';
+  if(panel) panel.style.display='flex';
+  // Update summary
+  const summary=document.getElementById('t2ExportSummary');
+  if(summary) summary.textContent=`${t2Entries.length} entr${t2Entries.length===1?'y':'ies'} · ${t2Fields.length} fields`;
+  // Show/hide append button based on whether a template file was loaded
+  const appendBtn=document.getElementById('t2ExportAppendBtn');
+  if(appendBtn) appendBtn.style.display=t2TemplateFile?'inline-flex':'none';
 }
 
 // Image strip
 function t2PromptFiles(){
+  console.trace('t2PromptFiles called');
   const inp=document.createElement('input');inp.type='file';inp.multiple=true;
   inp.accept='.jpg,.jpeg,.png,.webp,.bmp,.gif,.pdf,.mp4';
   inp.onchange=async e=>{
@@ -1405,20 +1391,33 @@ async function t2LoadInViewer(i){
 }
 
 function t2SaveProject() {
+  if(t2Fields.length===0){alert('No fields to save.');return;}
   const project = {
-    version: 1,
+    version: 2,
     savedAt: new Date().toLocaleString(),
     fields: t2Fields,
-    namingPattern: document.getElementById('t2NamingPattern')?.value || '{A}',
+    namingPattern: document.getElementById('t2NamingPattern')?.value||'{A}',
     entries: t2Entries
   };
-  const dataStr = JSON.stringify(project, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
+  // Save project JSON — local only, never synced to DB
+  const blob = new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'docuops_project.json';
   a.click();
   URL.revokeObjectURL(a.href);
+
+  // Also bundle Excel if there are entries
+  if(t2Entries.length>0){
+    setTimeout(()=>{
+      const headers=['Source File','Timestamp','Saved As',...t2Fields.map(f=>f.name)];
+      const rows=[headers,...t2Entries.map(e=>headers.map(h=>e[h]||''))];
+      const ws=XLSX.utils.aoa_to_sheet(rows);
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Data');
+      XLSX.writeFile(wb,'docuops_project_data.xlsx');
+    },400);
+  }
 }
 
 function t2LoadProject() {
@@ -1466,5 +1465,3 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft')t2LoadInViewer(Math.max(0,t2ActiveFile-1));
   if(e.key==='ArrowRight')t2LoadInViewer(Math.min(t2Files.length-1,t2ActiveFile+1));
 });
-
-
