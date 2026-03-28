@@ -758,36 +758,54 @@ const lines=[
   {text:"No Install. No Upload. No Compromise.",arabic:false},
   {text:"مستنداتك. آمنة. دائماً.",arabic:true},
 ];
+
 let li=0,ci=0,typing=true;
 const rEl=document.getElementById('rotatingText');
+
+function startLine(){
+  const line=lines[li];
+  // Set class ONCE per line — not on every character
+  rEl.className='rotating-text'+(line.arabic?' arabic':'');
+  rEl.textContent='';
+  ci=0;
+  typing=true;
+  setTimeout(typeLoop, 50);
+}
+
 function typeLoop(){
   const line=lines[li];
-  rEl.className='rotating-text'+(line.arabic?' arabic':'');
   if(typing){
-    // Typing speed: 40ms per char (smooth)
     if(ci<=line.text.length){
       rEl.textContent=line.text.slice(0,ci);
-      rEl.classList.add('visible');
+      // Add visible once (on first char) and leave it
+      if(ci===1) rEl.classList.add('visible');
       ci++;
       setTimeout(typeLoop, line.arabic ? 90 : 40);
     } else {
-      // Stay duration: 8000ms — text stays visible longer
+      // Full line typed — hold for 2800ms then erase
       typing=false;
-      setTimeout(typeLoop, 8000);
+      setTimeout(eraseLoop, 2800);
     }
+  }
+}
+
+function eraseLoop(){
+  const line=lines[li];
+  if(ci>0){
+    ci--;
+    rEl.textContent=line.text.slice(0,ci);
+    setTimeout(eraseLoop, line.arabic ? 60 : 28);
   } else {
-    // Fade out then pause before next line
+    // Erased — pause then next line
     rEl.classList.remove('visible');
     setTimeout(()=>{
       li=(li+1)%lines.length;
-      ci=0;
-      typing=true;
-      rEl.textContent='';
-      setTimeout(typeLoop, 400);
-    }, 500);
+      startLine();
+    }, 400);
   }
 }
-typeLoop();
+
+startLine();
 
 // ── SCROLL ANIMATIONS ──
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target);}});},{threshold:.1});
