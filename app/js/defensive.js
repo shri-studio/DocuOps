@@ -253,24 +253,15 @@ function t2EditTemplate() {
   t2ShowBuilder();
 }
 
-// ── 16. PATCH t2StartEntry to use strip controls ──────
+// ── 16. t2StartEntry — strip controls + session activation ──────
+// Not patched — t2StartEntry in tool2.js already sets up OCR and attachEvents.
+// We extend it cleanly by calling helpers after it runs.
 const _orig_t2StartEntry = t2StartEntry;
 async function t2StartEntry() {
-  if (t2Fields.length === 0) { alert('Add at least one field.'); return; }
-  ['t2Setup','t2Builder','t2Work','t2Done'].forEach(id => document.getElementById(id).style.display = 'none');
-  document.getElementById('t2Work').style.display = 'flex';
-  document.getElementById('t2StripWrap').style.display = 'block';
-  t2AutoSave();
-  t2RenderForm();
+  await _orig_t2StartEntry();
   t2SetupStripControls();
   t2UpdateStripCount();
   _setSessionActive(true);
-
-  v2.s.onOCR = (text) => {
-    if (!t2ActiveFieldId) return;
-    t2FillField(t2ActiveFieldId, text.trim());
-  };
-  v2.attachEvents('de');
 }
 
 // ── 17. UPDATE VERSION EVERYWHERE ────────────────────

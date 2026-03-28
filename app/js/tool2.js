@@ -1409,6 +1409,8 @@ async function t2LoadInViewer(i){
   if(ft==='pdf')await v2.loadPDF(file);
   else if(ft==='mp4')await v2.loadVideo(file);
   else await v2.loadImg(file);
+  // Re-attach selection events so OCR box drawing works on every new image
+  v2.attachEvents('de');
   // Notify learning engine that image has loaded (defined in learning.js)
   if(typeof _t2OnImageLoaded==='function') _t2OnImageLoaded();
 }
