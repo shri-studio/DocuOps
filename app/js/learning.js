@@ -380,11 +380,10 @@ async function t2AcceptAllSuggestions() {
   document.getElementById('t2Hint').textContent = '✅ All suggested fields OCR\'d — review and save entry';
 }
 
-// Hook into t2LoadInViewer to check for suggestions after image loads
-const _origT2LoadInViewer = t2LoadInViewer;
-async function t2LoadInViewer(i) {
-  await _origT2LoadInViewer(i);
-  // After image loads, check for profile suggestions
+// Hook into t2LoadInViewer to check for suggestions after image loads.
+// Cannot patch by wrapping — captured reference causes infinite recursion.
+// tool2.js calls _t2OnImageLoaded() at the end of t2LoadInViewer instead.
+function _t2OnImageLoaded() {
   setTimeout(() => {
     const profileId = t2GetProfileId();
     if (profileId) t2CheckForSuggestions();
