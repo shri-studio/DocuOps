@@ -682,7 +682,12 @@ function t2RenderFormPreview() {
     wrap.className = 'prev-field';
     const lbl = document.createElement('div');
     lbl.className = 'prev-field-lbl';
-    lbl.innerHTML = `<span class="prev-field-code" style="background:${col};">${f.code}</span> ${f.name}${f.required ? ' <span style="color:var(--warn);">*</span>' : ''}`;
+    const badges = [
+      f.required    ? `<span style="color:var(--warn);font-weight:900;margin-left:3px;">*</span>` : '',
+      f.isProfileKey ? `<span title="Profile Key — AI learns layout from this field" style="font-size:10px;margin-left:4px;opacity:.85;">🧠</span>` : '',
+      f.isUnique     ? `<span title="Duplicate check enabled" style="font-size:10px;margin-left:2px;opacity:.85;">🔍</span>` : '',
+    ].join('');
+    lbl.innerHTML = `<span class="prev-field-code" style="background:${col};">${f.code}</span> ${f.name}${badges}`;
     wrap.appendChild(lbl);
 
     if(f.type === 'dropdown'){
