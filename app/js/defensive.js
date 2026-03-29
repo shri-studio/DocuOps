@@ -20,23 +20,11 @@ window.addEventListener('beforeunload', e => {
 // Activate session protection when work starts
 function _setSessionActive(v) { _sessionActive = v; }
 
-// ── 2. PATCH t1Start to activate session (DELAYED) ─────────────
-// Wait for t1Start to be defined before patching
-let _orig_t1Start = null;
-function patchT1Start() {
-  if (typeof t1Start !== 'undefined' && !_orig_t1Start) {
-    _orig_t1Start = t1Start;
-    window.t1Start = async function(files) {
-      _setSessionActive(true);
-      await _orig_t1Start(files);
-    };
-    console.log('✅ t1Start patched successfully');
-  }
+// ── 2. T1 — session activation hook ─────────────────
+// tool1.js calls _t1OnStart() at the end of t1Start.
+function _t1OnStart() {
+  _setSessionActive(true);
 }
-// Try immediately and again after delay
-patchT1Start();
-setTimeout(patchT1Start, 200);
-setTimeout(patchT1Start, 500);
 
 // ── 4. T1 — DROP NEW FILES ON ACTIVE SESSION ─────────
 document.getElementById('t1DropArea').addEventListener('dragover', e => e.preventDefault());
@@ -93,15 +81,10 @@ function _t2SwitchGuard(targetIdx) {
 }
 
 // ── 7. T2 — EXPORT WITH PARTIALLY FILLED FORM ────────
-const _orig_t2Finish = t2Finish;
-function t2Finish() {
-  const hasData = t2Fields.some(f => {
-    const el = document.getElementById('dei_' + f.id);
-    if (!el) return false;
-    return el.tagName === 'SELECT' ? el.selectedIndex > 0 : el.value !== '';
-  });
-  if (hasData && !confirm('⬇ Export now?\n\nYou have unsaved data in the current form that has NOT been saved as an entry.\n\nClick "Save Entry" first to include it, or export now without it.')) return;
-  _orig_t2Finish();
+// tool2.js calls _t2FinishGuard() at the top of t2Finish.
+function _t2FinishGuard() {
+  if (!_t2HasUnsavedFormData()) return true;
+  return confirm('⬇ Export now?\n\nYou have unsaved data in the current form that has NOT been saved as an entry.\n\nClick "Save Entry" first to include it, or export now without it.');
 }
 
 // ── 8. T2 — LOAD NEW TEMPLATE OVER EXISTING ──────────
@@ -138,41 +121,27 @@ function t2BackToSetup() {
 }
 
 // ── 10. T2 — DELETE FIELD WITH SAVED ENTRIES ─────────
-const _orig_t2DelField = t2DelField;
-function t2DelField(i) {
+// tool2.js calls _t2DelFieldGuard(i) at the top of t2DelField.
+function _t2DelFieldGuard(i) {
   const f = t2Fields[i];
-  if (t2Entries.length > 0) {
-    if (!confirm(`Delete field "${f.name}" [${f.code}]?\n\n⚠️ You have ${t2Entries.length} saved entries that reference this field.\nDeleting it won't remove data from already-saved entries, but future exports may have missing columns.`)) return;
-  }
-  _orig_t2DelField(i);
+  if (t2Entries.length === 0) return true;
+  return confirm(`Delete field "${f.name}" [${f.code}]?\n\n⚠️ You have ${t2Entries.length} saved entries that reference this field.\nDeleting it won't remove data from already-saved entries, but future exports may have missing columns.`);
 }
 
 // ── 11. T2 — CHANGE FIELD TYPE WITH SAVED ENTRIES ────
-// Delay patching until t2FieldSet exists
-let _orig_t2FieldSet = null;
-function patchT2FieldSet() {
-  if (typeof t2FieldSet !== 'undefined' && !_orig_t2FieldSet) {
-    _orig_t2FieldSet = t2FieldSet;
-    window.t2FieldSet = function(i, k, v) {
-      if (k === 'type' && t2Entries.length > 0 && t2Fields[i] && t2Fields[i].type !== v) {
-        if (!confirm(`Change "${t2Fields[i].name}" from ${t2Fields[i].type} to ${v}?\n\n⚠️ You have ${t2Entries.length} saved entries. Changing field type may affect data consistency.`)) return;
-      }
-      _orig_t2FieldSet(i, k, v);
-    };
-    console.log('✅ t2FieldSet patched successfully');
-  }
+// tool2.js calls _t2FieldSetGuard(i, k, v) at the top of t2FieldSet.
+function _t2FieldSetGuard(i, k, v) {
+  if (k !== 'type') return true;
+  if (t2Entries.length === 0) return true;
+  if (!t2Fields[i] || t2Fields[i].type === v) return true;
+  return confirm(`Change "${t2Fields[i].name}" from ${t2Fields[i].type} to ${v}?\n\n⚠️ You have ${t2Entries.length} saved entries. Changing field type may affect data consistency.`);
 }
-patchT2FieldSet();
-setTimeout(patchT2FieldSet, 200);
-setTimeout(patchT2FieldSet, 500);
 
 // ── 12. T2 — LOAD JSON TEMPLATE OVER EXISTING ────────
-const _orig_t2LoadTemplateFile = t2LoadTemplateFile;
-function t2LoadTemplateFile() {
-  if (t2Fields.length > 0) {
-    if (!confirm(`📂 Load template from JSON?\n\nThis will replace your current ${t2Fields.length} field(s).\n\nContinue?`)) return;
-  }
-  _orig_t2LoadTemplateFile();
+// tool2.js calls _t2LoadTemplateGuard() at the top of t2LoadTemplateFile.
+function _t2LoadTemplateGuard() {
+  if (t2Fields.length === 0) return true;
+  return confirm(`📂 Load template from JSON?\n\nThis will replace your current ${t2Fields.length} field(s).\n\nContinue?`);
 }
 
 // ── 13. T2 — NEW DATA FOLDER WHEN ONE EXISTS ─────────
@@ -254,11 +223,9 @@ function t2EditTemplate() {
 }
 
 // ── 16. t2StartEntry — strip controls + session activation ──────
-// Not patched — t2StartEntry in tool2.js already sets up OCR and attachEvents.
-// We extend it cleanly by calling helpers after it runs.
-const _orig_t2StartEntry = t2StartEntry;
-async function t2StartEntry() {
-  await _orig_t2StartEntry();
+// Cannot patch by wrapping — same recursion issue as other functions.
+// tool2.js calls _t2OnStartEntry() at the end of t2StartEntry instead.
+function _t2OnStartEntry() {
   t2SetupStripControls();
   t2UpdateStripCount();
   _setSessionActive(true);

@@ -231,6 +231,7 @@ function t2SaveTemplate(){
 }
 
 function t2LoadTemplateFile(){
+  if(typeof _t2LoadTemplateGuard==='function'&&!_t2LoadTemplateGuard())return;
   document.getElementById('t2TmplLoadIn').click();
 }
 
@@ -772,8 +773,8 @@ function t2RenderSubFields(f,fi){
   return html;
 }
 
-function t2FieldSet(i,k,v){t2Fields[i][k]=v;t2RenderBuilder();}
-function t2DelField(i){t2Fields.splice(i,1);t2RenderBuilder();}
+function t2FieldSet(i,k,v){if(typeof _t2FieldSetGuard==='function'&&!_t2FieldSetGuard(i,k,v))return;t2Fields[i][k]=v;t2RenderBuilder();}
+function t2DelField(i){if(typeof _t2DelFieldGuard==='function'&&!_t2DelFieldGuard(i))return;t2Fields.splice(i,1);t2RenderBuilder();}
 function t2AddField(){t2Fields.push({id:'f'+Date.now(),name:'New Field',type:'text',options:'',formula:'',required:false,subFields:[],customCode:false});assignCodes(t2Fields);t2RenderBuilder();}
 function t2AddSubField(fi){if(!t2Fields[fi].subFields)t2Fields[fi].subFields=[];t2Fields[fi].subFields.push({name:'Sub '+( t2Fields[fi].subFields.length+1),customCode:false});assignCodes(t2Fields);t2RenderBuilder();}
 function t2DelSubField(fi,si){t2Fields[fi].subFields.splice(si,1);assignCodes(t2Fields);t2RenderBuilder();}
@@ -974,6 +975,8 @@ async function t2StartEntry(){
     t2FillField(t2ActiveFieldId,text.trim());
   };
   v2.attachEvents('de');
+  // Notify defensive.js to set up strip controls and session flag
+  if(typeof _t2OnStartEntry==='function') _t2OnStartEntry();
 }
 
 function t2RenderForm(){
@@ -1210,6 +1213,7 @@ async function t2SaveEntry(){
 }
 
 function t2Finish(){
+  if(typeof _t2FinishGuard==='function'&&!_t2FinishGuard())return;
   if(t2Entries.length===0&&!confirm('No entries yet. Export empty file?'))return;
   document.getElementById('t2Work').style.display='none';
   document.getElementById('t2Done').style.display='flex';
