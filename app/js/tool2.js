@@ -36,6 +36,17 @@ function codeColor(code){
 // ════════════════════════════════════════════════════
 // TOOL 2
 // ════════════════════════════════════════════════════
+
+// Issue 4 — file saving toggle (default: enabled)
+window.t2SaveFileEnabled = true;
+function t2ToggleFileSaving(enabled){
+  window.t2SaveFileEnabled = enabled;
+  const fnameRow = document.getElementById('t2EntryFname');
+  if(fnameRow) fnameRow.style.display = enabled ? 'flex' : 'none';
+  const hintEl = document.getElementById('t2FileSaveHint');
+  if(hintEl) hintEl.textContent = enabled ? '💾 Image will be renamed and saved' : '📋 Data only — image will not be saved';
+}
+
 let t2Fields=[];
 let t2Files=[],t2ActiveFile=0,t2Entries=[],t2ActiveFieldId=null;
 let t2RepeatData={},t2TemplateFile=null,t2NamingPatternOverride=null;
@@ -1045,7 +1056,8 @@ function t2RenderForm(){
     container.appendChild(wrap);
   });
 
-  document.getElementById('t2EntryFname').style.display='flex';
+  const fnameRow = document.getElementById('t2EntryFname');
+  if(fnameRow) fnameRow.style.display = window.t2SaveFileEnabled !== false ? 'flex' : 'none';
   t2UpdateFormulas();
 }
 
@@ -1191,8 +1203,8 @@ async function t2SaveEntry(){
   // Refresh Excel preview with real data
   t2RenderExcelPreview();
 
-  // Save renamed file
-  if(v2.s.blob){
+  // Save renamed file — only if user enabled file saving
+  if(v2.s.blob && window.t2SaveFileEnabled !== false){
     const blob=await v2.buildRotBlob();
     await saveBlob(blob,name+'.jpg');
   }

@@ -182,6 +182,12 @@
       <div class="tool-card-desc">AI-powered batch extraction from resumes, contracts, invoices. Upload documents → define fields → get Excel automatically.</div>
       <span class="tool-card-tag" style="background:rgba(136,146,164,.15);color:var(--muted);">Coming Soon</span>
     </div>
+    <div class="tool-card t1" onclick="launchT4()" style="cursor:pointer;">
+      <div class="tool-card-icon">⬇</div>
+      <div class="tool-card-name">Bulk Link Downloader</div>
+      <div class="tool-card-desc">Paste links or upload Excel/CSV. Downloads files directly to a folder on your disk with 4 concurrent connections.</div>
+      <span class="tool-card-tag tag-t1">Batch Download · Excel Import</span>
+    </div>
   </div>
   <div class="home-footer">All tools run locally · No data uploaded anywhere · <span class="version-display"></span></div>
 </div>
@@ -445,6 +451,14 @@
           <span class="entry-fname-warn" id="t2FnameWarn"></span>
         </div>
         <div class="t2w-hint" id="t2Hint">💡 Click a field label to activate, then draw a box on the image</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 10px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none;">
+            <input type="checkbox" id="t2SaveFileChk" checked onchange="t2ToggleFileSaving(this.checked)" style="accent-color:var(--green);cursor:pointer;">
+            Save image file
+          </label>
+          <span id="t2FileSaveHint" style="font-size:10px;color:var(--muted);font-family:var(--mono);">💾 Image will be renamed and saved</span>
+          <div style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);">Hold Space + drag to pan</div>
+        </div>
         <div class="t2w-actions">
           <button class="btn btn-save" id="t2SaveBtn" onclick="t2SaveEntry()" style="flex:1;">✔ Save Entry</button>
           <button class="btn btn-skip" onclick="t2ClearForm()" style="flex:0.6;font-size:11px;">↺ Clear</button>
@@ -697,9 +711,65 @@
   </div>
 </div>
 
+<!-- ══ TOOL 4 — BULK LINK DOWNLOADER ══ -->
+<div id="tool4" style="display:none;flex:1;flex-direction:column;align-items:center;overflow-y:auto;padding:32px 6%;">
+  <div style="width:100%;max-width:760px;">
+
+    <!-- Notice -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.7;font-family:var(--mono);">
+      Uses the <span style="color:var(--text);font-weight:700;">File System Access API</span> to save directly to disk.
+      Best in <span style="color:var(--green);">Chrome</span> or <span style="color:var(--green);">Edge</span> · Firefox/Safari saves to Downloads folder instead.
+    </div>
+
+    <!-- Step 1: Paste links -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:10px;">01 — Paste your links</div>
+      <textarea id="t4LinkInput" placeholder="https://example.com/file.pdf&#10;https://example.com/image.jpg&#10;&#10;One per line, or comma / space separated" style="width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11px;padding:10px;resize:vertical;outline:none;transition:border-color .15s;line-height:1.6;" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'" oninput="t4RefreshCount()"></textarea>
+    </div>
+
+    <!-- Step 2: Upload file -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:10px;">02 — Or upload Excel / CSV / TXT with links</div>
+      <div id="t4UploadZone" style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;">
+        <input type="file" id="t4FileInput" accept=".xlsx,.xls,.csv,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+        <div style="font-size:22px;margin-bottom:6px;">📂</div>
+        <div id="t4UploadLabel" style="font-size:12px;color:var(--muted);">Drop file here or click to browse</div>
+        <div style="font-size:10px;color:var(--border);margin-top:4px;font-family:var(--mono);">.xlsx · .xls · .csv · .txt</div>
+      </div>
+    </div>
+
+    <!-- Step 3: Folder -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:10px;">03 — Select target folder</div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 14px;">
+        <span style="font-size:18px;">🗂</span>
+        <span id="t4FolderPath" style="flex:1;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No folder selected</span>
+        <button onclick="t4PickFolder()" class="btn" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 12px;font-size:11px;">Choose Folder</button>
+      </div>
+    </div>
+
+    <!-- Start row -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+      <button id="t4StartBtn" class="btn btn-save" style="padding:11px 28px;font-size:13px;" onclick="t4Start()" disabled>▶ Start Download</button>
+      <span id="t4UrlCount" style="font-size:11px;font-family:var(--mono);color:var(--muted);"><span style="color:var(--green);font-weight:700;">0</span> links detected</span>
+      <button class="rst-btn" onclick="showHome()" style="margin-left:auto;">🏠 Home</button>
+    </div>
+
+    <!-- Progress -->
+    <div id="t4Progress" style="display:none;">
+      <div style="background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;margin-bottom:14px;">
+        <div id="t4Bar" style="height:100%;background:var(--green);border-radius:4px;width:0%;transition:width .3s;"></div>
+      </div>
+      <div id="t4Log" style="display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto;"></div>
+      <div id="t4Summary" style="margin-top:10px;font-size:11px;font-family:var(--mono);color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;"></div>
+    </div>
+
+  </div>
+</div>
+
   <!-- DocuOps Scripts — ORDER MATTERS -->
   <script src="js/theme.js?v=3.4.11"></script>
-  <script src="js/shared.js?v=3.4.11"></script>
+  <script src="js/shared.js?v=3.4.15"></script>
   <script>
   // ── VERSION DISPLAY ──
   document.addEventListener('DOMContentLoaded', function(){
@@ -717,10 +787,11 @@
   });
   </script>
   <script src="js/tool1.js?v=3.4.11"></script>
-  <script src="js/tool2.js?v=3.4.11"></script>
+  <script src="js/tool2.js?v=3.4.15"></script>
   <script src="js/learning.js?v=3.4.11"></script>
   <script src="js/defensive.js?v=3.4.11"></script>
   <script src="js/tool3.js?v=3.4.11"></script>
+  <script src="js/tool4.js?v=3.4.15"></script>
 
 
 
@@ -756,6 +827,7 @@ window.addEventListener('load', async () => {
     const tool = params.get('tool');
     if (tool === 't1') launchT1();
     if (tool === 't2') launchT2();
+    if (tool === 't4') launchT4();
 
   } catch(e) {
     console.log('Supabase app error:', e);

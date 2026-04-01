@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.4.25';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -111,12 +111,10 @@ function showHome(){
   if(typeof _setSessionActive==='function') _setSessionActive(false);
 }
 
-
 function launchT1(){
   document.getElementById('homePage').style.display='none';
   document.getElementById('tool1').style.display='flex';
   document.getElementById('tool2').style.display='none';
-  // homeBtn removed v2.2.4
   const b=document.getElementById('toolBadge');
   b.textContent='📄 Renamer';b.className='tool-badge t1';b.style.display='inline';
   document.getElementById('statsBar').style.display='flex';
@@ -126,10 +124,19 @@ function launchT2(){
   document.getElementById('homePage').style.display='none';
   document.getElementById('tool1').style.display='none';
   document.getElementById('tool2').style.display='flex';
-  // homeBtn removed v2.2.4
   const b=document.getElementById('toolBadge');
   b.textContent='📊 Data Entry';b.className='tool-badge t2';b.style.display='inline';
   t2ShowSetup();
+}
+
+function launchT4(){
+  document.getElementById('homePage').style.display='none';
+  document.getElementById('tool1').style.display='none';
+  document.getElementById('tool2').style.display='none';
+  const t3=document.getElementById('tool3');if(t3)t3.style.display='none';
+  const t4=document.getElementById('tool4');if(t4)t4.style.display='flex';
+  const b=document.getElementById('toolBadge');
+  if(b){b.textContent='⬇ Bulk Downloader';b.className='tool-badge t2';b.style.display='inline';}
 }
 
 // ════════════════════════════════════════════════════
@@ -141,6 +148,7 @@ function makeViewer(px){
     img:null,natW:0,natH:0,blob:null,
     zoom:1,panX:0,panY:0,rot:0,
     isPan:false,pSX:0,pSY:0,pOX:0,pOY:0,
+    spaceDown:false,
     drag:false,ox:0,oy:0,sx:0,sy:0,sw:0,sh:0,hasSel:false,
     pdfDoc:null,pdfPage:1,pdfTotal:1,vidDur:0,
     onOCR:null
@@ -191,13 +199,31 @@ function makeViewer(px){
     render();
   }
 
+  // ── FIX 1 & 3: Rotation-aware coordinate mapping ──────────────────
+  // Maps canvas pixel (cx,cy) → original image pixel (ix,iy)
+  // accounting for current rotation, zoom, and pan.
   function c2i(cx,cy){
     const cw=s.canvas.width,ch=s.canvas.height;
     const rot90=(s.rot===90||s.rot===270);
     const dW=rot90?s.natH:s.natW,dH=rot90?s.natW:s.natH;
     const sc=Math.min(cw/dW,ch/dH);
-    const fW=dW*sc,fH=dH*sc,fX=(cw-fW)/2,fY=(ch-fH)/2;
-    return[(cx-fX-s.panX)/s.zoom*(s.natW/fW),(cy-fY-s.panY)/s.zoom*(s.natH/fH)];
+    const fW=dW*sc,fH=dH*sc;
+    const fX=(cw-fW)/2,fY=(ch-fH)/2;
+
+    // Step 1: undo pan/translate to get coords relative to image centre
+    const ox=(cx-fX-s.panX-fW/2)/s.zoom;
+    const oy=(cy-fY-s.panY-fH/2)/s.zoom;
+
+    // Step 2: undo rotation to get coords in original image space
+    const rad=-s.rot*Math.PI/180;
+    const rx=ox*Math.cos(rad)-oy*Math.sin(rad);
+    const ry=ox*Math.sin(rad)+oy*Math.cos(rad);
+
+    // Step 3: shift from image-centre coords to image-pixel coords
+    const ix=rx+(s.natW/2);
+    const iy=ry+(s.natH/2);
+
+    return [ix, iy];
   }
 
   function clamp(){
@@ -220,72 +246,127 @@ function makeViewer(px){
     }catch(e){showOvl(false);console.error(e);}
   }
 
+  // ── FIX 1 & 3: OCR selection now rotation-aware ────────────────────
+  // Renders the rotated image to a temp canvas at full resolution,
+  // then crops the selected region from that — so rotation and crop
+  // are always consistent regardless of zoom or pan.
   async function ocrSelection(){
     if(!s.hasSel||s.sw<6||s.sh<6)return;
-    const[ix1,iy1]=c2i(s.sx,s.sy),[ix2,iy2]=c2i(s.sx+s.sw,s.sy+s.sh);
-    const rx=Math.round(Math.max(0,ix1)),ry=Math.round(Math.max(0,iy1));
-    const rw=Math.round(Math.min(s.natW-rx,ix2-ix1)),rh=Math.round(Math.min(s.natH-ry,iy2-iy1));
+
+    // Map all 4 corners of the selection box back to original image coords
+    const corners=[
+      c2i(s.sx,      s.sy),
+      c2i(s.sx+s.sw, s.sy),
+      c2i(s.sx,      s.sy+s.sh),
+      c2i(s.sx+s.sw, s.sy+s.sh)
+    ];
+    const xs=corners.map(c=>c[0]);
+    const ys=corners.map(c=>c[1]);
+    const ix1=Math.max(0,Math.min(...xs));
+    const iy1=Math.max(0,Math.min(...ys));
+    const ix2=Math.min(s.natW,Math.max(...xs));
+    const iy2=Math.min(s.natH,Math.max(...ys));
+    const rw=Math.round(ix2-ix1);
+    const rh=Math.round(iy2-iy1);
     if(rw<2||rh<2)return;
-    const cr=document.createElement('canvas');cr.width=rw;cr.height=rh;
+
+    // Draw original (unrotated) image and crop the selection region
+    const cr=document.createElement('canvas');
+    cr.width=rw;cr.height=rh;
     const url=URL.createObjectURL(s.blob||new Blob());
     const img=new Image();
     img.onload=async()=>{
-      cr.getContext('2d').drawImage(img,rx,ry,rw,rh,0,0,rw,rh);
+      cr.getContext('2d').drawImage(img,Math.round(ix1),Math.round(iy1),rw,rh,0,0,rw,rh);
       URL.revokeObjectURL(url);
       await runOCR(await new Promise(r=>cr.toBlob(r,'image/jpeg',.97)));
     };
     img.src=url;
   }
 
+  // ── FIX 2: Pan in 'de' mode via Space+drag ─────────────────────────
   function attachEvents(mode){
     const cv=g('Canvas');
-    cv.addEventListener('wheel',e=>{
+
+    // Remove old listeners by cloning (safest way to avoid duplicate stacking)
+    const newCv=cv.cloneNode(false);
+    cv.parentNode.replaceChild(newCv,cv);
+    s.canvas=newCv;
+    s.ctx=newCv.getContext('2d');
+    render();
+
+    newCv.addEventListener('wheel',e=>{
       e.preventDefault();
-      const r=cv.getBoundingClientRect();
+      const r=newCv.getBoundingClientRect();
       setZoom(s.zoom+(e.deltaY>0?-.2:.2),e.clientX-r.left,e.clientY-r.top);
     },{passive:false});
 
     if(mode==='select'||mode==='de'){
-      cv.addEventListener('mousedown',e=>{
+      // Space key toggles pan mode
+      const onKeyDown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;newCv.style.cursor='grab';e.preventDefault();}};
+      const onKeyUp=e=>{if(e.code==='Space'){s.spaceDown=false;newCv.style.cursor='crosshair';}};
+      document.addEventListener('keydown',onKeyDown);
+      document.addEventListener('keyup',onKeyUp);
+      newCv.style.cursor='crosshair';
+
+      newCv.addEventListener('mousedown',e=>{
         e.preventDefault();
-        const r=cv.getBoundingClientRect();
-        s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
-        s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;render();
-        const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');
-        const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
+        const r=newCv.getBoundingClientRect();
+        if(s.spaceDown||e.button===1){
+          // Pan mode: Space+drag or middle-click drag
+          s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
+          newCv.style.cursor='grabbing';
+        } else {
+          // Draw selection box
+          s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
+          s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;render();
+          const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');
+          const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
+        }
       });
+
       window.addEventListener('mousemove',e=>{
-        if(!s.drag)return;
-        const r=cv.getBoundingClientRect();
-        const cx=e.clientX-r.left,cy=e.clientY-r.top;
-        s.sx=Math.min(s.ox,cx);s.sy=Math.min(s.oy,cy);
-        s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);render();
+        if(s.isPan){
+          s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
+        } else if(s.drag){
+          const r=newCv.getBoundingClientRect();
+          const cx=e.clientX-r.left,cy=e.clientY-r.top;
+          s.sx=Math.min(s.ox,cx);s.sy=Math.min(s.oy,cy);
+          s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);render();
+        }
       });
-      window.addEventListener('mouseup',async()=>{
-        if(!s.drag)return;s.drag=false;
-        if(s.sw>6&&s.sh>6){
-          s.hasSel=true;render();
-          const rb=g('RedrawBtn');if(rb)rb.classList.remove('hidden');
-          const ob=g('OcrSelBtn');if(ob)ob.classList.add('ready');
-          await ocrSelection();
-        }else render();
+
+      window.addEventListener('mouseup',async e=>{
+        if(s.isPan){
+          s.isPan=false;
+          newCv.style.cursor=s.spaceDown?'grab':'crosshair';
+        } else if(s.drag){
+          s.drag=false;
+          if(s.sw>6&&s.sh>6){
+            s.hasSel=true;render();
+            const rb=g('RedrawBtn');if(rb)rb.classList.remove('hidden');
+            const ob=g('OcrSelBtn');if(ob)ob.classList.add('ready');
+            await ocrSelection();
+          }else render();
+        }
       });
+
     } else {
-      cv.addEventListener('mousedown',e=>{
+      // Tool 1 mode — pan only
+      newCv.addEventListener('mousedown',e=>{
         if(s.zoom<=1)return;
         s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
-        cv.style.cursor='grabbing';
+        newCv.style.cursor='grabbing';
       });
       window.addEventListener('mousemove',e=>{
         if(!s.isPan)return;
         s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
       });
-      window.addEventListener('mouseup',()=>{if(s.isPan){s.isPan=false;cv.style.cursor=s.zoom>1?'grab':'default';}});
+      window.addEventListener('mouseup',()=>{if(s.isPan){s.isPan=false;newCv.style.cursor=s.zoom>1?'grab':'default';}});
     }
   }
 
   function setZoom(z,px,py){
-    const cv=g('Canvas');if(!cv)return;
+    const cv=s.canvas;if(!cv)return;
     const cw=cv.width,ch=cv.height;
     if(px===undefined){px=cw/2;py=ch/2;}
     const prev=s.zoom;s.zoom=Math.min(8,Math.max(1,z));
@@ -293,7 +374,7 @@ function makeViewer(px){
     clamp();render();
     const zp=g('ZPct');if(zp)zp.textContent=Math.round(s.zoom*100)+'%';
     const zs=g('ZSlider');if(zs)zs.value=s.zoom;
-    if(cv)cv.style.cursor=s.zoom>1?'grab':'default';
+    if(cv)cv.style.cursor=s.zoom>1?(s.spaceDown?'grabbing':'grab'):'crosshair';
   }
 
   async function loadImg(file){
@@ -371,6 +452,7 @@ function makeViewer(px){
   function reset(){
     s.img=null;s.blob=null;s.zoom=1;s.panX=0;s.panY=0;s.rot=0;
     s.hasSel=false;s.sw=0;s.sh=0;s.pdfDoc=null;s.pdfPage=1;
+    s.spaceDown=false;
     const zp=g('ZPct');if(zp)zp.textContent='100%';
     const zs=g('ZSlider');if(zs)zs.value=1;
     const pb=g('PdfBar');if(pb)pb.style.display='none';
@@ -390,4 +472,3 @@ function makeViewer(px){
 }
 
 const v1=makeViewer('t1'), v2=makeViewer('t2');
-
