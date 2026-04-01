@@ -982,9 +982,11 @@ async function t2StartEntry(){
   t2RenderForm();
 
   v2.s.onOCR=(text)=>{
-    if(!t2ActiveFieldId)return;
+    console.log('[T2] onOCR fired — text:',JSON.stringify(text),'t2ActiveFieldId:',t2ActiveFieldId);
+    if(!t2ActiveFieldId){console.warn('[T2] no active field — dropped');return;}
     t2FillField(t2ActiveFieldId,text.trim());
   };
+  console.log('[T2] attachEvents de — onOCR set:',!!v2.s.onOCR);
   v2.attachEvents('de');
   // Notify defensive.js to set up strip controls and session flag
   if(typeof _t2OnStartEntry==='function') _t2OnStartEntry();

@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.29';
+const DOCUOPS_VERSION = '3.5.30';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -255,13 +255,16 @@ function makeViewer(px){
   }
 
   async function runOCR(src){
+    console.log('[OCR] runOCR called — src:',src,'onOCR:',!!s.onOCR);
     showOvl(true);setTxt('OCR…');
     const w=await ensureWorker();
     try{
       const{data:{text}}=await w.recognize(src);
+      console.log('[OCR] result text:',JSON.stringify(text.trim()),'onOCR:',!!s.onOCR);
       showOvl(false);
       if(s.onOCR)s.onOCR(text.trim());
-    }catch(e){showOvl(false);console.error(e);}
+      else console.warn('[OCR] no onOCR handler set!');
+    }catch(e){showOvl(false);console.error('[OCR] recognize error:',e);}
   }
 
   // ── FIX 1 & 3: OCR selection now rotation-aware ────────────────────
@@ -269,9 +272,10 @@ function makeViewer(px){
   // then crops the selected region from that — so rotation and crop
   // are always consistent regardless of zoom or pan.
   async function ocrSelection(){
-    if(!s.hasSel||s.sw<6||s.sh<6)return;
+    console.log('[OCR] ocrSelection called — hasSel:',s.hasSel,'sw:',s.sw,'sh:',s.sh,'blob:',!!s.blob,'onOCR:',!!s.onOCR);
+    if(!s.hasSel||s.sw<6||s.sh<6){console.warn('[OCR] aborted early — bad sel');return;}
+    if(!s.blob){console.warn('[OCR] aborted — no blob');return;}
 
-    // Map all 4 corners of the selection box back to original image coords
     const corners=[
       c2i(s.sx,      s.sy),
       c2i(s.sx+s.sw, s.sy),
@@ -286,24 +290,26 @@ function makeViewer(px){
     const iy2=Math.min(s.natH,Math.max(...ys));
     const rw=Math.round(ix2-ix1);
     const rh=Math.round(iy2-iy1);
-    if(rw<2||rh<2)return;
+    console.log('[OCR] crop region — ix1:',ix1,'iy1:',iy1,'rw:',rw,'rh:',rh,'natW:',s.natW,'natH:',s.natH);
+    if(rw<2||rh<2){console.warn('[OCR] aborted — crop too small');return;}
 
-    // Draw original (unrotated) image and crop the selection region
     const cr=document.createElement('canvas');
     cr.width=rw;cr.height=rh;
-    const url=URL.createObjectURL(s.blob||new Blob());
+    const url=URL.createObjectURL(s.blob);
     const img=new Image();
     img.onload=async()=>{
       cr.getContext('2d').drawImage(img,Math.round(ix1),Math.round(iy1),rw,rh,0,0,rw,rh);
       URL.revokeObjectURL(url);
-      await runOCR(await new Promise(r=>cr.toBlob(r,'image/jpeg',.97)));
+      const cropBlob=await new Promise(r=>cr.toBlob(r,'image/jpeg',.97));
+      console.log('[OCR] cropBlob size:',cropBlob?.size);
+      await runOCR(cropBlob);
     };
+    img.onerror=e=>console.error('[OCR] img load failed',e);
     img.src=url;
   }
 
-  // attachEvents — called once per viewer. Window listeners are stored and
-  // removed before re-adding to prevent stacking across image loads.
-  let _evMode=null, _wmove=null, _wup=null, _kdown=null, _kup=null;
+  // Event listener refs — window/document listeners stored for removal
+  let _wmove=null,_wup=null,_kdown=null,_kup=null,_evMode=null;
 
   function detachWindowListeners(){
     if(_wmove){window.removeEventListener('mousemove',_wmove);_wmove=null;}
@@ -312,17 +318,16 @@ function makeViewer(px){
     if(_kup){document.removeEventListener('keyup',_kup);_kup=null;}
   }
 
+  // attachEvents: canvas listeners attached ONCE (guarded by _evMode).
+  // Window listeners refreshed every call so stale refs don't accumulate.
   function attachEvents(mode){
     const cv=g('Canvas');
     if(!cv)return;
 
-    // Re-attach window listeners every time (image changed, canvas resized)
-    detachWindowListeners();
-
-    // Only re-attach canvas listeners if mode changed
+    // Canvas + document listeners — attach only once per mode
     if(_evMode!==mode){
       _evMode=mode;
-      // Canvas wheel — always needed
+
       cv.addEventListener('wheel',e=>{
         e.preventDefault();
         const r=cv.getBoundingClientRect();
@@ -331,21 +336,23 @@ function makeViewer(px){
 
       if(mode==='select'||mode==='de'){
         cv.style.cursor='crosshair';
+        // ONE mousedown on canvas — uses closure over s, not re-registered
         cv.addEventListener('mousedown',e=>{
+          if(e.button===2)return; // ignore right-click
           e.preventDefault();
           const r=cv.getBoundingClientRect();
           if(s.spaceDown||e.button===1){
             s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
             cv.style.cursor='grabbing';
           } else {
+            s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;
             s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
-            s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;render();
+            render();
             const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');
             const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
           }
         });
       } else {
-        // Tool 1 pan-only
         cv.addEventListener('mousedown',e=>{
           if(s.zoom<=1)return;
           s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
@@ -354,30 +361,47 @@ function makeViewer(px){
       }
     }
 
-    // Window listeners — always fresh (removed above, re-added here)
+    // Window + document listeners — always remove old ones first, then re-add
+    detachWindowListeners();
+
     if(mode==='select'||mode==='de'){
-      _kdown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;const cv2=g('Canvas');if(cv2)cv2.style.cursor='grab';e.preventDefault();}};
-      _kup=e=>{if(e.code==='Space'){s.spaceDown=false;const cv2=g('Canvas');if(cv2)cv2.style.cursor='crosshair';}};
+      _kdown=e=>{
+        if(e.code==='Space'&&!e.repeat){
+          s.spaceDown=true;
+          const c=g('Canvas');if(c)c.style.cursor='grab';
+          e.preventDefault();
+        }
+      };
+      _kup=e=>{
+        if(e.code==='Space'){
+          s.spaceDown=false;
+          const c=g('Canvas');if(c)c.style.cursor='crosshair';
+        }
+      };
       document.addEventListener('keydown',_kdown);
       document.addEventListener('keyup',_kup);
 
       _wmove=e=>{
         if(s.isPan){
-          s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
+          s.panX=s.pOX+(e.clientX-s.pSX);
+          s.panY=s.pOY+(e.clientY-s.pSY);
+          clamp();render();
         } else if(s.drag){
-          const cv2=g('Canvas');if(!cv2)return;
-          const r=cv2.getBoundingClientRect();
+          const c=g('Canvas');if(!c)return;
+          const r=c.getBoundingClientRect();
           const cx=e.clientX-r.left,cy=e.clientY-r.top;
           s.sx=Math.min(s.ox,cx);s.sy=Math.min(s.oy,cy);
-          s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);render();
+          s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);
+          render();
         }
       };
-      _wup=async e=>{
+      _wup=async()=>{
         if(s.isPan){
           s.isPan=false;
-          const cv2=g('Canvas');if(cv2)cv2.style.cursor=s.spaceDown?'grab':'crosshair';
+          const c=g('Canvas');if(c)c.style.cursor=s.spaceDown?'grab':'crosshair';
         } else if(s.drag){
           s.drag=false;
+          console.log('[OCR] mouseup — sw:',s.sw,'sh:',s.sh);
           if(s.sw>6&&s.sh>6){
             s.hasSel=true;render();
             const rb=g('RedrawBtn');if(rb)rb.classList.remove('hidden');
@@ -389,15 +413,18 @@ function makeViewer(px){
     } else {
       _wmove=e=>{
         if(!s.isPan)return;
-        s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
+        s.panX=s.pOX+(e.clientX-s.pSX);
+        s.panY=s.pOY+(e.clientY-s.pSY);
+        clamp();render();
       };
       _wup=()=>{
         if(s.isPan){
           s.isPan=false;
-          const cv2=g('Canvas');if(cv2)cv2.style.cursor=s.zoom>1?'grab':'default';
+          const c=g('Canvas');if(c)c.style.cursor=s.zoom>1?'grab':'default';
         }
       };
     }
+
     window.addEventListener('mousemove',_wmove);
     window.addEventListener('mouseup',_wup);
   }
