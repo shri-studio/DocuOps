@@ -230,20 +230,16 @@ function learnFromEntry(profileId, fieldId, canvasSel, viewer) {
   saveAllProfiles(profiles);
 }
 
-// Record learning when entry is saved in T2
-const _origT2SaveEntry = t2SaveEntry;
-async function t2SaveEntry() {
-  // Record coordinates for all filled fields before saving
+// Hook called from tool2.js t2SaveEntry — records learning for filled fields
+function _t2OnSaveEntry() {
   const profileId = t2GetProfileId();
   if (profileId && v2.s.hasSel) {
-    // Record the last selection for the active field
     if (t2ActiveFieldId && !t2ActiveFieldId.startsWith('rei_')) {
       learnFromEntry(profileId, t2ActiveFieldId, {
         sx: v2.s.sx, sy: v2.s.sy, sw: v2.s.sw, sh: v2.s.sh
       }, v2);
     }
   }
-  await _origT2SaveEntry();
 }
 
 // ════════════════════════════════════════════════════
@@ -404,10 +400,6 @@ function _t2OnFieldFilled(id) {
 // Patch t2RenderBuilder to add profile key star toggle
 // ════════════════════════════════════════════════════
 // v2.2 — PROFILE KEY TOGGLE IN BUILDER
-// ════════════════════════════════════════════════════
-// Patch t2RenderBuilder to add profile key star toggle
-const _origT2RenderBuilder = t2RenderBuilder;
-
 // ════════════════════════════════════════════════════
 // v2.2 — PROFILE MANAGER (in Settings panel)
 // ════════════════════════════════════════════════════

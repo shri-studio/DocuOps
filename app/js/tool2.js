@@ -1165,6 +1165,8 @@ function t2ClearForm(){
 }
 
 async function t2SaveEntry(){
+  // Notify learning engine before save (defined in learning.js)
+  if(typeof _t2OnSaveEntry==='function') _t2OnSaveEntry();
   // Validate required
   let valid=true;
   t2Fields.forEach(f=>{
