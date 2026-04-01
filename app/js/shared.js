@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.4.15';
+const DOCUOPS_VERSION = '3.5.35';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -161,12 +161,23 @@ function makeViewer(px){
     pdfDoc:null,pdfPage:1,pdfTotal:1,vidDur:0,
     onOCR:null
   };
-  // ResizeObserver keeps canvas sized to wrap at all times
-  let _ro=null;
+  // ResizeObserver keeps canvas sized to wrap — debounced to prevent loops
+  let _ro=null,_roTimer=null;
   function _startResize(){
     if(_ro||!window.ResizeObserver)return;
     const wrap=g('CWrap');if(!wrap)return;
-    _ro=new ResizeObserver(()=>{ if(s.img)fit(); });
+    _ro=new ResizeObserver(()=>{
+      if(!s.img)return;
+      clearTimeout(_roTimer);
+      _roTimer=setTimeout(()=>{
+        // Only refit if wrap size actually changed meaningfully
+        const r=wrap.getBoundingClientRect();
+        const cw=Math.round(r.width),ch=Math.round(r.height);
+        if(s.canvas&&(Math.abs(s.canvas.width-cw)>2||Math.abs(s.canvas.height-ch)>2)){
+          fit();
+        }
+      },100);
+    });
     _ro.observe(wrap);
   }
   const g=id=>document.getElementById(px+id);
@@ -214,17 +225,12 @@ function makeViewer(px){
     if(!cv||!wrap)return;
     s.canvas=cv;s.wrap=wrap;
     s.ctx=cv.getContext('2d');
-    // Force canvas to fill wrap via CSS, then read actual rendered size
     cv.style.display='block';
-    cv.style.width='100%';
-    cv.style.height='100%';
-    // getBoundingClientRect gives true rendered pixel size regardless of CSS layout
+    // Read wrap's rendered size — do NOT set CSS width/height on canvas (causes RO loop)
     const rect=wrap.getBoundingClientRect();
     const cw=Math.round(rect.width)||wrap.clientWidth||800;
     const ch=Math.round(rect.height)||wrap.clientHeight||600;
-    cv.width=cw;
-    cv.height=ch;
-    console.log(`[fit/${px}] wrap=${Math.round(rect.width)}×${Math.round(rect.height)} canvas=${cw}×${ch}`);
+    if(cw>10&&ch>10){cv.width=cw;cv.height=ch;}
     render();
   }
 
