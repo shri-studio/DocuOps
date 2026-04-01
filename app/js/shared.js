@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.4.26';
+const DOCUOPS_VERSION = '3.4.27';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -102,6 +102,8 @@ function showHome(){
   document.getElementById('tool2').style.display='none';
   const t3 = document.getElementById('tool3');
   if(t3) t3.style.display='none';
+  const t4 = document.getElementById('tool4');
+  if(t4) t4.style.display='none';
   const b=document.getElementById('toolBadge');
   if(b){b.style.display='none';b.textContent='';}
   const mb=document.getElementById('modeBadge');
@@ -115,6 +117,8 @@ function launchT1(){
   document.getElementById('homePage').style.display='none';
   document.getElementById('tool1').style.display='flex';
   document.getElementById('tool2').style.display='none';
+  const t3=document.getElementById('tool3');if(t3)t3.style.display='none';
+  const t4=document.getElementById('tool4');if(t4)t4.style.display='none';
   const b=document.getElementById('toolBadge');
   b.textContent='📄 Renamer';b.className='tool-badge t1';b.style.display='inline';
   document.getElementById('statsBar').style.display='flex';
@@ -124,6 +128,8 @@ function launchT2(){
   document.getElementById('homePage').style.display='none';
   document.getElementById('tool1').style.display='none';
   document.getElementById('tool2').style.display='flex';
+  const t3=document.getElementById('tool3');if(t3)t3.style.display='none';
+  const t4=document.getElementById('tool4');if(t4)t4.style.display='none';
   const b=document.getElementById('toolBadge');
   b.textContent='📊 Data Entry';b.className='tool-badge t2';b.style.display='inline';
   t2ShowSetup();
@@ -135,6 +141,8 @@ function launchT4(){
   document.getElementById('tool2').style.display='none';
   const t3=document.getElementById('tool3');if(t3)t3.style.display='none';
   const t4=document.getElementById('tool4');if(t4)t4.style.display='flex';
+  const mb=document.getElementById('modeBadge');if(mb)mb.style.display='none';
+  const sb=document.getElementById('statsBar');if(sb)sb.style.display='none';
   const b=document.getElementById('toolBadge');
   if(b){b.textContent='⬇ Bulk Downloader';b.className='tool-badge t2';b.style.display='inline';}
 }
