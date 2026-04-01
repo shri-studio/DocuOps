@@ -982,8 +982,20 @@ async function t2StartEntry(){
   t2RenderForm();
 
   v2.s.onOCR=(text)=>{
-    // Use targetFieldId stored at activation time as fallback
-    const fid=t2ActiveFieldId||v2.s.targetFieldId;
+    if(!text||!text.trim())return;
+    // Use activated field, or targetFieldId fallback, or auto-pick first empty field
+    let fid=t2ActiveFieldId||v2.s.targetFieldId;
+    if(!fid){
+      // Auto-fill: find first field with an empty input
+      const firstEmpty=t2Fields.find(f=>{
+        const el=document.getElementById('dei_'+f.id);
+        return el&&(el.value===''||el.textContent==='—'||el.selectedIndex===0);
+      });
+      if(firstEmpty){
+        fid=firstEmpty.id;
+        t2ActivateField(fid); // highlight it so user knows which got filled
+      }
+    }
     if(!fid)return;
     t2FillField(fid,text.trim());
   };

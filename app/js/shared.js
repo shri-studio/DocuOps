@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.32';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -206,10 +206,14 @@ function makeViewer(px){
     if(!cv||!wrap)return;
     s.canvas=cv;s.wrap=wrap;
     s.ctx=cv.getContext('2d');
-    // Read dimensions — offsetWidth/Height more reliable than clientWidth during layout
-    const cw=wrap.offsetWidth||wrap.clientWidth||800;
-    const ch=wrap.offsetHeight||wrap.clientHeight||600;
-    if(cw>10&&ch>10){cv.width=cw;cv.height=ch;}
+    // clientWidth/Height gives CSS layout size (excludes borders, correct for flex children)
+    // Fall back up the parent chain if wrap has no size yet
+    let cw=wrap.clientWidth, ch=wrap.clientHeight;
+    if(cw<50){const p=wrap.parentElement;if(p)cw=p.clientWidth||p.offsetWidth;}
+    if(ch<50){const p=wrap.parentElement;if(p)ch=p.clientHeight||p.offsetHeight;}
+    if(cw<50)cw=800;
+    if(ch<50)ch=600;
+    cv.width=cw;cv.height=ch;
     cv.style.display='block';
     render();
   }

@@ -253,7 +253,7 @@
         <span class="video-time" id="t1VidTime">—</span>
         <button class="capture-btn" onclick="v1.captureFrame(true)">📸</button>
       </div>
-      <div class="canvas-wrap" id="t1CWrap">
+      <div class="canvas-wrap" id="t1CWrap" style="flex:1;min-height:0;overflow:hidden;">
         <canvas class="main-canvas" id="t1Canvas"></canvas>
         <video id="t1Video" muted playsinline preload="metadata" style="display:none"></video>
         <div class="ocr-overlay" id="t1Overlay"><div class="spinner"></div><div class="ocr-status-txt" id="t1Status">Loading…</div></div>
@@ -426,7 +426,7 @@
           <span class="video-time" id="t2VidTime">—</span>
           <button class="capture-btn" onclick="v2.captureFrame(true)">📸</button>
         </div>
-        <div class="canvas-wrap" id="t2CWrap">
+        <div class="canvas-wrap" id="t2CWrap" style="flex:1;min-height:0;overflow:hidden;">
           <canvas class="main-canvas" id="t2Canvas"></canvas>
           <video id="t2Video" muted playsinline preload="metadata" style="display:none"></video>
           <div class="ocr-overlay" id="t2Overlay" style="display:none;"><div class="spinner"></div><div class="ocr-status-txt" id="t2Status">OCR…</div></div>
