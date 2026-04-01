@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.28';
+const DOCUOPS_VERSION = '3.5.29';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -201,9 +201,15 @@ function makeViewer(px){
   }
 
   function fit(){
-    s.canvas=g('Canvas');s.ctx=s.canvas.getContext('2d');s.wrap=g('CWrap');
-    const cw=s.wrap.clientWidth,ch=s.wrap.clientHeight;
-    s.canvas.width=cw;s.canvas.height=ch;s.canvas.style.display='block';
+    s.canvas=g('Canvas');
+    s.wrap=g('CWrap');
+    if(!s.canvas||!s.wrap)return;
+    s.ctx=s.canvas.getContext('2d');
+    // Use offsetWidth/Height as fallback — clientWidth can be 0 briefly during layout
+    const cw=s.wrap.clientWidth||s.wrap.offsetWidth||s.canvas.parentElement?.offsetWidth||800;
+    const ch=s.wrap.clientHeight||s.wrap.offsetHeight||s.canvas.parentElement?.offsetHeight||600;
+    if(cw>0&&ch>0){s.canvas.width=cw;s.canvas.height=ch;}
+    s.canvas.style.display='block';
     render();
   }
 
@@ -295,62 +301,81 @@ function makeViewer(px){
     img.src=url;
   }
 
-  // Pan in 'de' mode via Space+drag. Uses attached flag to prevent stacking.
+  // attachEvents — called once per viewer. Window listeners are stored and
+  // removed before re-adding to prevent stacking across image loads.
+  let _evMode=null, _wmove=null, _wup=null, _kdown=null, _kup=null;
+
+  function detachWindowListeners(){
+    if(_wmove){window.removeEventListener('mousemove',_wmove);_wmove=null;}
+    if(_wup){window.removeEventListener('mouseup',_wup);_wup=null;}
+    if(_kdown){document.removeEventListener('keydown',_kdown);_kdown=null;}
+    if(_kup){document.removeEventListener('keyup',_kup);_kup=null;}
+  }
+
   function attachEvents(mode){
     const cv=g('Canvas');
     if(!cv)return;
 
-    // Guard against duplicate attachment — only attach once per canvas instance
-    if(cv._eventsAttached===mode) return;
-    cv._eventsAttached=mode;
-    s.canvas=cv;
-    s.ctx=cv.getContext('2d');
+    // Re-attach window listeners every time (image changed, canvas resized)
+    detachWindowListeners();
 
-    cv.addEventListener('wheel',e=>{
-      e.preventDefault();
-      const r=cv.getBoundingClientRect();
-      setZoom(s.zoom+(e.deltaY>0?-.2:.2),e.clientX-r.left,e.clientY-r.top);
-    },{passive:false});
-
-    if(mode==='select'||mode==='de'){
-      // Space key toggles pan mode
-      const onKeyDown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;cv.style.cursor='grab';e.preventDefault();}};
-      const onKeyUp=e=>{if(e.code==='Space'){s.spaceDown=false;cv.style.cursor='crosshair';}};
-      document.addEventListener('keydown',onKeyDown);
-      document.addEventListener('keyup',onKeyUp);
-      cv.style.cursor='crosshair';
-
-      cv.addEventListener('mousedown',e=>{
+    // Only re-attach canvas listeners if mode changed
+    if(_evMode!==mode){
+      _evMode=mode;
+      // Canvas wheel — always needed
+      cv.addEventListener('wheel',e=>{
         e.preventDefault();
         const r=cv.getBoundingClientRect();
-        if(s.spaceDown||e.button===1){
-          // Pan mode: Space+drag or middle-click drag
+        setZoom(s.zoom+(e.deltaY>0?-.2:.2),e.clientX-r.left,e.clientY-r.top);
+      },{passive:false});
+
+      if(mode==='select'||mode==='de'){
+        cv.style.cursor='crosshair';
+        cv.addEventListener('mousedown',e=>{
+          e.preventDefault();
+          const r=cv.getBoundingClientRect();
+          if(s.spaceDown||e.button===1){
+            s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
+            cv.style.cursor='grabbing';
+          } else {
+            s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
+            s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;render();
+            const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');
+            const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
+          }
+        });
+      } else {
+        // Tool 1 pan-only
+        cv.addEventListener('mousedown',e=>{
+          if(s.zoom<=1)return;
           s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
           cv.style.cursor='grabbing';
-        } else {
-          // Draw selection box
-          s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
-          s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;render();
-          const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');
-          const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
-        }
-      });
+        });
+      }
+    }
 
-      window.addEventListener('mousemove',e=>{
+    // Window listeners — always fresh (removed above, re-added here)
+    if(mode==='select'||mode==='de'){
+      _kdown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;const cv2=g('Canvas');if(cv2)cv2.style.cursor='grab';e.preventDefault();}};
+      _kup=e=>{if(e.code==='Space'){s.spaceDown=false;const cv2=g('Canvas');if(cv2)cv2.style.cursor='crosshair';}};
+      document.addEventListener('keydown',_kdown);
+      document.addEventListener('keyup',_kup);
+
+      _wmove=e=>{
         if(s.isPan){
           s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
         } else if(s.drag){
-          const r=cv.getBoundingClientRect();
+          const cv2=g('Canvas');if(!cv2)return;
+          const r=cv2.getBoundingClientRect();
           const cx=e.clientX-r.left,cy=e.clientY-r.top;
           s.sx=Math.min(s.ox,cx);s.sy=Math.min(s.oy,cy);
           s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);render();
         }
-      });
-
-      window.addEventListener('mouseup',async e=>{
+      };
+      _wup=async e=>{
         if(s.isPan){
           s.isPan=false;
-          cv.style.cursor=s.spaceDown?'grab':'crosshair';
+          const cv2=g('Canvas');if(cv2)cv2.style.cursor=s.spaceDown?'grab':'crosshair';
         } else if(s.drag){
           s.drag=false;
           if(s.sw>6&&s.sh>6){
@@ -358,23 +383,23 @@ function makeViewer(px){
             const rb=g('RedrawBtn');if(rb)rb.classList.remove('hidden');
             const ob=g('OcrSelBtn');if(ob)ob.classList.add('ready');
             await ocrSelection();
-          }else render();
+          } else render();
         }
-      });
-
+      };
     } else {
-      // Tool 1 mode — pan only
-      cv.addEventListener('mousedown',e=>{
-        if(s.zoom<=1)return;
-        s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
-        cv.style.cursor='grabbing';
-      });
-      window.addEventListener('mousemove',e=>{
+      _wmove=e=>{
         if(!s.isPan)return;
         s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
-      });
-      window.addEventListener('mouseup',()=>{if(s.isPan){s.isPan=false;cv.style.cursor=s.zoom>1?'grab':'default';}});
+      };
+      _wup=()=>{
+        if(s.isPan){
+          s.isPan=false;
+          const cv2=g('Canvas');if(cv2)cv2.style.cursor=s.zoom>1?'grab':'default';
+        }
+      };
     }
+    window.addEventListener('mousemove',_wmove);
+    window.addEventListener('mouseup',_wup);
   }
 
   function setZoom(z,px,py){
@@ -465,8 +490,9 @@ function makeViewer(px){
     s.img=null;s.blob=null;s.zoom=1;s.panX=0;s.panY=0;s.rot=0;
     s.hasSel=false;s.sw=0;s.sh=0;s.pdfDoc=null;s.pdfPage=1;
     s.spaceDown=false;
-    // Reset event guard so attachEvents re-attaches on next image load
-    const cv=g('Canvas');if(cv)delete cv._eventsAttached;
+    // Detach window listeners so they don't fire on stale state
+    detachWindowListeners();
+    _evMode=null;
     const zp=g('ZPct');if(zp)zp.textContent='100%';
     const zs=g('ZSlider');if(zs)zs.value=1;
     const pb=g('PdfBar');if(pb)pb.style.display='none';
