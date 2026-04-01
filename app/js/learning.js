@@ -390,11 +390,8 @@ function _t2OnImageLoaded() {
   }, 500);
 }
 
-// Also check when a profile key field is filled
-const _origT2FillField = t2FillField;
-function t2FillField(id, text) {
-  _origT2FillField(id, text);
-  // Check if a profile key was just filled
+// Hook called from tool2.js t2FillField — check if a profile key was filled
+function _t2OnFieldFilled(id) {
   const f = t2Fields.find(f => f.id === id);
   if (f && f.isProfileKey) {
     setTimeout(t2CheckForSuggestions, 100);

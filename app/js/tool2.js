@@ -1146,6 +1146,8 @@ function t2FillField(id,text){
     const next=t2Fields.slice(idx+1).find(f=>f.type!=='formula'&&f.type!=='repeat');
     if(next)t2ActivateField(next.id);
   }
+  // Notify learning engine (defined in learning.js)
+  if(typeof _t2OnFieldFilled==='function') _t2OnFieldFilled(id);
 }
 
 function t2ClearForm(){
