@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.4.27';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -207,27 +207,31 @@ function makeViewer(px){
     render();
   }
 
-  // ── FIX 1 & 3: Rotation-aware coordinate mapping ──────────────────
   // Maps canvas pixel (cx,cy) → original image pixel (ix,iy)
-  // accounting for current rotation, zoom, and pan.
+  // accounting for rotation, zoom, pan and the fit-to-canvas scale.
   function c2i(cx,cy){
     const cw=s.canvas.width,ch=s.canvas.height;
     const rot90=(s.rot===90||s.rot===270);
     const dW=rot90?s.natH:s.natW,dH=rot90?s.natW:s.natH;
-    const sc=Math.min(cw/dW,ch/dH);
+    const sc=Math.min(cw/dW,ch/dH);  // fit-to-canvas scale
     const fW=dW*sc,fH=dH*sc;
     const fX=(cw-fW)/2,fY=(ch-fH)/2;
 
-    // Step 1: undo pan/translate to get coords relative to image centre
+    // Step 1: canvas px → display px relative to rotated image centre
+    //         (undo pan, translate-to-centre, zoom)
     const ox=(cx-fX-s.panX-fW/2)/s.zoom;
     const oy=(cy-fY-s.panY-fH/2)/s.zoom;
 
-    // Step 2: undo rotation to get coords in original image space
-    const rad=-s.rot*Math.PI/180;
-    const rx=ox*Math.cos(rad)-oy*Math.sin(rad);
-    const ry=ox*Math.sin(rad)+oy*Math.cos(rad);
+    // Step 2: display px → original image px (undo fit scale)
+    const ox2=ox/sc;
+    const oy2=oy/sc;
 
-    // Step 3: shift from image-centre coords to image-pixel coords
+    // Step 3: undo rotation around image centre
+    const rad=-s.rot*Math.PI/180;
+    const rx=ox2*Math.cos(rad)-oy2*Math.sin(rad);
+    const ry=ox2*Math.sin(rad)+oy2*Math.cos(rad);
+
+    // Step 4: shift from image-centre coords to image-pixel coords
     const ix=rx+(s.natW/2);
     const iy=ry+(s.natH/2);
 
@@ -291,38 +295,38 @@ function makeViewer(px){
     img.src=url;
   }
 
-  // ── FIX 2: Pan in 'de' mode via Space+drag ─────────────────────────
+  // Pan in 'de' mode via Space+drag. Uses attached flag to prevent stacking.
   function attachEvents(mode){
     const cv=g('Canvas');
+    if(!cv)return;
 
-    // Remove old listeners by cloning (safest way to avoid duplicate stacking)
-    const newCv=cv.cloneNode(false);
-    cv.parentNode.replaceChild(newCv,cv);
-    s.canvas=newCv;
-    s.ctx=newCv.getContext('2d');
-    render();
+    // Guard against duplicate attachment — only attach once per canvas instance
+    if(cv._eventsAttached===mode) return;
+    cv._eventsAttached=mode;
+    s.canvas=cv;
+    s.ctx=cv.getContext('2d');
 
-    newCv.addEventListener('wheel',e=>{
+    cv.addEventListener('wheel',e=>{
       e.preventDefault();
-      const r=newCv.getBoundingClientRect();
+      const r=cv.getBoundingClientRect();
       setZoom(s.zoom+(e.deltaY>0?-.2:.2),e.clientX-r.left,e.clientY-r.top);
     },{passive:false});
 
     if(mode==='select'||mode==='de'){
       // Space key toggles pan mode
-      const onKeyDown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;newCv.style.cursor='grab';e.preventDefault();}};
-      const onKeyUp=e=>{if(e.code==='Space'){s.spaceDown=false;newCv.style.cursor='crosshair';}};
+      const onKeyDown=e=>{if(e.code==='Space'&&!e.repeat){s.spaceDown=true;cv.style.cursor='grab';e.preventDefault();}};
+      const onKeyUp=e=>{if(e.code==='Space'){s.spaceDown=false;cv.style.cursor='crosshair';}};
       document.addEventListener('keydown',onKeyDown);
       document.addEventListener('keyup',onKeyUp);
-      newCv.style.cursor='crosshair';
+      cv.style.cursor='crosshair';
 
-      newCv.addEventListener('mousedown',e=>{
+      cv.addEventListener('mousedown',e=>{
         e.preventDefault();
-        const r=newCv.getBoundingClientRect();
+        const r=cv.getBoundingClientRect();
         if(s.spaceDown||e.button===1){
           // Pan mode: Space+drag or middle-click drag
           s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
-          newCv.style.cursor='grabbing';
+          cv.style.cursor='grabbing';
         } else {
           // Draw selection box
           s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
@@ -336,7 +340,7 @@ function makeViewer(px){
         if(s.isPan){
           s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
         } else if(s.drag){
-          const r=newCv.getBoundingClientRect();
+          const r=cv.getBoundingClientRect();
           const cx=e.clientX-r.left,cy=e.clientY-r.top;
           s.sx=Math.min(s.ox,cx);s.sy=Math.min(s.oy,cy);
           s.sw=Math.abs(cx-s.ox);s.sh=Math.abs(cy-s.oy);render();
@@ -346,7 +350,7 @@ function makeViewer(px){
       window.addEventListener('mouseup',async e=>{
         if(s.isPan){
           s.isPan=false;
-          newCv.style.cursor=s.spaceDown?'grab':'crosshair';
+          cv.style.cursor=s.spaceDown?'grab':'crosshair';
         } else if(s.drag){
           s.drag=false;
           if(s.sw>6&&s.sh>6){
@@ -360,16 +364,16 @@ function makeViewer(px){
 
     } else {
       // Tool 1 mode — pan only
-      newCv.addEventListener('mousedown',e=>{
+      cv.addEventListener('mousedown',e=>{
         if(s.zoom<=1)return;
         s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
-        newCv.style.cursor='grabbing';
+        cv.style.cursor='grabbing';
       });
       window.addEventListener('mousemove',e=>{
         if(!s.isPan)return;
         s.panX=s.pOX+(e.clientX-s.pSX);s.panY=s.pOY+(e.clientY-s.pSY);clamp();render();
       });
-      window.addEventListener('mouseup',()=>{if(s.isPan){s.isPan=false;newCv.style.cursor=s.zoom>1?'grab':'default';}});
+      window.addEventListener('mouseup',()=>{if(s.isPan){s.isPan=false;cv.style.cursor=s.zoom>1?'grab':'default';}});
     }
   }
 
@@ -461,6 +465,8 @@ function makeViewer(px){
     s.img=null;s.blob=null;s.zoom=1;s.panX=0;s.panY=0;s.rot=0;
     s.hasSel=false;s.sw=0;s.sh=0;s.pdfDoc=null;s.pdfPage=1;
     s.spaceDown=false;
+    // Reset event guard so attachEvents re-attaches on next image load
+    const cv=g('Canvas');if(cv)delete cv._eventsAttached;
     const zp=g('ZPct');if(zp)zp.textContent='100%';
     const zs=g('ZSlider');if(zs)zs.value=1;
     const pb=g('PdfBar');if(pb)pb.style.display='none';
@@ -470,7 +476,7 @@ function makeViewer(px){
   return{
     s,loadImg,loadPDF,loadVideo,captureFrame,ocrSelection,
     attachEvents,render,fit,setZoom,buildRotBlob,reset,
-    rotate(d){s.rot=(s.rot+d+360)%360;s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;render();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
+    rotate(d){s.rot=(s.rot+d+360)%360;s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;fit();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
     zoomBy(d){setZoom(s.zoom+d);},
     resetZoom(){s.zoom=1;s.panX=0;s.panY=0;render();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
     resetSel(){s.hasSel=false;s.sw=0;s.sh=0;render();const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');},
