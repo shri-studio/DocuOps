@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.30';
+const DOCUOPS_VERSION = '3.5.31';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -201,15 +201,16 @@ function makeViewer(px){
   }
 
   function fit(){
-    s.canvas=g('Canvas');
-    s.wrap=g('CWrap');
-    if(!s.canvas||!s.wrap)return;
-    s.ctx=s.canvas.getContext('2d');
-    // Use offsetWidth/Height as fallback — clientWidth can be 0 briefly during layout
-    const cw=s.wrap.clientWidth||s.wrap.offsetWidth||s.canvas.parentElement?.offsetWidth||800;
-    const ch=s.wrap.clientHeight||s.wrap.offsetHeight||s.canvas.parentElement?.offsetHeight||600;
-    if(cw>0&&ch>0){s.canvas.width=cw;s.canvas.height=ch;}
-    s.canvas.style.display='block';
+    const cv=g('Canvas');
+    const wrap=g('CWrap');
+    if(!cv||!wrap)return;
+    s.canvas=cv;s.wrap=wrap;
+    s.ctx=cv.getContext('2d');
+    // Read dimensions — offsetWidth/Height more reliable than clientWidth during layout
+    const cw=wrap.offsetWidth||wrap.clientWidth||800;
+    const ch=wrap.offsetHeight||wrap.clientHeight||600;
+    if(cw>10&&ch>10){cv.width=cw;cv.height=ch;}
+    cv.style.display='block';
     render();
   }
 
@@ -255,16 +256,13 @@ function makeViewer(px){
   }
 
   async function runOCR(src){
-    console.log('[OCR] runOCR called — src:',src,'onOCR:',!!s.onOCR);
     showOvl(true);setTxt('OCR…');
     const w=await ensureWorker();
     try{
       const{data:{text}}=await w.recognize(src);
-      console.log('[OCR] result text:',JSON.stringify(text.trim()),'onOCR:',!!s.onOCR);
       showOvl(false);
       if(s.onOCR)s.onOCR(text.trim());
-      else console.warn('[OCR] no onOCR handler set!');
-    }catch(e){showOvl(false);console.error('[OCR] recognize error:',e);}
+    }catch(e){showOvl(false);console.error(e);}
   }
 
   // ── FIX 1 & 3: OCR selection now rotation-aware ────────────────────
@@ -272,9 +270,8 @@ function makeViewer(px){
   // then crops the selected region from that — so rotation and crop
   // are always consistent regardless of zoom or pan.
   async function ocrSelection(){
-    console.log('[OCR] ocrSelection called — hasSel:',s.hasSel,'sw:',s.sw,'sh:',s.sh,'blob:',!!s.blob,'onOCR:',!!s.onOCR);
-    if(!s.hasSel||s.sw<6||s.sh<6){console.warn('[OCR] aborted early — bad sel');return;}
-    if(!s.blob){console.warn('[OCR] aborted — no blob');return;}
+    if(!s.hasSel||s.sw<6||s.sh<6)return;
+    if(!s.img)return;
 
     const corners=[
       c2i(s.sx,      s.sy),
@@ -290,22 +287,15 @@ function makeViewer(px){
     const iy2=Math.min(s.natH,Math.max(...ys));
     const rw=Math.round(ix2-ix1);
     const rh=Math.round(iy2-iy1);
-    console.log('[OCR] crop region — ix1:',ix1,'iy1:',iy1,'rw:',rw,'rh:',rh,'natW:',s.natW,'natH:',s.natH);
-    if(rw<2||rh<2){console.warn('[OCR] aborted — crop too small');return;}
+    if(rw<2||rh<2)return;
 
+    // Upscale small crops for better OCR accuracy (min 200px on shortest side)
+    const scale=Math.max(1,Math.ceil(200/Math.min(rw,rh)));
     const cr=document.createElement('canvas');
-    cr.width=rw;cr.height=rh;
-    const url=URL.createObjectURL(s.blob);
-    const img=new Image();
-    img.onload=async()=>{
-      cr.getContext('2d').drawImage(img,Math.round(ix1),Math.round(iy1),rw,rh,0,0,rw,rh);
-      URL.revokeObjectURL(url);
-      const cropBlob=await new Promise(r=>cr.toBlob(r,'image/jpeg',.97));
-      console.log('[OCR] cropBlob size:',cropBlob?.size);
-      await runOCR(cropBlob);
-    };
-    img.onerror=e=>console.error('[OCR] img load failed',e);
-    img.src=url;
+    cr.width=rw*scale;cr.height=rh*scale;
+    // Draw directly from s.img (already in memory — no blob URL needed)
+    cr.getContext('2d').drawImage(s.img,Math.round(ix1),Math.round(iy1),rw,rh,0,0,rw*scale,rh*scale);
+    await runOCR(await new Promise(r=>cr.toBlob(r,'image/jpeg',.97)));
   }
 
   // Event listener refs — window/document listeners stored for removal
@@ -401,7 +391,6 @@ function makeViewer(px){
           const c=g('Canvas');if(c)c.style.cursor=s.spaceDown?'grab':'crosshair';
         } else if(s.drag){
           s.drag=false;
-          console.log('[OCR] mouseup — sw:',s.sw,'sh:',s.sh);
           if(s.sw>6&&s.sh>6){
             s.hasSel=true;render();
             const rb=g('RedrawBtn');if(rb)rb.classList.remove('hidden');
@@ -529,7 +518,12 @@ function makeViewer(px){
   return{
     s,loadImg,loadPDF,loadVideo,captureFrame,ocrSelection,
     attachEvents,render,fit,setZoom,buildRotBlob,reset,
-    rotate(d){s.rot=(s.rot+d+360)%360;s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;fit();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
+    rotate(d){
+      s.rot=(s.rot+d+360)%360;s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;
+      const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;
+      // rAF ensures layout is complete before fit() reads wrap dimensions
+      requestAnimationFrame(()=>fit());
+    },
     zoomBy(d){setZoom(s.zoom+d);},
     resetZoom(){s.zoom=1;s.panX=0;s.panY=0;render();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
     resetSel(){s.hasSel=false;s.sw=0;s.sh=0;render();const rb=g('RedrawBtn');if(rb)rb.classList.add('hidden');const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');},

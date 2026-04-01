@@ -982,11 +982,11 @@ async function t2StartEntry(){
   t2RenderForm();
 
   v2.s.onOCR=(text)=>{
-    console.log('[T2] onOCR fired — text:',JSON.stringify(text),'t2ActiveFieldId:',t2ActiveFieldId);
-    if(!t2ActiveFieldId){console.warn('[T2] no active field — dropped');return;}
-    t2FillField(t2ActiveFieldId,text.trim());
+    // Use targetFieldId stored at activation time as fallback
+    const fid=t2ActiveFieldId||v2.s.targetFieldId;
+    if(!fid)return;
+    t2FillField(fid,text.trim());
   };
-  console.log('[T2] attachEvents de — onOCR set:',!!v2.s.onOCR);
   v2.attachEvents('de');
   // Notify defensive.js to set up strip controls and session flag
   if(typeof _t2OnStartEntry==='function') _t2OnStartEntry();
@@ -1097,6 +1097,7 @@ function t2MakeRepeatRow(f,ri){
 
 function t2ActivateField(id){
   t2ActiveFieldId=id;
+  v2.s.targetFieldId=id;  // also store on viewer so OCR can use it even if t2ActiveFieldId is cleared
   t2NamingPatternOverride=null;
   document.querySelectorAll('.de-lbl').forEach(l=>l.classList.toggle('active',l.dataset.fid===id));
   document.querySelectorAll('.de-inp').forEach(inp=>inp.classList.toggle('active',inp.id==='dei_'+id));
