@@ -19,6 +19,12 @@
   <link rel="stylesheet" href="css/style.css">
 
 <style>
+/* ── CANVAS WRAP FILL FIX ── */
+.canvas-wrap{flex:1;min-height:0;overflow:hidden;position:relative;display:flex;}
+.canvas-wrap canvas{display:block;}
+.img-panel{display:flex;flex-direction:column;min-height:0;flex:1;}
+</style>
+<style>
 /* ── TOOL 2 REVIEW TABLE ── */
 .t2-review-table{width:100%;border-collapse:collapse;font-size:12px;}
 .t2-review-table th{background:var(--surface);border-bottom:2px solid var(--border);padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;position:sticky;top:0;z-index:1;font-family:var(--mono);}
@@ -253,7 +259,7 @@
         <span class="video-time" id="t1VidTime">—</span>
         <button class="capture-btn" onclick="v1.captureFrame(true)">📸</button>
       </div>
-      <div class="canvas-wrap" id="t1CWrap" style="flex:1;min-height:0;overflow:hidden;">
+      <div class="canvas-wrap" id="t1CWrap">
         <canvas class="main-canvas" id="t1Canvas"></canvas>
         <video id="t1Video" muted playsinline preload="metadata" style="display:none"></video>
         <div class="ocr-overlay" id="t1Overlay"><div class="spinner"></div><div class="ocr-status-txt" id="t1Status">Loading…</div></div>
@@ -426,7 +432,7 @@
           <span class="video-time" id="t2VidTime">—</span>
           <button class="capture-btn" onclick="v2.captureFrame(true)">📸</button>
         </div>
-        <div class="canvas-wrap" id="t2CWrap" style="flex:1;min-height:0;overflow:hidden;">
+        <div class="canvas-wrap" id="t2CWrap">
           <canvas class="main-canvas" id="t2Canvas"></canvas>
           <video id="t2Video" muted playsinline preload="metadata" style="display:none"></video>
           <div class="ocr-overlay" id="t2Overlay" style="display:none;"><div class="spinner"></div><div class="ocr-status-txt" id="t2Status">OCR…</div></div>

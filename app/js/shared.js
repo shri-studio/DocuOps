@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.35';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -161,6 +161,14 @@ function makeViewer(px){
     pdfDoc:null,pdfPage:1,pdfTotal:1,vidDur:0,
     onOCR:null
   };
+  // ResizeObserver keeps canvas sized to wrap at all times
+  let _ro=null;
+  function _startResize(){
+    if(_ro||!window.ResizeObserver)return;
+    const wrap=g('CWrap');if(!wrap)return;
+    _ro=new ResizeObserver(()=>{ if(s.img)fit(); });
+    _ro.observe(wrap);
+  }
   const g=id=>document.getElementById(px+id);
   const showOvl=v=>{ const e=g('Overlay');if(e)e.style.display=v?'flex':'none'; };
   const setTxt=t=>{ const e=g('Status');if(e)e.textContent=t; };
@@ -206,15 +214,17 @@ function makeViewer(px){
     if(!cv||!wrap)return;
     s.canvas=cv;s.wrap=wrap;
     s.ctx=cv.getContext('2d');
-    // clientWidth/Height gives CSS layout size (excludes borders, correct for flex children)
-    // Fall back up the parent chain if wrap has no size yet
-    let cw=wrap.clientWidth, ch=wrap.clientHeight;
-    if(cw<50){const p=wrap.parentElement;if(p)cw=p.clientWidth||p.offsetWidth;}
-    if(ch<50){const p=wrap.parentElement;if(p)ch=p.clientHeight||p.offsetHeight;}
-    if(cw<50)cw=800;
-    if(ch<50)ch=600;
-    cv.width=cw;cv.height=ch;
+    // Force canvas to fill wrap via CSS, then read actual rendered size
     cv.style.display='block';
+    cv.style.width='100%';
+    cv.style.height='100%';
+    // getBoundingClientRect gives true rendered pixel size regardless of CSS layout
+    const rect=wrap.getBoundingClientRect();
+    const cw=Math.round(rect.width)||wrap.clientWidth||800;
+    const ch=Math.round(rect.height)||wrap.clientHeight||600;
+    cv.width=cw;
+    cv.height=ch;
+    console.log(`[fit/${px}] wrap=${Math.round(rect.width)}×${Math.round(rect.height)} canvas=${cw}×${ch}`);
     render();
   }
 
@@ -438,7 +448,13 @@ function makeViewer(px){
     return new Promise(res=>{
       const url=URL.createObjectURL(file);
       const img=new Image();
-      img.onload=()=>{s.img=img;s.natW=img.naturalWidth;s.natH=img.naturalHeight;s.blob=file;fit();URL.revokeObjectURL(url);res();};
+      img.onload=()=>{
+        s.img=img;s.natW=img.naturalWidth;s.natH=img.naturalHeight;s.blob=file;
+        _startResize();
+        fit();
+        URL.revokeObjectURL(url);
+        res();
+      };
       img.src=url;
     });
   }
