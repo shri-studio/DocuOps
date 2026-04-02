@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.35';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -224,13 +224,16 @@ function makeViewer(px){
     const wrap=g('CWrap');
     if(!cv||!wrap)return;
     s.canvas=cv;s.wrap=wrap;
-    s.ctx=cv.getContext('2d');
     cv.style.display='block';
-    // Read wrap's rendered size — do NOT set CSS width/height on canvas (causes RO loop)
+    // Read wrap size BEFORE touching canvas dimensions
     const rect=wrap.getBoundingClientRect();
     const cw=Math.round(rect.width)||wrap.clientWidth||800;
     const ch=Math.round(rect.height)||wrap.clientHeight||600;
-    if(cw>10&&ch>10){cv.width=cw;cv.height=ch;}
+    if(cw>10&&ch>10){
+      cv.width=cw;   // setting .width wipes the context —
+      cv.height=ch;  // so get context AFTER setting dimensions
+    }
+    s.ctx=cv.getContext('2d');  // ← must be AFTER cv.width/cv.height
     render();
   }
 
@@ -460,6 +463,8 @@ function makeViewer(px){
         fit();
         URL.revokeObjectURL(url);
         res();
+        // Second fit after layout settles — ensures correct canvas size
+        requestAnimationFrame(()=>{ if(s.img)fit(); });
       };
       img.src=url;
     });
