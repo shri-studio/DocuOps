@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.6.0';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -274,13 +274,19 @@ function makeViewer(px){
   }
 
   function clamp(){
+    if(!s.canvas)return;
     const cw=s.canvas.width,ch=s.canvas.height;
     const rot90=(s.rot===90||s.rot===270);
     const dW=rot90?s.natH:s.natW,dH=rot90?s.natW:s.natH;
     const sc=Math.min(cw/dW,ch/dH);
-    const fW=dW*sc*s.zoom,fH=dH*sc*s.zoom,fX=(cw-dW*sc)/2,fY=(ch-dH*sc)/2;
-    s.panX=Math.min(Math.max(0,-fX),Math.max(Math.min(0,cw-fX-fW),s.panX));
-    s.panY=Math.min(Math.max(0,-fY),Math.max(Math.min(0,ch-fY-fH),s.panY));
+    // Zoomed image size in canvas pixels
+    const fW=dW*sc*s.zoom, fH=dH*sc*s.zoom;
+    // How far the image can move: allow seeing any edge
+    // maxPan = half the overflow (image larger than canvas → can pan that much each way)
+    const maxPanX=Math.max(0,(fW-cw)/2);
+    const maxPanY=Math.max(0,(fH-ch)/2);
+    s.panX=Math.max(-maxPanX,Math.min(maxPanX,s.panX));
+    s.panY=Math.max(-maxPanY,Math.min(maxPanY,s.panY));
   }
 
   async function runOCR(src){
@@ -348,8 +354,17 @@ function makeViewer(px){
 
       cv.addEventListener('wheel',e=>{
         e.preventDefault();
-        const r=cv.getBoundingClientRect();
-        setZoom(s.zoom+(e.deltaY>0?-.2:.2),e.clientX-r.left,e.clientY-r.top);
+        if(e.ctrlKey||s.zoom===1){
+          // Ctrl+wheel or at 1× → zoom (centred on cursor)
+          const r=cv.getBoundingClientRect();
+          setZoom(s.zoom+(e.deltaY>0?-.15:.15),e.clientX-r.left,e.clientY-r.top);
+        } else if(e.shiftKey){
+          // Shift+wheel → pan horizontally
+          s.panX-=e.deltaY*0.5;clamp();render();
+        } else {
+          // Plain wheel when zoomed → pan vertically
+          s.panY-=e.deltaY*0.5;clamp();render();
+        }
       },{passive:false});
 
       if(mode==='select'||mode==='de'){
@@ -359,10 +374,12 @@ function makeViewer(px){
           if(e.button===2)return; // ignore right-click
           e.preventDefault();
           const r=cv.getBoundingClientRect();
-          if(s.spaceDown||e.button===1){
+          if(s.spaceDown||e.button===1||s.zoom>1){
+            // Space+drag, middle-click, OR zoomed-in → pan
             s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
             cv.style.cursor='grabbing';
           } else {
+            // zoom=1 → draw selection box for OCR
             s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;
             s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
             render();
@@ -455,7 +472,11 @@ function makeViewer(px){
     clamp();render();
     const zp=g('ZPct');if(zp)zp.textContent=Math.round(s.zoom*100)+'%';
     const zs=g('ZSlider');if(zs)zs.value=s.zoom;
-    if(cv)cv.style.cursor=s.zoom>1?(s.spaceDown?'grabbing':'grab'):'crosshair';
+    if(cv){
+      if(s.zoom>1) cv.style.cursor='grab';
+      else if(_evMode==='select'||_evMode==='de') cv.style.cursor='crosshair';
+      else cv.style.cursor='default';
+    }
   }
 
   async function loadImg(file){
