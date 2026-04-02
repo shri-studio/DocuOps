@@ -168,7 +168,7 @@ function t2SetupStripControls() {
     <span id="stripCount" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;"></span>
   `;
   wrap.insertBefore(bar, wrap.firstChild);
-  wrap.style.height = '120px';
+  // Do NOT set wrap height — the strip-wrap uses its natural flex size
 }
 
 function t2LoadDocuments(addMore) {

@@ -68,9 +68,14 @@ async function loadPDFjs(){
   return new Promise((res,rej)=>{
     if(window.pdfjsLib){res();return;}
     const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/legacy/build/pdf.min.js';
-    s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/legacy/build/pdf.worker.min.js';res();};
-    s.onerror=rej;document.head.appendChild(s);
+    // Use cdnjs for reliability — version 3.11.174 is widely cached and stable
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      res();
+    };
+    s.onerror=rej;
+    document.head.appendChild(s);
   });
 }
 
