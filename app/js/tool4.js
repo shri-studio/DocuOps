@@ -79,18 +79,43 @@ async function t4PickFolder(){
   }catch(e){if(e.name!=='AbortError')alert('Folder error: '+e.message);}
 }
 
-async function t4DownloadOne(url,filename){
-  let blob;
+// CORS proxy list — tried in order until one works
+const T4_PROXIES=[
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://proxy.cors.sh/${u}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+async function t4TryFetch(url){
+  // 1. Direct fetch first
   try{
-    const res=await fetch(url,{signal:AbortSignal.timeout(30000)});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    blob=await res.blob();
-  }catch(e){
-    const proxy='https://corsproxy.io/?'+encodeURIComponent(url);
-    const res2=await fetch(proxy,{signal:AbortSignal.timeout(30000)});
-    if(!res2.ok)throw new Error('Proxy HTTP '+res2.status);
-    blob=await res2.blob();
+    const r=await fetch(url,{signal:AbortSignal.timeout(20000)});
+    if(r.ok)return r.blob();
+  }catch(e){}
+  // 2. Try each proxy in sequence
+  for(const makeProxy of T4_PROXIES){
+    try{
+      const r=await fetch(makeProxy(url),{signal:AbortSignal.timeout(20000)});
+      if(r.ok){
+        const blob=await r.blob();
+        // allorigins wraps in JSON sometimes — check content type
+        if(blob.type&&!blob.type.includes('json'))return blob;
+        // try reading as text to see if it's a JSON wrapper
+        const text=await blob.text();
+        try{
+          const j=JSON.parse(text);
+          if(j.contents)return new Blob([j.contents]);
+        }catch(e2){}
+        return blob;
+      }
+    }catch(e){}
   }
+  throw new Error('All proxies failed for: '+url);
+}
+
+async function t4DownloadOne(url,filename){
+  const blob=await t4TryFetch(url);
   if(t4DirHandle&&t4DirHandle!=='fallback'){
     const fh=await t4DirHandle.getFileHandle(filename,{create:true});
     const wr=await fh.createWritable();
