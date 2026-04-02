@@ -23,6 +23,10 @@
 .canvas-wrap{flex:1;min-height:0;overflow:hidden;position:relative;display:flex;}
 .canvas-wrap canvas{display:block;}
 .img-panel{display:flex;flex-direction:column;min-height:0;flex:1;}
+/* Force work area to fill full viewport */
+#t2Work{flex:1;min-height:0;overflow:hidden;}
+#t2Work .t2w-main{height:100%;min-height:0;}
+#t2Work .img-panel{min-height:0;}
 </style>
 <style>
 /* ── TOOL 2 REVIEW TABLE ── */
@@ -752,6 +756,16 @@
         <span id="t4FolderPath" style="flex:1;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No folder selected</span>
         <button onclick="t4PickFolder()" class="btn" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 12px;font-size:11px;">Choose Folder</button>
       </div>
+    </div>
+
+    <!-- Custom proxy -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:8px;">04 — CORS Proxy (optional — default uses built-in)</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="text" id="t4CustomProxy" placeholder="https://docu-ops.vercel.app/api/proxy?url=" value="https://docu-ops.vercel.app/api/proxy?url=" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;outline:none;" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+        <button onclick="document.getElementById('t4CustomProxy').value=''" class="btn" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:5px 10px;">Clear</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">Leave as-is to use the built-in Vercel proxy · Or enter your own · Clear for direct fetch only</div>
     </div>
 
     <!-- Start row -->

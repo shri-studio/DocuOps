@@ -79,39 +79,66 @@ async function t4PickFolder(){
   }catch(e){if(e.name!=='AbortError')alert('Folder error: '+e.message);}
 }
 
-// CORS proxy list — tried in order until one works
-const T4_PROXIES=[
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u=>`https://proxy.cors.sh/${u}`,
-  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
-];
-
 async function t4TryFetch(url){
-  // 1. Direct fetch first
+  // 0. Custom proxy (user-supplied or our own Vercel proxy — most reliable)
+  const customProxy=document.getElementById('t4CustomProxy')?.value.trim()
+    ||'https://docu-ops.vercel.app/api/proxy?url=';
+  if(customProxy){
+    try{
+      const proxyUrl=customProxy+(customProxy.includes('?url=')?'':encodeURIComponent(url))+
+        (customProxy.includes('?url=')?encodeURIComponent(url):'');
+      const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(25000)});
+      if(r.ok)return r.blob();
+    }catch(e){}
+  }
+
+  // 1. Direct fetch
   try{
     const r=await fetch(url,{signal:AbortSignal.timeout(20000)});
     if(r.ok)return r.blob();
   }catch(e){}
-  // 2. Try each proxy in sequence
-  for(const makeProxy of T4_PROXIES){
-    try{
-      const r=await fetch(makeProxy(url),{signal:AbortSignal.timeout(20000)});
-      if(r.ok){
-        const blob=await r.blob();
-        // allorigins wraps in JSON sometimes — check content type
-        if(blob.type&&!blob.type.includes('json'))return blob;
-        // try reading as text to see if it's a JSON wrapper
-        const text=await blob.text();
+
+  // 2. allorigins /get endpoint — returns JSON with base64 for binary files
+  try{
+    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+      {signal:AbortSignal.timeout(20000)});
+    if(r.ok){
+      const json=await r.json();
+      if(json.contents){
         try{
-          const j=JSON.parse(text);
-          if(j.contents)return new Blob([j.contents]);
-        }catch(e2){}
-        return blob;
+          const binary=atob(json.contents);
+          const bytes=new Uint8Array(binary.length);
+          for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+          return new Blob([bytes],{type:json.status?.content_type||'application/octet-stream'});
+        }catch(e2){
+          return new Blob([json.contents]);
+        }
       }
-    }catch(e){}
-  }
-  throw new Error('All proxies failed for: '+url);
+    }
+  }catch(e){}
+
+  // 3. cors-anywhere
+  try{
+    const r=await fetch(`https://cors-anywhere.herokuapp.com/${url}`,
+      {signal:AbortSignal.timeout(20000)});
+    if(r.ok)return r.blob();
+  }catch(e){}
+
+  // 4. corsproxy.io
+  try{
+    const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,
+      {signal:AbortSignal.timeout(20000)});
+    if(r.ok)return r.blob();
+  }catch(e){}
+
+  // 5. cors.sh (with delay hint built-in)
+  try{
+    const r=await fetch(`https://proxy.cors.sh/${url}`,
+      {signal:AbortSignal.timeout(20000)});
+    if(r.ok)return r.blob();
+  }catch(e){}
+
+  throw new Error('All proxies failed');
 }
 
 async function t4DownloadOne(url,filename){
@@ -163,11 +190,13 @@ async function t4Start(){
       (done<total?`<span>Remaining: ${total-done}</span>`:`<span style="color:var(--green);">— All finished</span>`);
   }
 
-  const CONCURRENCY=4;let idx=0;
+  const CONCURRENCY=1;let idx=0;  // single stream to avoid proxy rate limits
   async function worker(){
     while(idx<total){
       const i=idx++;const url=t4AllUrls[i];const row=rows[i];
       const name=t4FilenameFromUrl(url,i+1);
+      // Small delay between requests to respect proxy rate limits
+      if(i>0)await new Promise(r=>setTimeout(r,600));
       row.style.borderColor='var(--blue)';
       row.querySelector('.li-icon').textContent='⏳';
       row.querySelector('.li-status').textContent='downloading…';
