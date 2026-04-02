@@ -725,11 +725,7 @@
 <div id="tool4" style="display:none;flex:1;flex-direction:column;align-items:center;overflow-y:auto;padding:32px 6%;">
   <div style="width:100%;max-width:760px;">
 
-    <!-- Notice -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.7;font-family:var(--mono);">
-      Uses the <span style="color:var(--text);font-weight:700;">File System Access API</span> to save directly to disk.
-      Best in <span style="color:var(--green);">Chrome</span> or <span style="color:var(--green);">Edge</span> · Firefox/Safari saves to Downloads folder instead.
-    </div>
+    <!-- Notice hidden -->
 
     <!-- Step 1: Paste links -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;">
@@ -765,7 +761,7 @@
         <input type="text" id="t4CustomProxy" placeholder="https://docu-ops.vercel.app/api/proxy?url=" value="https://docu-ops.vercel.app/api/proxy?url=" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;outline:none;" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
         <button onclick="document.getElementById('t4CustomProxy').value=''" class="btn" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:5px 10px;">Clear</button>
       </div>
-      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:5px;">Leave as-is to use the built-in Vercel proxy · Or enter your own · Clear for direct fetch only</div>
+
     </div>
 
     <!-- Start row -->
