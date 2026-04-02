@@ -1150,9 +1150,10 @@ function t2FillField(id,text){
   if(typeof _t2OnFieldFilled==='function') _t2OnFieldFilled(id);
 }
 
-function t2ClearForm(){
+function t2ClearForm(silent){
   // Guard: confirm if form has data (defined in defensive.js)
-  if(typeof _t2ClearGuard==='function' && !_t2ClearGuard()) return;
+  // silent=true when called after a save — skips the confirm dialog
+  if(typeof _t2ClearGuard==='function' && !_t2ClearGuard(silent)) return;
   t2Fields.forEach(f=>{
     const el=document.getElementById('dei_'+f.id);
     if(el){if(el.tagName==='SELECT')el.selectedIndex=0;else if(el.tagName==='INPUT')el.value='';else el.textContent='—';}
@@ -1165,6 +1166,17 @@ function t2ClearForm(){
 }
 
 async function t2SaveEntry(){
+  // Check if form has any data at all — warn if completely empty
+  const hasAnyData = t2Fields.some(f => {
+    if(f.type==='formula') return false;
+    const el = document.getElementById('dei_'+f.id);
+    if(!el) return false;
+    const val = el.tagName==='SELECT' ? el.value : el.value;
+    return val && val.trim() !== '' && val !== '—';
+  });
+  if(!hasAnyData){
+    if(!confirm('⚠️ Form is empty.\n\nNo data has been entered. Save an empty entry?')) return;
+  }
   // Notify learning engine before save (defined in learning.js)
   if(typeof _t2OnSaveEntry==='function') _t2OnSaveEntry();
   // Validate required
@@ -1236,7 +1248,7 @@ async function t2SaveEntry(){
   btn.textContent=`✔ Saved! (${t2Entries.length})`;
   setTimeout(()=>btn.textContent='✔ Save Entry',1500);
 
-  t2ClearForm();
+  t2ClearForm(true);  // silent — no confirm after a successful save
 
   // Move to next undone
   const next=t2Files.findIndex((_,i)=>i>t2ActiveFile&&!document.getElementById('st_'+i)?.classList.contains('done'));

@@ -52,7 +52,9 @@ document.getElementById('t1DropArea').addEventListener('drop', e => {
 // ── 5. T2 — CLEAR FORM CONFIRMATION ──────────────────
 // Cannot patch t2ClearForm directly — same recursion issue as t2LoadInViewer.
 // Expose _t2ClearGuard() which tool2.js calls at the top of t2ClearForm.
-function _t2ClearGuard() {
+function _t2ClearGuard(silent) {
+  // silent=true when called after a successful save — no confirm needed
+  if (silent) return true;
   const hasData = t2Fields.some(f => {
     const el = document.getElementById('dei_' + f.id);
     if (!el) return false;
