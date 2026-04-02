@@ -529,13 +529,8 @@ function makeViewer(px){
   }
 
   async function buildRotBlob(){
-    if(s.rot===0)return s.blob;
-    const rot90=(s.rot===90||s.rot===270);
-    const w=rot90?s.natH:s.natW,h=rot90?s.natW:s.natH;
-    const rc=document.createElement('canvas');rc.width=w;rc.height=h;
-    const ctx=rc.getContext('2d');
-    ctx.translate(w/2,h/2);ctx.rotate(s.rot*Math.PI/180);ctx.drawImage(s.img,-s.natW/2,-s.natH/2);
-    return new Promise(r=>rc.toBlob(r,'image/jpeg',.95));
+    // Rotation is baked into s.img and s.blob by rotate() — always return blob directly
+    return s.blob;
   }
 
   function reset(){
@@ -555,10 +550,26 @@ function makeViewer(px){
     s,loadImg,loadPDF,loadVideo,captureFrame,ocrSelection,
     attachEvents,render,fit,setZoom,buildRotBlob,reset,
     rotate(d){
-      s.rot=(s.rot+d+360)%360;s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;
+      // Bake rotation into the image so natW/natH always reflect true dimensions.
+      // This means fit() always maximizes the image regardless of orientation.
+      const newRot=(s.rot+d+360)%360;
+      s.hasSel=false;s.sw=0;s.sh=0;s.zoom=1;s.panX=0;s.panY=0;
       const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;
-      // rAF ensures layout is complete before fit() reads wrap dimensions
-      requestAnimationFrame(()=>fit());
+      if(!s.img)return;
+      const rot90=(newRot===90||newRot===270);
+      const ow=rot90?s.natH:s.natW, oh=rot90?s.natW:s.natH;
+      const rc=document.createElement('canvas');rc.width=ow;rc.height=oh;
+      const ctx=rc.getContext('2d');
+      ctx.translate(ow/2,oh/2);
+      ctx.rotate(newRot*Math.PI/180);
+      ctx.drawImage(s.img,-s.natW/2,-s.natH/2);
+      const newImg=new Image();
+      newImg.onload=()=>{
+        s.img=newImg;s.natW=ow;s.natH=oh;s.rot=0;
+        rc.toBlob(b=>{s.blob=b;},'image/jpeg',.95);
+        requestAnimationFrame(()=>fit());
+      };
+      newImg.src=rc.toDataURL('image/jpeg',.95);
     },
     zoomBy(d){setZoom(s.zoom+d);},
     resetZoom(){s.zoom=1;s.panX=0;s.panY=0;render();const zp=g('ZPct');if(zp)zp.textContent='100%';const zs=g('ZSlider');if(zs)zs.value=1;},
