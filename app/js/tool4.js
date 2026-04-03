@@ -174,6 +174,7 @@ async function t4Start(){
 
   const total=t4AllUrls.length;
   let done=0,ok=0,err=0;
+  const failedUrls=[];
 
   const rows=t4AllUrls.map(url=>{
     const div=document.createElement('div');
@@ -213,6 +214,7 @@ async function t4Start(){
         row.querySelector('.li-icon').textContent='❌';
         row.querySelector('.li-status').style.color='var(--danger)';
         row.querySelector('.li-status').textContent='failed: '+e.message;
+        failedUrls.push(url);
         err++;
       }
       done++;
@@ -223,4 +225,19 @@ async function t4Start(){
 
   await Promise.all(Array.from({length:Math.min(CONCURRENCY,total)},worker));
   btn.disabled=false;
+
+  // If any failed — show retry file download
+  if(failedUrls.length>0){
+    const retryBlob=new Blob([failedUrls.join('\n')],{type:'text/plain'});
+    const retryUrl=URL.createObjectURL(retryBlob);
+    const retryDiv=document.createElement('div');
+    retryDiv.style.cssText='margin-top:12px;padding:10px 14px;background:rgba(255,80,80,.07);border:1px solid var(--danger);border-radius:8px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;';
+    retryDiv.innerHTML=`
+      <span style="color:var(--danger);font-weight:700;">✗ ${failedUrls.length} failed</span>
+      <span style="color:var(--muted);flex:1;">Download the failed URLs as a .txt file to retry later</span>
+      <a href="${retryUrl}" download="failed_links.txt" style="background:var(--danger);color:#fff;padding:5px 14px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:700;flex-shrink:0;">⬇ failed_links.txt</a>
+    `;
+    summaryEl.appendChild(retryDiv);
+    setTimeout(()=>URL.revokeObjectURL(retryUrl),60000);
+  }
 }
