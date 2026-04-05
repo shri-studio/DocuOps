@@ -424,6 +424,7 @@
           <span class="file-type-badge" id="t2FType"></span>
           <span class="sel-hint">✏️ Click field label then draw box</span>
           <button class="icon-btn hidden" id="t2RedrawBtn" onclick="v2.resetSel()">↺ Re-draw</button>
+          <button onclick="t2EditTemplate()" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:var(--mono);margin-left:auto;">✏️ Edit Template</button>
         </div>
         <div class="pdf-page-bar" id="t2PdfBar">
           <button onclick="v2.changePdfPage(-1)">‹</button>
@@ -468,16 +469,24 @@
           </label>
           <button onclick="pickFolder('t2')" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:var(--mono);flex-shrink:0;" id="t2FolderBtn">📁 Save folder</button>
           <span id="t2FolderName" style="font-size:10px;color:var(--muted);font-family:var(--mono);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">→ Downloads</span>
-          <div style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0;">Space + drag to pan</div>
+          <div style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0;">Right-click + drag to pan</div>
         </div>
         <div class="t2w-actions">
           <button class="btn btn-save" id="t2SaveBtn" onclick="t2SaveEntry()" style="flex:1;">✔ Save Entry</button>
-          <button class="btn btn-skip" onclick="t2ClearForm()" style="flex:0.6;font-size:11px;">↺ Clear</button>
+          <button class="btn btn-skip" onclick="t2SkipEntry()" style="flex:0.6;font-size:11px;">→ Skip</button>
           <button class="btn" onclick="t2Finish()" style="flex:0.6;background:var(--surface2);border:1px solid var(--border);font-size:11px;">⬇ Export</button>
         </div>
       </div>
     </div>
-    <div class="strip-wrap" id="t2StripWrap" style="overflow-x:auto;overflow-y:hidden;"><div class="strip" id="t2Strip" style="display:flex;flex-wrap:nowrap;gap:6px;padding:6px 8px;min-width:max-content;"></div></div>
+    <div class="strip-wrap" id="t2StripWrap" style="display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <button onclick="t2LoadDocuments(false)" class="btn btn-save" style="padding:4px 12px;font-size:11px;font-weight:600;">📂 Load Documents</button>
+        <button onclick="t2LoadDocuments(true)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);">+ Add More</button>
+        <button onclick="t2ClearStrip()" style="background:none;border:1px solid var(--border);color:var(--danger);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);">🗑 Clear All</button>
+        <span id="stripCount" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;"></span>
+      </div>
+      <div style="overflow-x:auto;overflow-y:hidden;flex:1;"><div class="strip" id="t2Strip" style="display:flex;flex-wrap:nowrap;gap:6px;padding:6px 8px;min-width:max-content;min-height:88px;"></div></div>
+    </div>
   </div>
 
   <!-- Done / Review -->

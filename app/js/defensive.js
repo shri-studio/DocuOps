@@ -157,20 +157,7 @@ FSM.pickDataFolder = async function() {
 
 // ── 14. T2 — IMAGE LOADING CONTROL BAR ───────────────
 function t2SetupStripControls() {
-  const wrap = document.getElementById('t2StripWrap');
-  if (!wrap || wrap.querySelector('.strip-controls')) return;
-
-  const bar = document.createElement('div');
-  bar.className = 'strip-controls';
-  bar.style.cssText = 'display:flex;align-items:center;gap:7px;padding:5px 10px;border-bottom:1px solid var(--border);flex-shrink:0;';
-  bar.innerHTML = `
-    <button onclick="t2LoadDocuments(false)" style="background:var(--accent);color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);">📂 Load Documents</button>
-    <button onclick="t2LoadDocuments(true)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);">+ Add More</button>
-    <button onclick="t2ClearStrip()" style="background:none;border:1px solid var(--border);color:var(--danger);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--sans);">🗑 Clear All</button>
-    <span id="stripCount" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;"></span>
-  `;
-  wrap.insertBefore(bar, wrap.firstChild);
-  // Do NOT set wrap height — the strip-wrap uses its natural flex size
+  // Strip controls are now static in app.html — nothing to inject
 }
 
 function t2LoadDocuments(addMore) {

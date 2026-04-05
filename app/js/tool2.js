@@ -1274,6 +1274,16 @@ async function t2SaveEntry(){
   if(next!==-1)t2LoadInViewer(next);
 }
 
+function t2SkipEntry(){
+  // Mark current thumb as skipped and move to next undone
+  const thumb=document.getElementById('st_'+t2ActiveFile);
+  if(thumb){thumb.classList.add('done');thumb.style.opacity='0.5';}
+  t2ClearForm(true);
+  const next=t2Files.findIndex((_,i)=>i>t2ActiveFile&&!document.getElementById('st_'+i)?.classList.contains('done'));
+  if(next!==-1)t2LoadInViewer(next);
+  t2UpdateCounters();
+}
+
 function t2Finish(){
   if(typeof _t2FinishGuard==='function'&&!_t2FinishGuard())return;
   if(t2Entries.length===0&&!confirm('No entries yet. Export empty file?'))return;
@@ -1387,7 +1397,12 @@ function t2Continue(){document.getElementById('t2Done').style.display='none';doc
 
 function t2ExportFresh(){
   const headers=['Source File','Timestamp','Saved As',...t2Fields.map(f=>f.name)];
-  const rows=[headers,...t2Entries.map(e=>headers.map(h=>e[h]||''))];
+  const rows=[headers,...t2Entries.map(e=>[
+    e._file||'',
+    e._timestamp||'',
+    e._savedAs||'',
+    ...t2Fields.map(f=>e[f.name]||'')
+  ])];
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Data');
@@ -1563,9 +1578,9 @@ document.addEventListener('keydown',e=>{
   if(!isInput){
     if(e.key==='ArrowLeft')t2LoadInViewer(Math.max(0,t2ActiveFile-1));
     if(e.key==='ArrowRight')t2LoadInViewer(Math.min(t2Files.length-1,t2ActiveFile+1));
-    // Enter = Save Entry
-    if(e.key==='Enter'){e.preventDefault();t2SaveEntry();}
   }
+  // Enter = Save Entry from anywhere (but not textarea where Enter = newline)
+  if(e.key==='Enter'&&tag!=='TEXTAREA'){e.preventDefault();t2SaveEntry();}
 });
 
 

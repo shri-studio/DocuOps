@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.6.4';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -172,7 +172,7 @@ function makeViewer(px){
     spaceDown:false,
     drag:false,ox:0,oy:0,sx:0,sy:0,sw:0,sh:0,hasSel:false,
     pdfDoc:null,pdfPage:1,pdfTotal:1,vidDur:0,
-    onOCR:null
+    onOCR:null,_lastZoom:0
   };
   // ResizeObserver keeps canvas sized to wrap — debounced to prevent loops
   let _ro=null,_roTimer=null;
@@ -360,27 +360,22 @@ function makeViewer(px){
     if(_evMode!==mode){
       _evMode=mode;
 
-      let _lastWheelZoom=0;
       cv.addEventListener('wheel',e=>{
         e.preventDefault();
         if(e.ctrlKey||s.zoom===1){
-          // Throttle zoom: max one step per 80ms to prevent runaway on fast wheels
+          // Throttle: one step per 120ms, treat any deltaY as exactly ±1 step
           const now=Date.now();
-          if(now-_lastWheelZoom<80)return;
-          _lastWheelZoom=now;
-          // Treat any deltaY magnitude as exactly one step (±15%)
+          if(now-s._lastZoom<120)return;
+          s._lastZoom=now;
           const r=cv.getBoundingClientRect();
-          const factor=e.deltaY>0?0.85:1.15;  // one discrete step
+          const factor=e.deltaY>0?0.85:1.15;
           setZoom(s.zoom*factor,e.clientX-r.left,e.clientY-r.top);
         } else if(e.shiftKey){
-          // Shift+wheel → pan horizontally
-          // Normalise deltaY: cap at 40px per event regardless of device
-          s.panX-=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),40)*0.4;
-          clamp();render();
+          // Horizontal pan — 1 step = 60px
+          s.panX-=Math.sign(e.deltaY)*60;clamp();render();
         } else {
-          // Plain wheel → pan vertically
-          s.panY-=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),40)*0.4;
-          clamp();render();
+          // Vertical pan — 1 step = 60px
+          s.panY-=Math.sign(e.deltaY)*60;clamp();render();
         }
       },{passive:false});
 
@@ -388,15 +383,14 @@ function makeViewer(px){
         cv.style.cursor='crosshair';
         // ONE mousedown on canvas — uses closure over s, not re-registered
         cv.addEventListener('mousedown',e=>{
-          if(e.button===2)return; // ignore right-click
           e.preventDefault();
           const r=cv.getBoundingClientRect();
-          if(s.spaceDown||e.button===1){
-            // Space+drag or middle-click → pan
+          if(e.button===1||e.button===2){
+            // Right-click or middle-click → pan
             s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
             cv.style.cursor='grabbing';
           } else {
-            // Normal drag → always draw OCR selection box (at any zoom level)
+            // Left drag → draw OCR selection box
             s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;
             s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
             render();
@@ -404,6 +398,8 @@ function makeViewer(px){
             const ob=g('OcrSelBtn');if(ob)ob.classList.remove('ready');
           }
         });
+        // Prevent context menu on right-click so pan works cleanly
+        cv.addEventListener('contextmenu',e=>e.preventDefault());
       } else {
         cv.addEventListener('mousedown',e=>{
           if(s.zoom<=1)return;
@@ -417,25 +413,8 @@ function makeViewer(px){
     detachWindowListeners();
 
     if(mode==='select'||mode==='de'){
-      _kdown=e=>{
-        if(e.code==='Space'&&!e.repeat){
-          // Don't intercept space if user is typing in a form field
-          const tag=document.activeElement?.tagName;
-          const isInput=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||document.activeElement?.isContentEditable;
-          if(isInput)return;
-          s.spaceDown=true;
-          const c=g('Canvas');if(c)c.style.cursor='grab';
-          e.preventDefault();
-        }
-      };
-      _kup=e=>{
-        if(e.code==='Space'){
-          s.spaceDown=false;
-          const c=g('Canvas');if(c)c.style.cursor='crosshair';
-        }
-      };
-      document.addEventListener('keydown',_kdown);
-      document.addEventListener('keyup',_kup);
+      // No space key handler needed — pan via right-click+drag instead
+      _kdown=null;_kup=null;
 
       _wmove=e=>{
         if(s.isPan){
@@ -454,7 +433,7 @@ function makeViewer(px){
       _wup=async()=>{
         if(s.isPan){
           s.isPan=false;
-          const c=g('Canvas');if(c)c.style.cursor=s.spaceDown?'grab':'crosshair';
+          const c=g('Canvas');if(c)c.style.cursor='crosshair';
         } else if(s.drag){
           s.drag=false;
           if(s.sw>6&&s.sh>6){
