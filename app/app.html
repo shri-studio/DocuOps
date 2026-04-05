@@ -461,13 +461,14 @@
           <span class="entry-fname-warn" id="t2FnameWarn"></span>
         </div>
         <div class="t2w-hint" id="t2Hint">💡 Click a field label to activate, then draw a box on the image</div>
-        <div style="display:flex;align-items:center;gap:10px;padding:4px 10px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 10px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none;">
             <input type="checkbox" id="t2SaveFileChk" checked onchange="t2ToggleFileSaving(this.checked)" style="accent-color:var(--green);cursor:pointer;">
             Save image file
           </label>
-          <span id="t2FileSaveHint" style="font-size:10px;color:var(--muted);font-family:var(--mono);">💾 Image will be renamed and saved</span>
-          <div style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);">Hold Space + drag to pan</div>
+          <button onclick="pickFolder('t2')" style="background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:var(--mono);flex-shrink:0;" id="t2FolderBtn">📁 Save folder</button>
+          <span id="t2FolderName" style="font-size:10px;color:var(--muted);font-family:var(--mono);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">→ Downloads</span>
+          <div style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0;">Space + drag to pan</div>
         </div>
         <div class="t2w-actions">
           <button class="btn btn-save" id="t2SaveBtn" onclick="t2SaveEntry()" style="flex:1;">✔ Save Entry</button>

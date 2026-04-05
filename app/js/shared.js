@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.5.39';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -46,7 +46,14 @@ async function pickFolder(tool){
     sharedFolder=await window.showDirectoryPicker({mode:'readwrite'});
     const id=tool==='t1'?'t1FolderName':'t2FolderName';
     const el=document.getElementById(id);
-    if(el){el.textContent='📁 '+sharedFolder.name;el.classList.remove('none');}
+    if(el){
+      el.textContent='📁 '+sharedFolder.name;
+      el.style.color='var(--green)';
+      el.classList.remove('none');
+    }
+    // Update the folder button to show it's set
+    const btn=document.getElementById(tool==='t2'?'t2FolderBtn':null);
+    if(btn)btn.style.borderColor='var(--green)';
   }catch(e){if(e.name!=='AbortError')console.error(e);}
 }
 

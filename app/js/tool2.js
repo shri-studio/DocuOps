@@ -43,8 +43,11 @@ function t2ToggleFileSaving(enabled){
   window.t2SaveFileEnabled = enabled;
   const fnameRow = document.getElementById('t2EntryFname');
   if(fnameRow) fnameRow.style.display = enabled ? 'flex' : 'none';
-  const hintEl = document.getElementById('t2FileSaveHint');
-  if(hintEl) hintEl.textContent = enabled ? '💾 Image will be renamed and saved' : '📋 Data only — image will not be saved';
+  // Show/hide folder picker when file saving is toggled
+  const folderBtn = document.getElementById('t2FolderBtn');
+  const folderName = document.getElementById('t2FolderName');
+  if(folderBtn) folderBtn.style.display = enabled ? '' : 'none';
+  if(folderName) folderName.style.display = enabled ? '' : 'none';
 }
 
 let t2Fields=[];
