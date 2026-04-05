@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.6.2';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -360,19 +360,27 @@ function makeViewer(px){
     if(_evMode!==mode){
       _evMode=mode;
 
+      let _lastWheelZoom=0;
       cv.addEventListener('wheel',e=>{
         e.preventDefault();
         if(e.ctrlKey||s.zoom===1){
-          // Ctrl+wheel or at 1× → zoom 15% per step, centred on cursor
+          // Throttle zoom: max one step per 80ms to prevent runaway on fast wheels
+          const now=Date.now();
+          if(now-_lastWheelZoom<80)return;
+          _lastWheelZoom=now;
+          // Treat any deltaY magnitude as exactly one step (±15%)
           const r=cv.getBoundingClientRect();
-          const delta=e.deltaY>0?-0.15:0.15;
-          setZoom(s.zoom*(1+delta),e.clientX-r.left,e.clientY-r.top);
+          const factor=e.deltaY>0?0.85:1.15;  // one discrete step
+          setZoom(s.zoom*factor,e.clientX-r.left,e.clientY-r.top);
         } else if(e.shiftKey){
-          // Shift+wheel → pan horizontally (gentle)
-          s.panX-=e.deltaY*0.3;clamp();render();
+          // Shift+wheel → pan horizontally
+          // Normalise deltaY: cap at 40px per event regardless of device
+          s.panX-=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),40)*0.4;
+          clamp();render();
         } else {
-          // Plain wheel when zoomed → pan vertically (gentle)
-          s.panY-=e.deltaY*0.3;clamp();render();
+          // Plain wheel → pan vertically
+          s.panY-=Math.sign(e.deltaY)*Math.min(Math.abs(e.deltaY),40)*0.4;
+          clamp();render();
         }
       },{passive:false});
 
