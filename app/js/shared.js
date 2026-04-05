@@ -381,12 +381,12 @@ function makeViewer(px){
           if(e.button===2)return; // ignore right-click
           e.preventDefault();
           const r=cv.getBoundingClientRect();
-          if(s.spaceDown||e.button===1||s.zoom>1){
-            // Space+drag, middle-click, OR zoomed-in → pan
+          if(s.spaceDown||e.button===1){
+            // Space+drag or middle-click → pan
             s.isPan=true;s.pSX=e.clientX;s.pSY=e.clientY;s.pOX=s.panX;s.pOY=s.panY;
             cv.style.cursor='grabbing';
           } else {
-            // zoom=1 → draw selection box for OCR
+            // Normal drag → always draw OCR selection box (at any zoom level)
             s.drag=true;s.hasSel=false;s.sw=0;s.sh=0;
             s.ox=e.clientX-r.left;s.oy=e.clientY-r.top;
             render();
@@ -480,9 +480,8 @@ function makeViewer(px){
     const zp=g('ZPct');if(zp)zp.textContent=Math.round(s.zoom*100)+'%';
     const zs=g('ZSlider');if(zs)zs.value=s.zoom;
     if(cv){
-      if(s.zoom>1) cv.style.cursor='grab';
-      else if(_evMode==='select'||_evMode==='de') cv.style.cursor='crosshair';
-      else cv.style.cursor='default';
+      if(_evMode==='select'||_evMode==='de') cv.style.cursor='crosshair';
+      else cv.style.cursor=s.zoom>1?'grab':'default';
     }
   }
 
