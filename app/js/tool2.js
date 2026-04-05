@@ -1007,6 +1007,21 @@ async function t2StartEntry(){
   if(typeof _t2OnStartEntry==='function') _t2OnStartEntry();
 }
 
+function t2UpdateCounters(){
+  const total=t2Files.length;
+  const done=document.querySelectorAll('.s-thumb.done').length;
+  // Top header counters
+  const stTotal=document.getElementById('statTotal');
+  const stDone=document.getElementById('statDone');
+  if(stTotal)stTotal.textContent=total||'—';
+  if(stDone)stDone.textContent=done;
+  // Bottom strip counter
+  if(typeof t2UpdateStripCount==='function')t2UpdateStripCount();
+  // Bottom right "X/Y done" label
+  const bottomCount=document.querySelector('.strip-done-count');
+  if(bottomCount)bottomCount.textContent=`${done}/${total} done`;
+}
+
 function t2RenderForm(){
   const container=document.getElementById('t2Form');
   container.innerHTML='';
@@ -1246,6 +1261,7 @@ async function t2SaveEntry(){
   // Mark strip thumb done
   const thumb=document.getElementById('st_'+t2ActiveFile);
   if(thumb)thumb.classList.add('done');
+  t2UpdateCounters();
 
   const btn=document.getElementById('t2SaveBtn');
   btn.textContent=`✔ Saved! (${t2Entries.length})`;
@@ -1451,7 +1467,10 @@ async function t2LoadInViewer(i){
   // Guard: check for unsaved form data before switching (defined in defensive.js)
   if(typeof _t2SwitchGuard === 'function' && !_t2SwitchGuard(i)) return;
   t2ActiveFile=i;
-  document.querySelectorAll('.s-thumb').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  document.querySelectorAll('.s-thumb').forEach((t,idx)=>{
+    t.classList.toggle('active',idx===i);
+    if(idx===i) t.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  });
   const file=t2Files[i];const ft=getFileType(file.name);const tb=getTypeBadge(ft);
   document.getElementById('t2FName').textContent=file.name;
   const ftb=document.getElementById('t2FType');ftb.textContent=tb.label;ftb.className='file-type-badge '+tb.cls;
@@ -1461,6 +1480,8 @@ async function t2LoadInViewer(i){
   else await v2.loadImg(file);
   // Re-attach selection events so OCR box drawing works on every new image
   v2.attachEvents('de');
+  // Update counters
+  t2UpdateCounters();
   // Notify learning engine that image has loaded (defined in learning.js)
   if(typeof _t2OnImageLoaded==='function') _t2OnImageLoaded();
 }
@@ -1534,10 +1555,17 @@ function t2LoadProject() {
 // T2 keyboard
 document.addEventListener('keydown',e=>{
   if(document.getElementById('t2Work').style.display==='none')return;
+  // Don't intercept keys when typing in a form field
+  const tag=document.activeElement?.tagName;
+  const isInput=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||document.activeElement?.isContentEditable;
   if(e.key==='['||e.key==='{')v2.rotate(-90);
   if(e.key===']'||e.key==='}')v2.rotate(90);
-  if(e.key==='ArrowLeft')t2LoadInViewer(Math.max(0,t2ActiveFile-1));
-  if(e.key==='ArrowRight')t2LoadInViewer(Math.min(t2Files.length-1,t2ActiveFile+1));
+  if(!isInput){
+    if(e.key==='ArrowLeft')t2LoadInViewer(Math.max(0,t2ActiveFile-1));
+    if(e.key==='ArrowRight')t2LoadInViewer(Math.min(t2Files.length-1,t2ActiveFile+1));
+    // Enter = Save Entry
+    if(e.key==='Enter'){e.preventDefault();t2SaveEntry();}
+  }
 });
 
 

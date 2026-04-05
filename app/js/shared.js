@@ -4,7 +4,7 @@
 // ============================================================
 
 // ── VERSION ──
-const DOCUOPS_VERSION = '3.6.1';
+const DOCUOPS_VERSION = '3.4.15';
 
 // ════════════════════════════════════════════════════
 // SHARED
@@ -144,6 +144,7 @@ function launchT2(){
   const t4=document.getElementById('tool4');if(t4)t4.style.display='none';
   const b=document.getElementById('toolBadge');
   b.textContent='📊 Data Entry';b.className='tool-badge t2';b.style.display='inline';
+  const sb=document.getElementById('statsBar');if(sb)sb.style.display='flex';
   t2ShowSetup();
 }
 
@@ -362,15 +363,16 @@ function makeViewer(px){
       cv.addEventListener('wheel',e=>{
         e.preventDefault();
         if(e.ctrlKey||s.zoom===1){
-          // Ctrl+wheel or at 1× → zoom (centred on cursor)
+          // Ctrl+wheel or at 1× → zoom 15% per step, centred on cursor
           const r=cv.getBoundingClientRect();
-          setZoom(s.zoom+(e.deltaY>0?-.15:.15),e.clientX-r.left,e.clientY-r.top);
+          const delta=e.deltaY>0?-0.15:0.15;
+          setZoom(s.zoom*(1+delta),e.clientX-r.left,e.clientY-r.top);
         } else if(e.shiftKey){
-          // Shift+wheel → pan horizontally
-          s.panX-=e.deltaY*0.5;clamp();render();
+          // Shift+wheel → pan horizontally (gentle)
+          s.panX-=e.deltaY*0.3;clamp();render();
         } else {
-          // Plain wheel when zoomed → pan vertically
-          s.panY-=e.deltaY*0.5;clamp();render();
+          // Plain wheel when zoomed → pan vertically (gentle)
+          s.panY-=e.deltaY*0.3;clamp();render();
         }
       },{passive:false});
 
@@ -409,6 +411,10 @@ function makeViewer(px){
     if(mode==='select'||mode==='de'){
       _kdown=e=>{
         if(e.code==='Space'&&!e.repeat){
+          // Don't intercept space if user is typing in a form field
+          const tag=document.activeElement?.tagName;
+          const isInput=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||document.activeElement?.isContentEditable;
+          if(isInput)return;
           s.spaceDown=true;
           const c=g('Canvas');if(c)c.style.cursor='grab';
           e.preventDefault();
